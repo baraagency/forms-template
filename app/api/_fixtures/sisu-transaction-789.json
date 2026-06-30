@@ -1,0 +1,28 @@
+{
+  "transaction": {
+    "transaction_id": 789,
+    "client_id": 789,
+    "id": 789,
+    "fub_id": "123",
+    "fub_deal_id": "456",
+    "agent_id": "1",
+    "first_name": "Jane",
+    "last_name": "Client",
+    "mobile_phone": "8435551234",
+    "email": "jane.client@example.com",
+    "trans_amt": "425000",
+    "address_1": "123 Main St",
+    "city": "Charleston",
+    "state": "SC",
+    "postal_code": "29401",
+    "type_id": "buyer",
+    "jcre_office": "Charleston",
+    "jcre_leads_63": "YES",
+    "are_you_on_a_teams_63": "NO",
+    "isa_sets_63": "NO",
+    "outside_referral": "No",
+    "financing": "Conventional",
+    "uc_dt": "2026-06-01",
+    "forecasted_closed_dt": "2026-07-15"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "deals": [
+    {
+      "id": 456,
+      "name": "Jane Client - Pending",
+      "status": "Active",
+      "stageName": "Pending",
+      "stageId": 54,
+      "pipelineId": 16,
+      "customSisuTransactionId": "789"
+    },
+    {
+      "id": 457,
+      "name": "Jane Client - Backup",
+      "status": "Active",
+      "stageName": "Under Contract",
+      "stageId": 55,
+      "pipelineId": 16
+    }
+  ]
+}

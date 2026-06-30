@@ -1,0 +1,94 @@
+{
+  "fields": {
+    "client_type": {
+      "name": "client_type",
+      "label": "Client Type",
+      "type": "select",
+      "custom": true,
+      "options": [
+        { "key": "buyer", "value": "buyer", "label": "Buyer" },
+        { "key": "seller", "value": "seller", "label": "Seller" }
+      ]
+    },
+    "jcre_office": {
+      "name": "jcre_office",
+      "label": "JCRE Office",
+      "type": "select",
+      "custom": true,
+      "options": [
+        { "key": "charleston", "value": "Charleston", "label": "Charleston" },
+        { "key": "columbia", "value": "Columbia", "label": "Columbia" }
+      ]
+    },
+    "jcre_leads_63": {
+      "name": "jcre_leads_63",
+      "label": "JCRE Lead?",
+      "type": "select",
+      "custom": true,
+      "options": [
+        { "key": "yes", "value": "YES", "label": "Yes" },
+        { "key": "no", "value": "NO", "label": "No" }
+      ]
+    },
+    "are_you_on_a_teams_63": {
+      "name": "are_you_on_a_teams_63",
+      "label": "Are you on a team?",
+      "type": "select",
+      "custom": true,
+      "options": [
+        { "key": "yes", "value": "YES", "label": "Yes" },
+        { "key": "no", "value": "NO", "label": "No" }
+      ]
+    },
+    "isa_sets_63": {
+      "name": "isa_sets_63",
+      "label": "ISA Set?",
+      "type": "select",
+      "custom": true,
+      "options": [
+        { "key": "yes", "value": "YES", "label": "Yes" },
+        { "key": "no", "value": "NO", "label": "No" }
+      ]
+    },
+    "outside_referral": {
+      "name": "outside_referral",
+      "label": "Outside Referral/Rebate?",
+      "type": "select",
+      "custom": true,
+      "options": [
+        { "key": "no", "value": "No", "label": "No" },
+        { "key": "outside", "value": "Outside Referral", "label": "Outside Referral" }
+      ]
+    },
+    "financing": {
+      "name": "financing",
+      "label": "Financing",
+      "type": "select",
+      "custom": true,
+      "options": [
+        { "key": "conventional", "value": "Conventional", "label": "Conventional" },
+        { "key": "cash", "value": "Cash", "label": "Cash" }
+      ]
+    },
+    "attorney_vid": {
+      "name": "attorney_vid",
+      "label": "Closing Attorney",
+      "type": "select",
+      "custom": true,
+      "options": [
+        { "key": "184883", "value": "184883", "label": "Other" },
+        { "key": "1001", "value": "1001", "label": "Sample Attorney LLC" }
+      ]
+    },
+    "mortgage_company_vid": {
+      "name": "mortgage_company_vid",
+      "label": "Mortgage Company",
+      "type": "select",
+      "custom": true,
+      "options": [
+        { "key": "184058", "value": "184058", "label": "Other" },
+        { "key": "2001", "value": "2001", "label": "Sample Mortgage Co" }
+      ]
+    }
+  }
+}

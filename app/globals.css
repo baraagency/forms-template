@@ -1,0 +1,519 @@
+@import "tailwindcss";
+
+/* ─── Global Design Tokens ────────────────────────────────────────────────────
+   Edit these variables to customise fonts, colours, spacing, and borders
+   across the entire app without touching component code.
+   ──────────────────────────────────────────────────────────────────────────── */
+
+:root {
+    /* Brand */
+    --brand-charcoal: #3f4548;
+    --brand-charcoal-dark: #2f3538;
+    --brand-cyan: #14b8cf;
+    --brand-cyan-dark: #079bb1;
+    --brand-cyan-soft: rgba(20, 184, 207, 0.12);
+
+    /* Page chrome */
+    --background: #f7f9fa;
+    --foreground: var(--brand-charcoal);
+
+    /* Typography */
+    --font-family: "Lexend", sans-serif;
+    --page-title-size: 2rem;
+    --page-title-weight: 700;
+    --page-title-color: var(--brand-charcoal);
+    --section-title-size: 1.15rem;
+    --section-title-weight: 600;
+    --section-title-color: var(--brand-charcoal);
+    --label-size: 0.875rem;
+    --label-color: #343a3d;
+    --body-size: 0.875rem;
+    --body-color: #535d62;
+
+    /* Layout */
+    --content-max-width: 920px;
+    --content-padding: 24px;
+    --section-gap: 24px;
+    --field-gap: 16px;
+    --field-min-width: 180px;
+
+    /* Card sections */
+    --card-bg: #ffffff;
+    --card-padding: 24px;
+    --card-radius: 8px;
+    --card-shadow: 0 18px 42px rgba(63, 69, 72, 0.08);
+    --card-border: 1px solid #dbe4e7;
+    --field-shadow: 0 2px 6px rgba(63, 69, 72, 0.08);
+    --field-hover-border: #aebcc1;
+    --field-focus-ring: rgba(20, 184, 207, 0.18);
+    --disabled-bg: #eef3f4;
+
+    /* Indent / conditional blocks */
+    --indent-border-width: 3px;
+    --indent-border-color: var(--brand-cyan);
+    --indent-padding-left: 16px;
+
+    /* Dividers */
+    --divider-color: #dbe4e7;
+
+    /* Buttons */
+    --btn-primary-bg: var(--brand-charcoal);
+    --btn-primary-color: #fff;
+    --btn-primary-hover-bg: var(--brand-charcoal-dark);
+    --btn-outline-color: var(--brand-cyan-dark);
+    --btn-outline-border: var(--brand-cyan);
+    --btn-radius: 6px;
+    --highlight-color: var(--brand-cyan);
+    --highlight-bg: var(--brand-cyan-soft);
+    --menu-hover-bg: #edf8fa;
+    --icon-muted: #667277;
+
+    /* Status colours */
+    --success-bg: #edf7ed;
+    --success-color: #1e4620;
+    --warning-bg: #fff4e5;
+    --warning-color: #663c00;
+    --error-color: #c0163f;
+    --placeholder-color: #8c979c;
+}
+
+@theme inline {
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+    --font-sans: var(--font-geist-sans);
+    --font-mono: var(--font-geist-mono);
+}
+
+/*@media (prefers-color-scheme: dark) {
+    :root {
+        --background: #252b2e;
+        --foreground: #e5e5e5;
+        --card-bg: #30373a;
+        --card-border: 1px solid #465055;
+        --card-shadow: 0 18px 42px rgba(0, 0, 0, 0.28);
+        --page-title-color: #f5f5f5;
+        --section-title-color: #e5e5e5;
+        --label-color: #a3a3a3;
+        --body-color: #d4d4d4;
+        --divider-color: #465055;
+        --indent-border-color: var(--brand-cyan);
+        --btn-primary-bg: var(--brand-charcoal);
+        --btn-primary-hover-bg: var(--brand-charcoal-dark);
+        --btn-outline-color: var(--brand-cyan);
+        --btn-outline-border: var(--brand-cyan);
+        --success-bg: #14532d;
+        --success-color: #86efac;
+        --warning-bg: #451a03;
+        --warning-color: #fed7aa;
+        --placeholder-color: #999;
+    }
+}*/
+
+/* Hide number input spinners */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+input[type="number"] {
+    -moz-appearance: textfield;
+}
+
+input::placeholder,
+textarea::placeholder {
+    color: var(--placeholder-color, #9ca3af);
+    opacity: 1;
+}
+
+.field-shadow {
+    box-shadow: var(--field-shadow);
+}
+
+body {
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-family);
+}
+
+/* ─── Reusable Layout Classes ─────────────────────────────────────────────── */
+
+.page-form {
+    font-family: var(--font-family);
+    color: var(--body-color);
+    font-size: var(--body-size);
+    container-type: inline-size;
+    width: min(100%, var(--content-max-width));
+    max-width: var(--content-max-width);
+    margin: 12px auto;
+    padding: var(--content-padding);
+    padding-bottom: 64px;
+    box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+    .page-form {
+        margin: 0 auto;
+        padding: 12px;
+        padding-bottom: 40px;
+    }
+}
+
+.page-title {
+    font-size: var(--page-title-size);
+    font-weight: var(--page-title-weight);
+    color: var(--page-title-color);
+    text-align: center;
+    margin-bottom: var(--section-gap);
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+}
+
+.page-title::after {
+    content: "";
+    display: block;
+    width: 88px;
+    height: 3px;
+    margin: 16px auto 0;
+    border-radius: 999px;
+    background: var(--brand-cyan);
+}
+
+.section-card {
+    background: var(--card-bg);
+    padding: var(--card-padding);
+    border-radius: var(--card-radius);
+    box-shadow: var(--card-shadow);
+    border: var(--card-border);
+    margin-bottom: var(--section-gap);
+}
+
+.section-card + .section-card,
+.section-card + section,
+section + .section-card {
+    border-top-color: var(--divider-color);
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--field-gap);
+}
+
+.form-loading {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: var(--field-gap);
+}
+
+.form-row,
+.form-grid-three,
+.form-contact-name-grid,
+.form-address-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--field-gap);
+}
+
+.form-hidden-placeholder {
+    display: none;
+    pointer-events: none;
+    visibility: hidden;
+}
+
+@container (min-width: 700px) {
+    .form-row {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .form-grid-three {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .form-contact-name-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .form-address-grid {
+        grid-template-columns: minmax(0, 3fr) minmax(0, 1fr);
+    }
+
+    .form-hidden-placeholder {
+        display: block;
+    }
+}
+
+.form-success {
+    padding: 32px;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.settings-page-stack {
+    display: grid;
+    gap: 24px;
+}
+
+.settings-section {
+    display: grid;
+    gap: 14px;
+}
+
+.settings-section + .settings-section {
+    border-top: var(--card-border);
+    padding-top: 24px;
+}
+
+.settings-section-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.settings-section-title {
+    color: var(--foreground);
+    font-size: 1rem;
+    font-weight: 800;
+    line-height: 1.25;
+    margin: 0;
+}
+
+.settings-section-description {
+    color: var(--body-color);
+    font-size: 0.86rem;
+    line-height: 1.45;
+    margin: 4px 0 0;
+    max-width: 620px;
+}
+
+.settings-recipient-list {
+    display: grid;
+    gap: 12px;
+}
+
+.settings-recipient-form {
+    display: grid;
+    grid-template-columns: minmax(220px, 1fr) minmax(280px, 1.4fr) auto;
+    align-items: end;
+    gap: 16px;
+}
+
+.settings-dynamic-recipient-form {
+    display: grid;
+    grid-template-columns: minmax(280px, 1fr) auto;
+    align-items: start;
+    column-gap: 16px;
+    row-gap: 8px;
+}
+
+.settings-dynamic-recipient-field {
+    display: grid;
+    gap: 8px;
+}
+
+.settings-dynamic-recipient-actions {
+    padding-top: 37px;
+}
+
+.settings-gmail-panel {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    border: var(--card-border);
+    border-radius: var(--card-radius);
+    background: var(--card-bg);
+    padding: 14px 16px;
+}
+
+.settings-gmail-title {
+    color: var(--foreground);
+    font-size: 0.95rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.settings-gmail-status {
+    color: var(--body-color);
+    font-size: 0.85rem;
+    margin: 4px 0 0;
+}
+
+.settings-gmail-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.settings-recipient-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    border: var(--card-border);
+    border-radius: var(--card-radius);
+    background: var(--card-bg);
+    padding: 14px 16px;
+}
+
+.settings-recipient-details {
+    display: grid;
+    gap: 10px;
+    min-width: 0;
+}
+
+.settings-recipient-email {
+    color: var(--foreground);
+    font-size: 0.95rem;
+    font-weight: 700;
+    margin: 0;
+    overflow-wrap: anywhere;
+}
+
+.settings-recipient-helper {
+    color: var(--body-color);
+    font-size: 0.82rem;
+    margin: 0;
+}
+
+.settings-form-options,
+.settings-recipient-form-options {
+    border: 0;
+    margin: 0;
+    min-inline-size: 0;
+    padding: 0;
+}
+
+.settings-form-options legend,
+.settings-recipient-form-options legend {
+    color: var(--body-color);
+    font-size: 0.78rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.settings-form-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 14px;
+}
+
+.settings-recipient-form-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 12px;
+}
+
+.settings-checkbox {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--foreground);
+    font-size: 0.85rem;
+    font-weight: 700;
+    line-height: 1.25;
+}
+
+.settings-recipient-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.settings-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--foreground);
+    font-size: 0.85rem;
+    font-weight: 700;
+}
+
+@media (max-width: 640px) {
+    .settings-recipient-form,
+    .settings-dynamic-recipient-form,
+    .settings-gmail-panel,
+    .settings-section-header,
+    .settings-recipient-row,
+    .settings-gmail-actions,
+    .settings-recipient-actions {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .settings-recipient-form {
+        grid-template-columns: 1fr;
+    }
+
+    .settings-dynamic-recipient-form {
+        grid-template-columns: 1fr;
+    }
+
+    .settings-dynamic-recipient-actions {
+        padding-top: 0;
+    }
+}
+
+.page-loader {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+/* ─── MUI Overrides (global, driven by tokens) ───────────────────────────── */
+
+.MuiFormLabel-root {
+    font-size: var(--label-size);
+    color: var(--label-color);
+}
+
+.MuiInputLabel-root {
+    font-size: var(--label-size);
+}
+
+.MuiTypography-subtitle2 {
+    font-size: var(--label-size);
+    color: var(--section-title-color);
+}
+
+.MuiDivider-root {
+    border-color: var(--divider-color);
+}
+
+.MuiButton-contained {
+    background-color: var(--btn-primary-bg);
+    color: var(--btn-primary-color);
+    border-radius: var(--btn-radius);
+    text-transform: none;
+}
+
+.MuiButton-contained:hover {
+    background-color: var(--btn-primary-hover-bg);
+}
+
+.MuiButton-outlined {
+    color: var(--btn-outline-color);
+    border-color: var(--btn-outline-border);
+    border-radius: var(--btn-radius);
+    text-transform: none;
+}
+
+.MuiButton-outlined:hover {
+    border-color: var(--brand-cyan-dark);
+    background-color: var(--brand-cyan-soft);
+}
+
+.MuiAlert-standardSuccess {
+    background-color: var(--success-bg);
+    color: var(--success-color);
+}
+
+.MuiAlert-standardWarning {
+    background-color: var(--warning-bg);
+    color: var(--warning-color);
+}

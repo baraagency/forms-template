@@ -1,0 +1,12 @@
+{
+  "id": "123",
+  "firstName": "Jane",
+  "lastName": "Client",
+  "email": "jane.client@example.com",
+  "phones": [{ "value": "8435551234", "isPrimary": 1 }],
+  "assignedUserId": 1,
+  "address": "123 Main St",
+  "city": "Charleston",
+  "state": "SC",
+  "zipCode": "29401"
+}

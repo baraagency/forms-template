@@ -1,0 +1,16 @@
+{
+  "agents": [
+    {
+      "value": "501",
+      "label": "Taylor ISA",
+      "email": "taylor.isa@example.com",
+      "isIsa": true
+    },
+    {
+      "value": "502",
+      "label": "Morgan OSA",
+      "email": "morgan.osa@example.com",
+      "isIsa": false
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "vendors": {
+    "titleCompany": [
+      { "value": "1001", "label": "Sample Title Co" }
+    ],
+    "mortgageCompany": [
+      { "value": "2001", "label": "Sample Mortgage Co" },
+      { "value": "184058", "label": "Other" }
+    ],
+    "attorney": [
+      { "value": "1001", "label": "Sample Attorney LLC" },
+      { "value": "184883", "label": "Other" }
+    ],
+    "homeWarranty": []
+  }
+}

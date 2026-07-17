@@ -42,7 +42,6 @@ import {
 } from "./pendingFormUtils";
 import {
   getPendingSelectOptions,
-  isNoSelection,
   isOtherSelection,
   isSellerSelection,
   isYesSelection,
@@ -74,16 +73,9 @@ type SelectOption = {
   label: string;
 };
 
-type TeamAgentOption = SelectOption & {
-  email: string;
-  isIsa: boolean;
-};
-
 type VendorsResponse = {
   vendors: {
-    titleCompany: SISUDropdownOption[];
     mortgageCompany: SISUDropdownOption[];
-    attorney?: SISUDropdownOption[];
   };
 };
 
@@ -425,9 +417,11 @@ function buildRouterHref(
 export function PendingFormClient({
   searchParams,
   previousSubmissionFormData = null,
+  localDemoEnabled = false,
 }: {
   searchParams: Record<string, string | string[] | undefined>;
   previousSubmissionFormData?: JsonValue | null;
+  localDemoEnabled?: boolean;
 }) {
   const router = useRouter();
   const routedAgentName = getSingleSearchParam(searchParams, "agentName");
@@ -451,8 +445,6 @@ export function PendingFormClient({
   });
   const [errors, setErrors] = useState<PendingFieldErrors>({});
   const [teamFields, setTeamFields] = useState<TeamFieldCatalog>({});
-  const [agents, setAgents] = useState<TeamAgentOption[]>([]);
-  const [attorneyVendors, setAttorneyVendors] = useState<SelectOption[]>([]);
   const [mortgageVendors, setMortgageVendors] = useState<SelectOption[]>([]);
   const [loadingLead, setLoadingLead] = useState(Boolean(formState.personId));
   const [loadingTransaction, setLoadingTransaction] = useState(false);
@@ -466,35 +458,17 @@ export function PendingFormClient({
 
   const {
     clientTypeOptions,
-    jcreOfficeOptions,
-    jcreLeadTransactionOptions,
-    plrAcknowledgementOptions,
-    closingDepartmentOptions,
     hasSecondaryClientOptions,
-    onTeamOptions,
-    isaSetOptions,
-    pastClientOptions,
     outsideReferralOptions,
     financingOptions,
     dueDiligencePeriodOptions,
     contingenciesOptions,
-    multipleTransactionsOptions,
-    goodFundContributionOptions,
-    commissionDeliveryOptions,
   } = getPendingSelectOptions(teamFields);
-  const isaOptions = agents;
-  const closingAttorneyOptions = prioritizeSpecialVendorOptions(attorneyVendors);
   const mortgageCompanyOptions = prioritizeSpecialVendorOptions(mortgageVendors);
-  const showClosingAttorneyOther = isOtherVendorSelection(
-    formState.closingAttorney,
-    closingAttorneyOptions,
-  );
   const showMortgageCompanyOther = isOtherVendorSelection(
     formState.mortgageCompany,
     mortgageCompanyOptions,
   );
-  const showIsaName = isYesSelection(formState.isaSet);
-  const showTeamFields = isYesSelection(formState.onTeam);
 
   useEffect(() => {
     if (!formState.personId) {
@@ -546,23 +520,14 @@ export function PendingFormClient({
     const loadOptions = async () => {
       try {
         setOptionsError(null);
-        const [teamFieldsResponse, agentsResponse, vendorsResponse] =
-          await Promise.all([
-            fetch("/api/sisu/team-fields", { signal: controller.signal }),
-            fetch("/api/sisu/team-agents?role_filter=ISISA", {
-              signal: controller.signal,
-            }),
-            fetch("/api/sisu/vendors", { signal: controller.signal }),
-          ]);
+        const [teamFieldsResponse, vendorsResponse] = await Promise.all([
+          fetch("/api/sisu/team-fields", { signal: controller.signal }),
+          fetch("/api/sisu/vendors", { signal: controller.signal }),
+        ]);
 
         if (!teamFieldsResponse.ok) {
           throw new Error(
             `Unable to load SISU team fields (HTTP ${teamFieldsResponse.status}).`,
-          );
-        }
-        if (!agentsResponse.ok) {
-          throw new Error(
-            `Unable to load SISU team agents (HTTP ${agentsResponse.status}).`,
           );
         }
         if (!vendorsResponse.ok) {
@@ -573,18 +538,9 @@ export function PendingFormClient({
 
         const teamFieldsPayload =
           (await teamFieldsResponse.json()) as SISUTeamFieldsCatalogResponse;
-        const agentsPayload = (await agentsResponse.json()) as {
-          agents: TeamAgentOption[];
-        };
         const vendorsPayload = (await vendorsResponse.json()) as VendorsResponse;
 
         setTeamFields(teamFieldsPayload.fields ?? {});
-        setAgents(agentsPayload.agents ?? []);
-        setAttorneyVendors(
-          normalizeSisuOptions(
-            vendorsPayload.vendors.attorney ?? vendorsPayload.vendors.titleCompany,
-          ),
-        );
         setMortgageVendors(normalizeSisuOptions(vendorsPayload.vendors.mortgageCompany));
       } catch (requestError) {
         if (
@@ -675,9 +631,6 @@ export function PendingFormClient({
         const nextState = { ...current, [field]: value };
         if (field === "clientType") {
           nextState.transactionStage = value === "Buyer" ? "buyer-pending" : value === "Seller" ? "seller-pending" : "";
-        }
-        if (field === "isaName" && value.trim() && !nextState.isaSet.trim()) {
-          nextState.isaSet = "yes";
         }
         return nextState;
       });
@@ -798,9 +751,18 @@ export function PendingFormClient({
         </div>
         <title>Pending Form</title>
         <div className="mb-6 border-b border-[var(--divider-color)] pb-6">
-          <h1 className="page-title mb-0">Pending</h1>
+          <h1 className="page-title mb-0 text-balance">Pending</h1>
+          <p className="page-intro">
+            Complete the under-contract transaction intake for this client.
+          </p>
         </div>
 
+        {localDemoEnabled ? (
+          <Notice tone="warning">
+            Local demo mode — fixture client/deal/SISU IDs were applied because no
+            clientId was provided.
+          </Notice>
+        ) : null}
         {loadError ? <Notice tone="warning">{loadError}</Notice> : null}
         {optionsError ? <Notice tone="warning">{optionsError}</Notice> : null}
         {transactionError ? (
@@ -1067,157 +1029,8 @@ export function PendingFormClient({
               </div>
             </SectionCard>
 
-            <SectionCard title="Secondary Information">
+            <SectionCard title="Financing">
               <Row>
-                <TextInput
-                  id="agent2"
-                  label="Secondary Agent"
-                  value={formState.agent2}
-                  onChange={(event) => updateField("agent2", event.target.value)}
-                />
-                <div>
-                  <TextInput
-                    id="agent2Percent"
-                    label="Secondary Agent %"
-                    inputMode="decimal"
-                    value={formState.agent2Percent}
-                    onBlur={() =>
-                      updateField(
-                        "agent2Percent",
-                        formatPercentageInput(formState.agent2Percent),
-                      )
-                    }
-                    onChange={(event) =>
-                      updateField(
-                        "agent2Percent",
-                        limitPercentageInputPrecision(event.target.value),
-                      )
-                    }
-                  />
-                  <FieldError message={errors.agent2Percent} />
-                </div>
-              </Row>
-              <Row>
-                <div>
-                  <SelectInput
-                    id="jcreOffice"
-                    label="JCRE Office"
-                    value={formState.jcreOffice}
-                    required
-                    onChange={(event) =>
-                      updateField("jcreOffice", event.target.value)
-                    }
-                  >
-                    <option value="">Select office...</option>
-                    {jcreOfficeOptions.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </SelectInput>
-                  <FieldError message={errors.jcreOffice} />
-                </div>
-                <div>
-                  <SelectInput
-                    id="jcreLeadTransaction"
-                    label="JCRE Lead Transaction"
-                    value={formState.jcreLeadTransaction}
-                    required
-                    onChange={(event) =>
-                      updateField("jcreLeadTransaction", event.target.value)
-                    }
-                  >
-                    <option value="">Select...</option>
-                    {jcreLeadTransactionOptions.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </SelectInput>
-                  <FieldError message={errors.jcreLeadTransaction} />
-                </div>
-              </Row>
-              {isNoSelection(formState.jcreLeadTransaction) ? (
-                <div>
-                  <SelectInput
-                    id="plrAcknowledgement"
-                    label="Do you understand that PLR's need to be FULLY EXECUTED within 48 hours of ratification and prior to a listing going live or this will be processed as a company deal?"
-                    value={formState.plrAcknowledgement}
-                    required
-                    onChange={(event) =>
-                      updateField("plrAcknowledgement", event.target.value)
-                    }
-                  >
-                    <option value="">Select...</option>
-                    {plrAcknowledgementOptions.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </SelectInput>
-                  <FieldError message={errors.plrAcknowledgement} />
-                </div>
-              ) : null}
-              <Row>
-                <SelectInput
-                  id="closingDepartment"
-                  label="CAP AGENTS ONLY: If personal, using the Closing Department?"
-                  value={formState.closingDepartment}
-                  onChange={(event) =>
-                    updateField("closingDepartment", event.target.value)
-                  }
-                >
-                  <option value="">Select...</option>
-                  {closingDepartmentOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </SelectInput>
-              </Row>
-              <Row>
-                <div>
-                  <SelectInput
-                    id="onTeam"
-                    label="Are you on a Team within JCRE?"
-                    value={formState.onTeam}
-                    required
-                    onChange={(event) => updateField("onTeam", event.target.value)}
-                  >
-                    <option value="">Select...</option>
-                    {onTeamOptions.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </SelectInput>
-                  <FieldError message={errors.onTeam} />
-                </div>
-                {showTeamFields ? (
-                  <TextInput
-                    id="teamLeaderName"
-                    label="Team Leader Name"
-                    value={formState.teamLeaderName}
-                    onChange={(event) =>
-                      updateField("teamLeaderName", event.target.value)
-                    }
-                  />
-                ) : null}
-              </Row>
-              {showTeamFields ? (
-                <TextAreaInput
-                  id="teamPayNotes"
-                  label="For Teams ONLY: Any different pay than what is on the spreadsheet? or special notes to Accounting?"
-                  value={formState.teamPayNotes}
-                  onChange={(event) =>
-                    updateField("teamPayNotes", event.target.value)
-                  }
-                />
-              ) : null}
-            </SectionCard>
-
-            <SectionCard title="Closing Attorney & Financing">
-              <div className="form-grid-three">
                 <div>
                   <SelectInput
                     id="financingType"
@@ -1239,25 +1052,6 @@ export function PendingFormClient({
                 </div>
                 <div>
                   <SelectInput
-                    id="closingAttorney"
-                    label="JCRE Closing Attorney"
-                    value={formState.closingAttorney}
-                    required
-                    onChange={(event) =>
-                      updateField("closingAttorney", event.target.value)
-                    }
-                  >
-                    <option value="">Select attorney...</option>
-                    {closingAttorneyOptions.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </SelectInput>
-                  <FieldError message={errors.closingAttorney} />
-                </div>
-                <div>
-                  <SelectInput
                     id="mortgageCompany"
                     label="Mortgage Company"
                     value={formState.mortgageCompany}
@@ -1275,98 +1069,44 @@ export function PendingFormClient({
                   </SelectInput>
                   <FieldError message={errors.mortgageCompany} />
                 </div>
-              </div>
-              {showClosingAttorneyOther || showMortgageCompanyOther ? (
-                <Row>
-                  {showClosingAttorneyOther ? (
-                    <div className="space-y-4 border-l-[var(--indent-border-width)] border-l-[var(--indent-border-color)] pl-[var(--indent-padding-left)]">
-                      <div>
-                        <TextInput
-                          id="closingAttorneyOther"
-                          label="Closing Attorney Other"
-                          value={formState.closingAttorneyOther}
-                          required
-                          onChange={(event) =>
-                            updateField("closingAttorneyOther", event.target.value)
-                          }
-                        />
-                        <FieldError message={errors.closingAttorneyOther} />
-                      </div>
-                      <Row>
-                        <div>
-                          <TextInput
-                            id="closingAttorneyPhone"
-                            label="Closing Attorney Phone"
-                            type="tel"
-                            value={formState.closingAttorneyPhone}
-                            onBlur={() =>
-                              updateField(
-                                "closingAttorneyPhone",
-                                formatPendingPhoneField(formState.closingAttorneyPhone),
-                              )
-                            }
-                            onChange={(event) =>
-                              updateField("closingAttorneyPhone", event.target.value)
-                            }
-                          />
-                          <FieldError message={errors.closingAttorneyPhone} />
-                        </div>
-                        <div>
-                          <TextInput
-                            id="closingAttorneyEmail"
-                            label="Closing Attorney Email"
-                            type="email"
-                            value={formState.closingAttorneyEmail}
-                            onChange={(event) =>
-                              updateField("closingAttorneyEmail", event.target.value)
-                            }
-                          />
-                          <FieldError message={errors.closingAttorneyEmail} />
-                        </div>
-                      </Row>
+              </Row>
+              {showMortgageCompanyOther ? (
+                <div className="space-y-4 border-l-[var(--indent-border-width)] border-l-[var(--indent-border-color)] pl-[var(--indent-padding-left)]">
+                  <div>
+                    <TextInput
+                      id="mortgageCompanyName"
+                      label="Mortgage Company Name"
+                      value={formState.mortgageCompanyName}
+                      required
+                      onChange={(event) =>
+                        updateField("mortgageCompanyName", event.target.value)
+                      }
+                    />
+                    <FieldError message={errors.mortgageCompanyName} />
+                  </div>
+                  <Row>
+                    <TextInput
+                      id="loanOfficerName"
+                      label="Loan Officer Name"
+                      value={formState.loanOfficerName}
+                      onChange={(event) =>
+                        updateField("loanOfficerName", event.target.value)
+                      }
+                    />
+                    <div>
+                      <TextInput
+                        id="loanOfficerEmail"
+                        label="Loan Officer Email"
+                        type="email"
+                        value={formState.loanOfficerEmail}
+                        onChange={(event) =>
+                          updateField("loanOfficerEmail", event.target.value)
+                        }
+                      />
+                      <FieldError message={errors.loanOfficerEmail} />
                     </div>
-                  ) : (
-                    <div />
-                  )}
-                  {showMortgageCompanyOther ? (
-                    <div className="space-y-4 border-l-[var(--indent-border-width)] border-l-[var(--indent-border-color)] pl-[var(--indent-padding-left)]">
-                      <div>
-                        <TextInput
-                          id="mortgageCompanyName"
-                          label="Mortgage Company Name"
-                          value={formState.mortgageCompanyName}
-                          required
-                          onChange={(event) =>
-                            updateField("mortgageCompanyName", event.target.value)
-                          }
-                        />
-                        <FieldError message={errors.mortgageCompanyName} />
-                      </div>
-                      <Row>
-                        <TextInput
-                          id="loanOfficerName"
-                          label="Loan Officer Name"
-                          value={formState.loanOfficerName}
-                          onChange={(event) =>
-                            updateField("loanOfficerName", event.target.value)
-                          }
-                        />
-                        <div>
-                          <TextInput
-                            id="loanOfficerEmail"
-                            label="Loan Officer Email"
-                            type="email"
-                            value={formState.loanOfficerEmail}
-                            onChange={(event) =>
-                              updateField("loanOfficerEmail", event.target.value)
-                            }
-                          />
-                          <FieldError message={errors.loanOfficerEmail} />
-                        </div>
-                      </Row>
-                    </div>
-                  ) : null}
-                </Row>
+                  </Row>
+                </div>
               ) : null}
             </SectionCard>
 
@@ -1393,67 +1133,6 @@ export function PendingFormClient({
                 <Row>
                   <div>
                     <SelectInput
-                      id="isaSet"
-                      label="ISA Set"
-                      value={formState.isaSet}
-                      required
-                      onChange={(event) => updateField("isaSet", event.target.value)}
-                    >
-                      <option value="">Select...</option>
-                      {isaSetOptions.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </SelectInput>
-                    <FieldError message={errors.isaSet} />
-                  </div>
-                  <div
-                    aria-hidden={!showIsaName}
-                    className={showIsaName ? undefined : "form-hidden-placeholder"}
-                  >
-                    <SelectInput
-                      id="isaName"
-                      label="Call Partner/ISA Name"
-                      value={formState.isaName}
-                      required={showIsaName}
-                      disabled={!showIsaName}
-                      onChange={(event) =>
-                        updateField("isaName", event.target.value)
-                      }
-                    >
-                      <option value="">Select ISA...</option>
-                      {isaOptions.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </SelectInput>
-                    <FieldError message={showIsaName ? errors.isaName : undefined} />
-                  </div>
-                </Row>
-                <Row>
-                  <div>
-                    <SelectInput
-                      id="pastClient"
-                      label="Was this a JCRE past client?"
-                      value={formState.pastClient}
-                      required
-                      onChange={(event) =>
-                        updateField("pastClient", event.target.value)
-                      }
-                    >
-                      <option value="">Select...</option>
-                      {pastClientOptions.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </SelectInput>
-                    <FieldError message={errors.pastClient} />
-                  </div>
-                  <div>
-                    <SelectInput
                       id="outsideReferral"
                       label="Outside Referral/Rebate?"
                       value={formState.outsideReferral}
@@ -1471,6 +1150,7 @@ export function PendingFormClient({
                     </SelectInput>
                     <FieldError message={errors.outsideReferral} />
                   </div>
+                  <div aria-hidden className="form-hidden-placeholder" />
                 </Row>
                 {isOutsideReferralSelected(formState.outsideReferral) ? (
                   <div className="space-y-4 border-l-[var(--indent-border-width)] border-l-[var(--indent-border-color)] pl-[var(--indent-padding-left)]">
@@ -1535,7 +1215,7 @@ export function PendingFormClient({
                   <div>
                     <TextInput
                       id="otherAgentName"
-                      label="Other Agent Name"
+                      label="Coop Agent Name"
                       value={formState.otherAgentName}
                       required
                       onChange={(event) =>
@@ -1547,7 +1227,7 @@ export function PendingFormClient({
                   <div>
                     <TextInput
                       id="otherAgentPhone"
-                      label="Other Agent Phone"
+                      label="Coop Agent Phone"
                       type="tel"
                       value={formState.otherAgentPhone}
                       onBlur={() =>
@@ -1567,7 +1247,7 @@ export function PendingFormClient({
                   <div>
                     <TextInput
                       id="otherAgentEmail"
-                      label="Other Agent Email"
+                      label="Coop Agent Email"
                       type="email"
                       value={formState.otherAgentEmail}
                       required
@@ -1579,7 +1259,7 @@ export function PendingFormClient({
                   </div>
                   <TextInput
                     id="otherAgentCompany"
-                    label="Other Agent Company"
+                    label="Coop Agent Company"
                     value={formState.otherAgentCompany}
                     onChange={(event) =>
                       updateField("otherAgentCompany", event.target.value)
@@ -1677,115 +1357,14 @@ export function PendingFormClient({
                   ) : null}
                 </FieldGroup>
               ) : null}
-
-              <FieldGroup title="Commission & Notes">
-                <Row>
-                  <div>
-                    <SelectInput
-                      id="multipleTransactions"
-                      label="Is the client doing multiple transactions with us?"
-                      value={formState.multipleTransactions}
-                      required
-                      onChange={(event) =>
-                        updateField("multipleTransactions", event.target.value)
-                      }
-                    >
-                      <option value="">Select...</option>
-                      {multipleTransactionsOptions.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </SelectInput>
-                    <FieldError message={errors.multipleTransactions} />
-                  </div>
-                  <div>
-                    <SelectInput
-                      id="goodFundContribution"
-                      label="Contribute $30.00 to the 1% for Good Fund?"
-                      value={formState.goodFundContribution}
-                      required
-                      onChange={(event) =>
-                        updateField("goodFundContribution", event.target.value)
-                      }
-                    >
-                      <option value="">Select...</option>
-                      {goodFundContributionOptions.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </SelectInput>
-                    <FieldError message={errors.goodFundContribution} />
-                  </div>
-                </Row>
-                {isYesSelection(formState.multipleTransactions) ? (
-                  <div>
-                    <TextAreaInput
-                      id="otherAddresses"
-                      label="List the other address"
-                      value={formState.otherAddresses}
-                      onChange={(event) =>
-                        updateField("otherAddresses", event.target.value)
-                      }
-                    />
-                    <FieldError message={errors.otherAddresses} />
-                  </div>
-                ) : null}
-                <Row>
-                  <div>
-                    <SelectInput
-                      id="commissionDelivery"
-                      label="How would you like the commission delivered to LPT?"
-                      value={formState.commissionDelivery}
-                      required
-                      onChange={(event) =>
-                        updateField("commissionDelivery", event.target.value)
-                      }
-                    >
-                      <option value="">Select delivery...</option>
-                      {commissionDeliveryOptions.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </SelectInput>
-                    <FieldError message={errors.commissionDelivery} />
-                  </div>
-                  <div>
-                    <TextInput
-                      id="grossCommissionTotal"
-                      label="JCRE Gross Commission Total ($)"
-                      inputMode="decimal"
-                      value={formState.grossCommissionTotal}
-                      required
-                      onBlur={() =>
-                        updateField(
-                          "grossCommissionTotal",
-                          formatCurrencyInput(formState.grossCommissionTotal),
-                        )
-                      }
-                      onChange={(event) =>
-                        updateField("grossCommissionTotal", event.target.value)
-                      }
-                    />
-                    <FieldError message={errors.grossCommissionTotal} />
-                  </div>
-                </Row>
-                <TextAreaInput
-                  id="closingDepartmentNotes"
-                  label="Is there anything else the Closing/Commission Department should know about this client that would be helpful?"
-                  value={formState.closingDepartmentNotes}
-                  onChange={(event) =>
-                    updateField("closingDepartmentNotes", event.target.value)
-                  }
-                />
-              </FieldGroup>
             </SectionCard>
           </div>
 
           <div className="form-actions mt-6">
-            <button type="submit" className={`${primaryButtonClassName} w-full`}>
+            <button
+              type="submit"
+              className={`app-button-press ${primaryButtonClassName} w-full`}
+            >
               Submit
             </button>
           </div>

@@ -1,6 +1,6 @@
 import { SUBMISSION_SUMMARY_EMAIL_FAILURE_MESSAGE } from "./submissionConstants";
 
-export type SubmissionFormType = "pending";
+export type SubmissionFormType = "pending" | "appointment-set";
 
 export { SUBMISSION_SUMMARY_EMAIL_FAILURE_MESSAGE };
 
@@ -110,10 +110,12 @@ const submissionDebugEnvironments = new Set(["LOCAL", "STAGING"]);
 
 export const submissionFormLabels: Record<SubmissionFormType, string> = {
   pending: "Pending",
+  "appointment-set": "Appointment Set",
 };
 
 export const submissionFormPaths: Record<SubmissionFormType, string> = {
   pending: "/forms/pending",
+  "appointment-set": "/forms/appointment-set",
 };
 
 function appendOptionalParam(params: URLSearchParams, key: string, value?: string) {

@@ -1,16 +1,16 @@
-import { PendingFormClient } from "./PendingFormClient";
+import { AppointmentSetFormClient } from "./AppointmentSetFormClient";
 import {
   applyLocalDemoSearchParams,
   isLocalFormsDemoEnvironment,
 } from "../_core/localFormsDemo";
 
 type SearchParamValue = string | string[] | undefined;
-type PendingSearchParams = Record<string, SearchParamValue>;
+type AppointmentSetSearchParams = Record<string, SearchParamValue>;
 
-export default async function PendingPage({
+export default async function AppointmentSetPage({
   searchParams,
 }: {
-  searchParams: Promise<PendingSearchParams>;
+  searchParams: Promise<AppointmentSetSearchParams>;
 }) {
   const resolvedSearchParams = await searchParams;
   const localDemoEnabled = isLocalFormsDemoEnvironment(process.env.ENVIRONMENT);
@@ -24,7 +24,7 @@ export default async function PendingPage({
     !resolvedSearchParams.personId;
 
   return (
-    <PendingFormClient
+    <AppointmentSetFormClient
       searchParams={effectiveSearchParams}
       previousSubmissionFormData={null}
       localDemoEnabled={appliedLocalDemo}

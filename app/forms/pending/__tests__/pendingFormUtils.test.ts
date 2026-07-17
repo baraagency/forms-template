@@ -435,35 +435,15 @@ describe("validatePendingSection", () => {
     });
   });
 
-  it("validates conditional PLR fields", () => {
-    expect(
-      validatePendingSection(
-        {
-          ...baseState,
-          jcreLeadTransaction: "no",
-          plrAcknowledgement: "",
-        },
-        "secondary",
-      ),
-    ).toEqual({
-      plrAcknowledgement: "Choose a PLR acknowledgement option.",
-    });
-  });
-
   it("validates conditional additional detail fields", () => {
     expect(
       validatePendingSection(
         {
           ...baseState,
-          isaSet: "yes",
-          isaName: "",
           outsideReferral: "Outside Referral",
           referralPercent: "",
           referralAmount: "",
           referralMailingAddress: "",
-          closingAttorney: "Other",
-          closingAttorneyOther: "",
-          closingAttorneyEmail: "bad-email",
           mortgageCompany: "Other",
           mortgageCompanyName: "",
           loanOfficerEmail: "bad-email",
@@ -471,9 +451,6 @@ describe("validatePendingSection", () => {
         "additional",
       ),
     ).toEqual({
-      isaName: "Choose the Call Partner/ISA.",
-      closingAttorneyOther: "Enter the closing attorney.",
-      closingAttorneyEmail: "Enter a valid closing attorney email.",
       mortgageCompanyName: "Enter the mortgage company name.",
       loanOfficerEmail: "Enter a valid loan officer email.",
     });
@@ -501,20 +478,17 @@ describe("validatePendingSection", () => {
       validatePendingSection(
         {
           ...baseState,
-          closingAttorney: "184883",
-          closingAttorneyOther: "",
           mortgageCompany: "184058",
           mortgageCompanyName: "",
         },
         "additional",
       ),
     ).toEqual({
-      closingAttorneyOther: "Enter the closing attorney.",
       mortgageCompanyName: "Enter the mortgage company name.",
     });
   });
 
-  it("validates seller-only and final commission fields", () => {
+  it("validates seller-only fields", () => {
     expect(
       validatePendingSection(
         {
@@ -523,18 +497,14 @@ describe("validatePendingSection", () => {
           dueDiligenceDeadline: "",
           contingencies: "yes",
           contingencyDetails: "",
-          multipleTransactions: "yes",
-          otherAddresses: "",
           sellerCompensationPercent: "125%",
-          grossCommissionTotal: "",
         },
-        "final",
+        "additional",
       ),
     ).toEqual({
       dueDiligenceDeadline: "Choose the due diligence deadline.",
       contingencyDetails: "Enter the contingencies.",
       sellerCompensationPercent: "Enter a percentage from 0 to 100.",
-      grossCommissionTotal: "This field is required.",
     });
   });
 });
@@ -546,15 +516,13 @@ describe("validatePendingForm", () => {
       validatePendingForm({
         ...baseState,
         clientType: "",
-        jcreOffice: "",
         underContractDate: "",
-        commissionDelivery: "",
+        otherAgentName: "",
       }),
     ).toEqual({
       clientType: "This field is required.",
-      jcreOffice: "This field is required.",
       underContractDate: "This field is required.",
-      commissionDelivery: "This field is required.",
+      otherAgentName: "This field is required.",
     });
   });
 

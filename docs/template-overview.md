@@ -19,10 +19,22 @@ flowchart LR
 | Other FUB routes | Fixture JSON |
 | SISU routes | Fixture JSON |
 | Pending submit | Validates form, returns fixture success |
-| Postgres / Gmail / Redis | Removed |
+| Postgres | Schema via `db/migrations`; not wired to submit routes yet |
+| Gmail / Redis | Removed |
 
 ## Core directories
 
 - `app/forms/_core/` — reusable form UI, routing, validation, submission helpers
 - `app/forms/pending/` — example form to copy
 - `app/api/_fixtures/` — mock API response data
+- `db/migrations/` — Postgres schema (form_submissions, form_sisu_mappings, app_audit_log)
+
+## Database
+
+Set `DATABASE_URL`, then apply migrations:
+
+```bash
+npm run db:migrations
+```
+
+Tables: unified `form_submissions` and `form_sisu_mappings` (discriminated by `form`), plus `app_audit_log`.

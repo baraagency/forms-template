@@ -8,7 +8,8 @@
     "lint": "eslint",
     "test": "bun test app",
     "test:e2e": "playwright test",
-    "dev:fub-context": "bun run scripts/dev/generate-fub-context.ts"
+    "dev:fub-context": "bun run scripts/dev/generate-fub-context.ts",
+    "db:migrations": "bun run scripts/db/migrate.ts"
   },
   "dependencies": {
     "@baraagency/components": "^0.1.0",
@@ -19,6 +20,7 @@
     "@mui/x-date-pickers": "^9.0.4",
     "dayjs": "^1.11.20",
     "next": "16.2.4",
+    "pg": "^8.22.0",
     "react": "19.2.4",
     "react-dom": "19.2.4"
   },
@@ -26,6 +28,7 @@
     "@playwright/test": "^1.59.1",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
+    "@types/pg": "^8.20.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",

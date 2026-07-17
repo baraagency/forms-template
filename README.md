@@ -6,6 +6,7 @@ Next.js template for Follow Up Boss embedded forms with MUI and `@baraagency/com
 
 - Form router (`/forms`) with FUB embedded context verification
 - Pending form example (`/forms/pending`) — multi-step intake UI
+- Appointment Set form example (`/forms/appointment-set`)
 - Shared form core in `app/forms/_core/`
 - Mock API routes for FUB and SISU (no credentials required locally)
 - Post-submit confirmation page (`/forms/submitted`)
@@ -19,6 +20,8 @@ bun run dev
 ```
 
 Open [http://localhost:3000/forms](http://localhost:3000/forms).
+
+With `ENVIRONMENT=LOCAL` (see `.env.example`), opening `/forms` or `/forms/pending` **without** a `clientId` uses fixture agent/client/deal IDs so you can click through the full mock flow.
 
 ## Template fixture IDs
 
@@ -57,7 +60,18 @@ See [docs/adding-a-form.md](docs/adding-a-form.md).
 ## Customize branding
 
 - Replace `public/form-banner.svg` with your logo (PNG/SVG also work — update `FORM_BANNER_SRC` in `app/forms/_core/FormBanner.tsx`).
-- Adjust colors and typography in `app/globals.css` (`:root` design tokens).
+- Adjust colors in `app/globals.css` (`:root` `--palette-1` / `--palette-2` / `--palette-3`) and mirror them in `app/AppTheme.tsx`.
+- Layout chrome (`.page-form`, `.page-header`, launch buttons) lives in `app/globals.css`.
+
+## Database
+
+Postgres schema lives in `db/migrations/`. Set `DATABASE_URL` in `.env`, then:
+
+```bash
+npm run db:migrations
+```
+
+Creates `form_submissions`, `form_sisu_mappings`, and `app_audit_log`. Submit routes are still mocked and do not write to the DB yet.
 
 ## Scripts
 
@@ -68,3 +82,4 @@ See [docs/adding-a-form.md](docs/adding-a-form.md).
 | `bun test app` | Unit tests |
 | `bun run test:e2e` | Playwright smoke tests |
 | `bun run dev:fub-context` | Print signed `/forms?context=...&signature=...` |
+| `npm run db:migrations` | Apply pending Postgres migrations |

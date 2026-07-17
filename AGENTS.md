@@ -22,12 +22,19 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## Pending Example
 
-- Four-step wizard; SISU prefill via `app/forms/_core/sisuTransactionLookup.ts`.
+- Multi-section intake; SISU prefill via `app/forms/_core/sisuTransactionLookup.ts`.
 - Submit: `POST /api/forms/pending/submit` returns mock success JSON.
 - Resubmission prefill: disabled in template (`previousSubmissionFormData={null}`).
 
+## Appointment Set Example
+
+- Client Info + Appointment Information sections (layout from jeff-cook appointment-set).
+- ISA options from `GET /api/sisu/team-agents?role_filter=ISISA`; OSA from `GET /api/fub/users` — placeholders when unavailable.
+- Submit: `POST /api/forms/appointment-set/submit` returns mock success JSON.
+
 ## Pages
 
-- `/forms` — form router (pending only)
-- `/forms/pending` — reference form
+- `/forms` — form router (pending, appointment-set)
+- `/forms/pending` — pending reference form
+- `/forms/appointment-set` — appointment set reference form
 - `/forms/submitted` — confirmation

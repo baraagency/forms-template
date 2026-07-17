@@ -10,26 +10,29 @@ const theme = createTheme({
     light: {
       palette: {
         background: {
-          default: "#f7f9fa",
+          default: "#f8faf7",
           paper: "#ffffff",
         },
         primary: {
-          main: "#3f4548",
+          main: "#003c18",
           contrastText: "#ffffff",
         },
         secondary: {
-          main: "#14b8cf",
+          main: "#67ad4b",
           contrastText: "#ffffff",
         },
         text: {
-          primary: "#3f4548",
-          secondary: "#535d62",
+          primary: "#003c18",
+          secondary: "#3d5c4a",
         },
         warning: {
-          main: "#9a5b00",
+          main: "#003c18",
         },
         success: {
-          main: "#1f6f43",
+          main: "#67ad4b",
+        },
+        error: {
+          main: "#410000",
         },
       },
     },

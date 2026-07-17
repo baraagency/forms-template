@@ -74,7 +74,11 @@ export default async function SubmittedPage({
   const debugKey = getSingleSearchParam(resolvedSearchParams, "debugKey");
   const emailWarning = getSingleSearchParam(resolvedSearchParams, "emailWarning");
   const timeoutWarning = getSingleSearchParam(resolvedSearchParams, "timeoutWarning");
-  const formLabel = submissionFormLabels.pending;
+  const formParam = getSingleSearchParam(resolvedSearchParams, "form");
+  const formLabel =
+    formParam in submissionFormLabels
+      ? submissionFormLabels[formParam as keyof typeof submissionFormLabels]
+      : submissionFormLabels.pending;
   const showSubmissionDebug = isSubmissionDebugEnvironment(process.env.ENVIRONMENT);
   const routerHref = buildSubmittedRouterHref({
     personId,
@@ -113,7 +117,9 @@ export default async function SubmittedPage({
   return (
     <main className="page-form">
       <title>Form Submitted</title>
-      <FormBanner />
+      <header className="page-header">
+        <FormBanner />
+      </header>
 
       <Paper
         elevation={0}
@@ -287,7 +293,7 @@ export default async function SubmittedPage({
           <Stack sx={{ width: "100%" }}>
             <FormRouterBackLink
               href={routerHref}
-              className={`${primaryButtonClassName} w-full py-[0.85rem]`}
+              className={`app-button-press ${primaryButtonClassName} w-full py-[0.85rem]`}
             />
           </Stack>
         </Stack>

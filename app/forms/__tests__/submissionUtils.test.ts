@@ -91,8 +91,11 @@ describe("submissionUtils", () => {
     expect(isSubmissionDebugEnvironment("PRODUCTION")).toBe(false);
   });
 
-  it("exposes display labels for the pending form", () => {
-    expect(submissionFormLabels).toEqual({ pending: "Pending" });
+  it("exposes display labels for supported forms", () => {
+    expect(submissionFormLabels).toEqual({
+      pending: "Pending",
+      "appointment-set": "Appointment Set",
+    });
   });
 
   it("prefers returned workflow error details over generic response messages", () => {

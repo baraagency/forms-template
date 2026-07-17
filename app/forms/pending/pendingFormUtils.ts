@@ -17,16 +17,13 @@ import {
   readSisuValue,
 } from "../_core/sisuTransactionPrefill";
 import {
-  isNoSelection,
   isSellerSelection,
   isYesSelection,
 } from "./pendingTeamFieldOptions";
 
 export const PENDING_SECTIONS = [
   "primary",
-  "secondary",
   "additional",
-  "final",
 ] as const;
 
 export type PendingSection = (typeof PENDING_SECTIONS)[number];
@@ -116,28 +113,14 @@ const requiredFieldsBySection: Record<PendingSection, Array<keyof PendingFormSta
     "state",
     "postal",
   ],
-  secondary: [
-    "jcreOffice",
-    "jcreLeadTransaction",
-    "onTeam",
-  ],
   additional: [
-    "isaSet",
-    "pastClient",
     "underContractDate",
     "forecastedClosedDate",
     "outsideReferral",
     "otherAgentName",
     "otherAgentEmail",
-    "closingAttorney",
     "mortgageCompany",
     "financingType",
-  ],
-  final: [
-    "multipleTransactions",
-    "goodFundContribution",
-    "commissionDelivery",
-    "grossCommissionTotal",
   ],
 };
 
@@ -168,7 +151,6 @@ export function isOutsideReferralSelected(value: string): boolean {
   );
 }
 
-const otherClosingAttorneyIds = new Set(["184883", "other"]);
 const otherMortgageCompanyIds = new Set(["184058", "other"]);
 
 function isOtherVendor(value: string, otherIds: Set<string>): boolean {
@@ -487,19 +469,7 @@ export function validatePendingSection(
     }
   }
 
-  if (section === "secondary") {
-    addPercentageError(errors, "agent2Percent", state.agent2Percent);
-
-    if (isNoSelection(state.jcreLeadTransaction) && !isPresent(state.plrAcknowledgement)) {
-      errors.plrAcknowledgement = "Choose a PLR acknowledgement option.";
-    }
-  }
-
   if (section === "additional") {
-    if (isYesSelection(state.isaSet) && !isPresent(state.isaName)) {
-      errors.isaName = "Choose the Call Partner/ISA.";
-    }
-
     if (isOutsideReferralSelected(state.outsideReferral)) {
       if (isPresent(state.referralPercent)) {
         addPercentageError(errors, "referralPercent", state.referralPercent);
@@ -507,23 +477,10 @@ export function validatePendingSection(
     }
 
     if (state.otherAgentPhone && !isValidPhone(state.otherAgentPhone)) {
-      errors.otherAgentPhone = "Enter a valid other agent phone number.";
+      errors.otherAgentPhone = "Enter a valid coop agent phone number.";
     }
     if (state.otherAgentEmail && !isValidEmail(state.otherAgentEmail)) {
-      errors.otherAgentEmail = "Enter a valid other agent email.";
-    }
-
-    if (
-      isOtherVendor(state.closingAttorney, otherClosingAttorneyIds) &&
-      !isPresent(state.closingAttorneyOther)
-    ) {
-      errors.closingAttorneyOther = "Enter the closing attorney.";
-    }
-    if (state.closingAttorneyPhone && !isValidPhone(state.closingAttorneyPhone)) {
-      errors.closingAttorneyPhone = "Enter a valid closing attorney phone number.";
-    }
-    if (state.closingAttorneyEmail && !isValidEmail(state.closingAttorneyEmail)) {
-      errors.closingAttorneyEmail = "Enter a valid closing attorney email.";
+      errors.otherAgentEmail = "Enter a valid coop agent email.";
     }
 
     if (
@@ -535,9 +492,7 @@ export function validatePendingSection(
     if (state.loanOfficerEmail && !isValidEmail(state.loanOfficerEmail)) {
       errors.loanOfficerEmail = "Enter a valid loan officer email.";
     }
-  }
 
-  if (section === "final") {
     if (isSellerSelection(state.clientType)) {
       if (isYesSelection(state.dueDiligencePeriod) && !isPresent(state.dueDiligenceDeadline)) {
         errors.dueDiligenceDeadline = "Choose the due diligence deadline.";
@@ -559,9 +514,7 @@ export function validatePendingSection(
 export function validatePendingForm(state: PendingFormState): PendingFieldErrors {
   return {
     ...validatePendingSection(state, "primary"),
-    ...validatePendingSection(state, "secondary"),
     ...validatePendingSection(state, "additional"),
-    ...validatePendingSection(state, "final"),
   };
 }
 

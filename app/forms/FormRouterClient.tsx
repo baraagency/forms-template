@@ -1,8 +1,6 @@
 "use client";
 
 import Alert from "@mui/material/Alert";
-import Box from "@mui/material/Box";
-import Stack from "@mui/material/Stack";
 import {
   useCallback,
   useEffect,
@@ -20,6 +18,9 @@ import {
 } from "@baraagency/components";
 import type { FUBDeal, FUBPerson } from "@/app/types/fub";
 import { FormBanner } from "./_core/FormBanner";
+import {
+  getLocalDemoFixtureIds,
+} from "./_core/localFormsDemo";
 import {
   buildFormRouteUrl,
   filterDealsForForm,
@@ -56,6 +57,12 @@ const availableForms: Array<{
     title: "Pending",
     description: "Route to the under-contract transaction intake flow.",
     pathname: "/forms/pending",
+  },
+  {
+    key: "appointment-set",
+    title: "Appointment Set",
+    description: "Schedule an appointment and capture client intake details.",
+    pathname: "/forms/appointment-set",
   },
 ];
 
@@ -123,7 +130,11 @@ async function readMessageFromResponse(
   }
 }
 
-export function FormRouterClient() {
+export function FormRouterClient({
+  localDemoEnabled = false,
+}: {
+  localDemoEnabled?: boolean;
+} = {}) {
   const locationSearch = useSyncExternalStore(
     subscribeToLocationChanges,
     getLocationSearchSnapshot,
@@ -153,11 +164,21 @@ export function FormRouterClient() {
   );
   const isEmbeddedInFub = Boolean(query.context && query.signature);
   const hasEmbeddedFubContext = hasFubContext(query, contextData);
+  const localDemoFixtures = getLocalDemoFixtureIds();
+  const isLocalDemoSession = Boolean(
+    localDemoEnabled && !isEmbeddedInFub && !query.personId,
+  );
   const presetClientId =
     query.personId ??
     (contextData?.fubPersonId ? String(contextData.fubPersonId) : "");
-  const selectedClient = clientOverride ?? presetClientId ?? "";
-  const selectedAgentFilter = agentOverride ?? query.agentId ?? "";
+  const selectedClient =
+    clientOverride ??
+    presetClientId ??
+    (isLocalDemoSession ? localDemoFixtures.personId : "");
+  const selectedAgentFilter =
+    agentOverride ??
+    query.agentId ??
+    (isLocalDemoSession ? localDemoFixtures.agentId : "");
   const clientData = clients.find(
     (client) => String(client.id) === selectedClient,
   );
@@ -165,12 +186,14 @@ export function FormRouterClient() {
     selectedAgentFilter ||
     (clientData?.assignedUserId ? String(clientData.assignedUserId) : "");
   const selectedAgentName =
-    agents.find((agent) => String(agent.id) === String(selectedAgent))?.name ?? "";
+    agents.find((agent) => String(agent.id) === String(selectedAgent))?.name ??
+    (isLocalDemoSession ? localDemoFixtures.agentName : "");
   const effectivePersonId = parsePositiveInteger(selectedClient);
   const hasValidPersonId = Boolean(effectivePersonId);
   const selectedClientName = clientData
     ? getPersonLabel(clientData)
-    : (contextData?.clientName ?? "");
+    : (contextData?.clientName ??
+      (isLocalDemoSession ? localDemoFixtures.clientName : ""));
   const isWaitingForEmbeddedClientContext = Boolean(
     query.context && !query.personId && !contextData?.fubPersonId,
   );
@@ -478,33 +501,20 @@ export function FormRouterClient() {
   }, []);
 
   return (
-    <Box
-      component="main"
-      sx={{
-        minHeight: "100vh",
-        bgcolor: "background.paper",
-        color: "text.primary",
-        px: { xs: 1.5, sm: 3 },
-        py: { xs: 1.5, sm: 3 },
-      }}
+    <main
+      className={`page-form${isEmbeddedInFub ? " page-form--embedded" : ""}`}
     >
       <title>Form Router</title>
-      <Stack spacing={2.5}>
-        <Box
-          component="header"
-          sx={{
-            borderBottom: isEmbeddedInFub ? "none" : "1px solid",
-            borderColor: "divider",
-            pb: isEmbeddedInFub ? 0 : 2,
-          }}
-        >
-          <Stack spacing={isEmbeddedInFub ? 0 : 1.25} sx={{ alignItems: "center" }}>
-            <FormBanner sx={{ mb: 0 }} />
-          </Stack>
-        </Box>
 
-        <div className="flex flex-col gap-1">
-          <section className="bg-transparent pb-0 pt-0">
+      <header
+        className={`page-header${isEmbeddedInFub ? " page-header--embedded" : ""}`}
+      >
+        <FormBanner />
+      </header>
+
+      <div className="form-router space-y-6">
+        {!selectedForm ? (
+          <SectionCard title="Forms">
             <div className="flex flex-col gap-4">
               <SelectInput
                 id="assigned-agent"
@@ -529,13 +539,19 @@ export function FormRouterClient() {
                 id="client"
                 label="Client"
                 value={selectedClient}
-                disabled={clientsLoading || isWaitingForEmbeddedClientContext}
+                disabled={
+                  clientsLoading ||
+                  isWaitingForEmbeddedClientContext ||
+                  (!selectedAgent && !presetClientId)
+                }
                 onChange={(event) => handleClientChange(event.target.value)}
               >
                 <option value="">
                   {clientsLoading || isWaitingForEmbeddedClientContext
                     ? "Loading clients..."
-                    : "Select client..."}
+                    : !selectedAgent && !presetClientId
+                      ? "Select an agent first..."
+                      : "Select client..."}
                 </option>
                 {clients.map((client) => (
                   <option key={String(client.id)} value={String(client.id)}>
@@ -543,6 +559,13 @@ export function FormRouterClient() {
                   </option>
                 ))}
               </SelectInput>
+              {isLocalDemoSession ? (
+                <Notice tone="warning">
+                  Local demo mode — using fixture client{" "}
+                  {localDemoFixtures.personId} and agent{" "}
+                  {localDemoFixtures.agentId}. All API responses are mocked.
+                </Notice>
+              ) : null}
               {contextLoading ? (
                 <Notice tone="warning">
                   <span className="inline-flex items-center gap-2">
@@ -557,17 +580,12 @@ export function FormRouterClient() {
               {clientsError ? (
                 <Alert severity="warning">{clientsError}</Alert>
               ) : null}
-              {!hasValidPersonId ? (
+              {!hasValidPersonId && !isLocalDemoSession ? (
                 <Notice tone="warning">
                   A valid clientId is required before a form can be selected.
                 </Notice>
               ) : null}
-            </div>
-          </section>
-
-          {!selectedForm ? (
-            <SectionCard title="Available Forms">
-              <div className="grid gap-3">
+              <div className="form-router-form-choices">
                 {availableForms.map((form) => (
                   <button
                     key={form.key}
@@ -579,117 +597,128 @@ export function FormRouterClient() {
                       setDeals([]);
                       setDealsError(null);
                     }}
-                    className="rounded-[var(--card-radius)] border border-[var(--divider-color)] bg-[var(--card-bg)] px-4 py-3 text-center transition hover:border-[var(--btn-outline-border)] hover:bg-[var(--highlight-bg)] disabled:cursor-not-allowed disabled:opacity-45"
+                    className="form-router-launch-button app-button-press w-full"
                   >
-                    <span className="block text-sm font-semibold text-[var(--label-color)]">
+                    <span className="form-router-launch-button__title">
                       {form.title}
+                    </span>
+                    <span className="form-router-launch-button__description">
+                      {form.description}
                     </span>
                   </button>
                 ))}
               </div>
-            </SectionCard>
-          ) : null}
-
-          {shouldShowDealSelection ? (
-            <SectionCard
-              title={`${selectedFormConfig?.title ?? "Selected Form"} Deals`}
-              description={
-                selectedFormSupportsCreateNew
-                  ? "Choose an active matching FUB deal, or start a new deal from this form."
-                  : "Choose an active matching FUB deal for this workflow."
-              }
-            >
-              <div className="flex flex-col gap-4">
-                {dealsError ? (
-                  <Alert severity="warning">{dealsError}</Alert>
-                ) : null}
-                {dealsLoading ? (
-                  <Notice tone="warning">
-                    <span className="inline-flex items-center gap-2">
-                      <Spinner className="h-4 w-4" />
-                      Loading active deals...
-                    </span>
-                  </Notice>
-                ) : null}
-                {!dealsLoading && filteredDeals.length ? (
-                  <div className="grid gap-3">
-                    {filteredDeals.map((deal) => {
-                      const stageLabel = getDealStageLabel(deal);
-
-                      return (
-                        <button
-                          key={String(deal.id)}
-                          type="button"
-                          className="rounded-[var(--card-radius)] border border-[var(--divider-color)] bg-[var(--card-bg)] px-4 py-3 text-left transition hover:border-[var(--btn-outline-border)] hover:bg-[var(--highlight-bg)]"
-                          onClick={() => handleDealClick(deal)}
-                        >
-                          <span className="block text-sm font-semibold text-[var(--label-color)]">
-                            {getDealLabel(deal)}
-                          </span>
-                          <span className="mt-1 block text-sm text-[var(--body-color)]">
-                            Type: {getDealTypeLabel(deal)}
-                          </span>
-                          {stageLabel ? (
-                            <span className="mt-1 block text-sm text-[var(--body-color)]">
-                              Stage: {stageLabel}
-                            </span>
-                          ) : null}
-                        </button>
-                      );
-                    })}
-                  </div>
-                ) : null}
-                {!dealsLoading && filteredDeals.length === 0 ? (
-                  <Notice tone="warning">
-                    No active matching FUB deals were found. Closed and lost deals are hidden.
-                  </Notice>
-                ) : null}
-                {selectedFormSupportsCreateNew ? (
-                  <button
-                    type="button"
-                    className={`${primaryButtonClassName} w-full`}
-                    onClick={handleCreateNewDeal}
-                  >
-                    Create New Deal
-                  </button>
-                ) : null}
-                <div className="flex justify-start">
-                  <button
-                    type="button"
-                    className={secondaryButtonClassName}
-                    onClick={() => {
-                      setSelectedForm(null);
-                      setSelectedDealId("");
-                      setDeals([]);
-                      setDealsError(null);
-                    }}
-                  >
-                    Change form
-                  </button>
-                </div>
-              </div>
-            </SectionCard>
-          ) : null}
-
-          {hasEmbeddedFubContext ? (
-            <div className="flex flex-col gap-3 px-0 sm:px-6">
-              <button
-                type="button"
-                className={`${secondaryButtonClassName} w-full`}
-                onClick={() => {
-                  window.open(
-                    buildCurrentUrl(effectivePersonId),
-                    "_blank",
-                    "noopener,noreferrer",
-                  );
-                }}
-              >
-                Open Form Router in New Tab
-              </button>
             </div>
-          ) : null}
-        </div>
-      </Stack>
-    </Box>
+          </SectionCard>
+        ) : null}
+
+        {shouldShowDealSelection ? (
+          <SectionCard
+            title={`${selectedFormConfig?.title ?? "Selected Form"} Deals`}
+            description={
+              selectedFormSupportsCreateNew
+                ? "Choose an active matching FUB deal, or start a new deal from this form."
+                : "Choose an active matching FUB deal for this workflow."
+            }
+          >
+            <div className="flex flex-col gap-4">
+              {selectedAgentName || selectedClientName ? (
+                <p className="settings-hint m-0">
+                  {[selectedAgentName, selectedClientName]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </p>
+              ) : null}
+              {dealsError ? (
+                <Alert severity="warning">{dealsError}</Alert>
+              ) : null}
+              {dealsLoading ? (
+                <Notice tone="warning">
+                  <span className="inline-flex items-center gap-2">
+                    <Spinner className="h-4 w-4" />
+                    Loading active deals...
+                  </span>
+                </Notice>
+              ) : null}
+              {!dealsLoading && filteredDeals.length ? (
+                <div className="grid gap-3">
+                  {filteredDeals.map((deal) => {
+                    const stageLabel = getDealStageLabel(deal);
+
+                    return (
+                      <button
+                        key={String(deal.id)}
+                        type="button"
+                        className="form-choice-button w-full"
+                        onClick={() => handleDealClick(deal)}
+                      >
+                        <span className="form-choice-button__title">
+                          {getDealLabel(deal)}
+                        </span>
+                        <span className="form-choice-button__meta">
+                          Type: {getDealTypeLabel(deal)}
+                        </span>
+                        {stageLabel ? (
+                          <span className="form-choice-button__meta">
+                            Stage: {stageLabel}
+                          </span>
+                        ) : null}
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : null}
+              {!dealsLoading && filteredDeals.length === 0 ? (
+                <Notice tone="warning">
+                  No active matching FUB deals were found. Closed and lost deals
+                  are hidden.
+                </Notice>
+              ) : null}
+              {selectedFormSupportsCreateNew ? (
+                <button
+                  type="button"
+                  className={`app-button-press ${primaryButtonClassName} w-full`}
+                  onClick={handleCreateNewDeal}
+                >
+                  Create New Deal
+                </button>
+              ) : null}
+              <div className="flex justify-start">
+                <button
+                  type="button"
+                  className={secondaryButtonClassName}
+                  onClick={() => {
+                    setSelectedForm(null);
+                    setSelectedDealId("");
+                    setDeals([]);
+                    setDealsError(null);
+                  }}
+                >
+                  Change form
+                </button>
+              </div>
+            </div>
+          </SectionCard>
+        ) : null}
+
+        {hasEmbeddedFubContext ? (
+          <div className="flex flex-col gap-3">
+            <button
+              type="button"
+              className={`app-button-press ${secondaryButtonClassName} w-full`}
+              onClick={() => {
+                window.open(
+                  buildCurrentUrl(effectivePersonId),
+                  "_blank",
+                  "noopener,noreferrer",
+                );
+              }}
+            >
+              Open Form Router in New Tab
+            </button>
+          </div>
+        ) : null}
+      </div>
+    </main>
   );
 }

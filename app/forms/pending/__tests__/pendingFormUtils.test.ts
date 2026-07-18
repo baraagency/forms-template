@@ -73,6 +73,8 @@ describe("pendingDatePickerBehaviorProps", () => {
   it("lets the picker close after selecting a date or clicking away", () => {
     expect(pendingDatePickerBehaviorProps).toEqual({
       closeOnSelect: true,
+      views: ["day"],
+      openTo: "day",
     });
     expect("keepOpenDuringFieldFocus" in pendingDatePickerBehaviorProps).toBe(false);
   });

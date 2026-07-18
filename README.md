@@ -5,8 +5,11 @@ Next.js template for Follow Up Boss embedded forms with MUI and `@baraagency/com
 ## What's included
 
 - Form router (`/forms`) with FUB embedded context verification
+- Form settings (`/forms/settings`) — Gmail, recipients, per-form visibility and mappings
 - Pending form example (`/forms/pending`) — multi-step intake UI
 - Appointment Set form example (`/forms/appointment-set`)
+- Appointment Met form example (`/forms/appointment-met`)
+- Closed form example (`/forms/closed`)
 - Shared form core in `app/forms/_core/`
 - Mock API routes for FUB and SISU (no credentials required locally)
 - Post-submit confirmation page (`/forms/submitted`)
@@ -51,9 +54,10 @@ All other API routes return fixtures from `app/api/_fixtures/`.
 ## Adding a new form
 
 1. Copy `app/forms/pending/` → `app/forms/<your-slug>/`
-2. Register the form in `FormRouterClient.tsx`
-3. Add `POST /api/forms/<your-slug>/submit` returning a mock success payload
-4. Import shared UI from `app/forms/_core/` only
+2. Register the form in `app/forms/_core/formRouterFormRegistry.ts` and seed `router_forms`
+3. Add field keys to `app/forms/settings/formFieldCatalog.ts` (+ migration seed) when mappings are needed
+4. Add `POST /api/forms/<your-slug>/submit` returning a mock success payload
+5. Import shared UI from `app/forms/_core/` only
 
 See [docs/adding-a-form.md](docs/adding-a-form.md).
 
@@ -68,10 +72,20 @@ See [docs/adding-a-form.md](docs/adding-a-form.md).
 Postgres schema lives in `db/migrations/`. Set `DATABASE_URL` in `.env`, then:
 
 ```bash
-npm run db:migrations
+bun run db:migrations
 ```
 
-Creates `form_submissions`, `form_sisu_mappings`, and `app_audit_log`. Submit routes are still mocked and do not write to the DB yet.
+Creates submissions, SISU mappings, audit log, Gmail credentials, email recipients, `router_forms`, and FUB mapping tables. Form settings CRUD uses these tables; submit routes are still mocked and do not write submissions or apply mappings yet.
+
+Optional local test DB (not committed):
+
+```bash
+docker run --rm -d --name forms-pg \
+  -e POSTGRES_PASSWORD=forms -e POSTGRES_USER=forms -e POSTGRES_DB=fub_forms \
+  -p 5432:5432 postgres:16-alpine
+```
+
+Gmail OAuth on `/forms/settings` needs `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, and optionally `GOOGLE_REDIRECT_URI` / `APP_BASE_URL`.
 
 ## Scripts
 
@@ -82,4 +96,4 @@ Creates `form_submissions`, `form_sisu_mappings`, and `app_audit_log`. Submit ro
 | `bun test app` | Unit tests |
 | `bun run test:e2e` | Playwright smoke tests |
 | `bun run dev:fub-context` | Print signed `/forms?context=...&signature=...` |
-| `npm run db:migrations` | Apply pending Postgres migrations |
+| `bun run db:migrations` | Apply pending Postgres migrations |

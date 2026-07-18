@@ -1,0 +1,286 @@
+.settings-tabs {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0;
+  margin-bottom: 20px;
+  border-bottom: var(--card-border);
+}
+
+.settings-tabs__tab {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  color: var(--body-color);
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 700;
+  padding: 12px 8px;
+  text-align: center;
+  transition:
+    color 180ms cubic-bezier(0.23, 1, 0.32, 1),
+    transform 140ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.settings-tabs__tab:active {
+  transform: scale(0.96);
+}
+
+.settings-tabs__tab--active,
+.settings-tabs__tab[aria-selected="true"] {
+  color: var(--foreground);
+}
+
+.settings-tabs__indicator {
+  position: absolute;
+  left: 0;
+  bottom: -1px;
+  height: 2px;
+  background: var(--palette-2);
+  transition: transform 200ms cubic-bezier(0.23, 1, 0.32, 1);
+  pointer-events: none;
+}
+
+.settings-pill-toggle {
+  user-select: none;
+}
+
+.settings-pill-toggle__input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.settings-pill-toggle__track {
+  position: relative;
+  display: inline-flex;
+  width: 40px;
+  height: 24px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--body-color) 28%, transparent);
+  transition:
+    background 160ms cubic-bezier(0.23, 1, 0.32, 1),
+    transform 140ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.settings-pill-toggle:active .settings-pill-toggle__track {
+  transform: scale(0.96);
+}
+
+.settings-pill-toggle__input:checked + .settings-pill-toggle__track {
+  background: var(--palette-2);
+}
+
+.settings-pill-toggle__thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 160ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.settings-pill-toggle__input:checked + .settings-pill-toggle__track .settings-pill-toggle__thumb {
+  transform: translateX(16px);
+}
+
+.settings-mapping-table {
+  display: grid;
+  gap: 10px;
+}
+
+.settings-mapping-table__head,
+.settings-mapping-table__row {
+  display: grid;
+  grid-template-columns: minmax(140px, 1.1fr) minmax(140px, 1.2fr) minmax(100px, 1fr) auto auto auto;
+  gap: 10px;
+  align-items: center;
+}
+
+.settings-mapping-table__head {
+  color: var(--body-color);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.settings-mapping-table__field {
+  font-size: 0.82rem;
+  overflow-wrap: anywhere;
+}
+
+.settings-sisu-mappings {
+  display: grid;
+  gap: 14px;
+}
+
+.settings-fub-block {
+  display: grid;
+  gap: 18px;
+}
+
+.settings-fub-subsections {
+  display: grid;
+  gap: 20px;
+}
+
+.settings-fub-subsection {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border-radius: calc(var(--card-radius) - 4px);
+  background: color-mix(in srgb, var(--card-bg) 92%, var(--body-color));
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--body-color) 10%, transparent),
+    0 1px 2px color-mix(in srgb, var(--body-color) 6%, transparent);
+}
+
+.settings-subsection-title {
+  color: var(--foreground);
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin: 0;
+  text-wrap: balance;
+}
+
+.settings-fub-stage-picker {
+  display: grid;
+  gap: 10px;
+}
+
+.settings-mapping-form-field {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.settings-mapping-form-field__label {
+  color: var(--foreground);
+  font-size: 0.9rem;
+  font-weight: 700;
+  line-height: 1.3;
+  text-wrap: pretty;
+}
+
+.settings-mapping-type {
+  color: var(--body-color);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.settings-mapping-type.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+.settings-mapping-search-row {
+  align-items: end;
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.settings-mapping-table-container {
+  background: var(--card-bg);
+  border: 1px solid color-mix(in srgb, var(--body-color) 18%, transparent);
+  border-radius: var(--card-radius);
+  overflow: hidden;
+}
+
+.settings-mapping-table-select .bara-field__label-row,
+.settings-mapping-table-select label {
+  border: 0;
+  clip: rect(0, 0, 0, 0);
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  padding: 0;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
+}
+
+.settings-mapping-table-select .bara-input,
+.settings-mapping-table-select .bara-select__control,
+.settings-mapping-table-select input {
+  /* FormSelectInput sets marginTop inline; force flush layout in dense table cells */
+  margin-top: 0 !important;
+}
+
+.settings-mapping-table-select .bara-field {
+  min-width: 0;
+}
+
+/* Portaled menus must sit above table chrome / sticky headers */
+.bara-select__menu-portal {
+  z-index: 1300;
+}
+
+.settings-mapping-table-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.settings-mapping-pagination {
+  border-top: 1px solid color-mix(in srgb, var(--body-color) 14%, transparent);
+  font-variant-numeric: tabular-nums;
+}
+
+.settings-mapping-pagination .MuiTablePagination-displayedRows,
+.settings-mapping-pagination .MuiTablePagination-selectLabel {
+  font-variant-numeric: tabular-nums;
+}
+
+.settings-mapping-pagination .MuiTablePagination-actions button {
+  min-width: 40px;
+  min-height: 40px;
+}
+
+.settings-mapping-pagination .MuiTablePagination-actions button:active {
+  transform: scale(0.96);
+}
+
+@media (max-width: 900px) {
+  .settings-mapping-table__head {
+    display: none;
+  }
+
+  .settings-mapping-table__row {
+    grid-template-columns: 1fr;
+    border: var(--card-border);
+    border-radius: var(--card-radius);
+    background: var(--card-bg);
+    padding: 12px;
+  }
+
+  .settings-tabs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .settings-tabs__indicator {
+    display: none;
+  }
+
+  .settings-mapping-table-container {
+    overflow-x: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .settings-tabs__tab,
+  .settings-tabs__indicator,
+  .settings-pill-toggle__track,
+  .settings-pill-toggle__thumb {
+    transition: none;
+  }
+
+  .settings-tabs__tab:active,
+  .settings-pill-toggle:active .settings-pill-toggle__track {
+    transform: none;
+  }
+}

@@ -410,6 +410,31 @@ section + .section-card {
     gap: var(--field-gap);
 }
 
+/* Sub-sections inside a SectionCard — shared horizontal rule + token spacing */
+.form-field-group {
+    display: grid;
+    gap: var(--field-gap);
+}
+
+.form-field-group-fields {
+    display: grid;
+    gap: var(--field-gap);
+}
+
+.form-field-group:not(:last-child) {
+    padding-bottom: var(--section-gap);
+    border-bottom: 1px solid var(--divider-color);
+}
+
+.form-field-group:not(:first-child) {
+    padding-top: var(--section-gap);
+}
+
+/* Avoid stacking bara-section__body flex gap on top of field-group separators */
+.page-form .bara-section__body:has(> .form-field-group) {
+    gap: 0;
+}
+
 .form-hidden-placeholder {
     display: none;
     pointer-events: none;
@@ -587,7 +612,16 @@ section + .section-card {
 .settings-recipient-details {
     display: grid;
     gap: 10px;
+    flex: 1;
     min-width: 0;
+}
+
+.settings-recipient-actions {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    flex-wrap: wrap;
+    padding-top: 28px;
 }
 
 .settings-recipient-email {
@@ -642,12 +676,6 @@ section + .section-card {
     line-height: 1.25;
 }
 
-.settings-recipient-actions {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
 .settings-toggle {
     display: inline-flex;
     align-items: center;
@@ -667,6 +695,7 @@ section + .section-card {
     .settings-recipient-actions {
         align-items: stretch;
         flex-direction: column;
+        padding-top: 0;
     }
 
     .settings-recipient-form {

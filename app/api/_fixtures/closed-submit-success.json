@@ -1,0 +1,17 @@
+{
+  "formType": "closed",
+  "message": "Closed workflow complete (mock).",
+  "dealId": 456,
+  "transaction": {
+    "transaction_id": 789,
+    "client_id": 789,
+    "id": 789,
+    "fub_id": "123",
+    "fub_deal_id": "456"
+  },
+  "email": {
+    "sent": false,
+    "reason": "no_recipients",
+    "message": "Summary email skipped in template mock mode."
+  }
+}

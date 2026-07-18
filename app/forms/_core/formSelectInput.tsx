@@ -55,7 +55,7 @@ const selectStyles = {
   }),
   menuPortal: (base: Record<string, unknown>) => ({
     ...base,
-    zIndex: 50,
+    zIndex: 1300,
   }),
   option: (
     base: Record<string, unknown>,

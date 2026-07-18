@@ -1,0 +1,15 @@
+{
+  "stages": [
+    { "id": 179, "name": "Lead", "orderWeight": 1 },
+    { "id": 180, "name": "Attempted Contact", "orderWeight": 2 },
+    { "id": 181, "name": "Spoke with Customer", "orderWeight": 3 },
+    { "id": 182, "name": "Appointment Set", "orderWeight": 4 },
+    { "id": 183, "name": "Met with Customer", "orderWeight": 5 },
+    { "id": 184, "name": "Showing Homes", "orderWeight": 6 },
+    { "id": 185, "name": "Submitting Offers", "orderWeight": 7 },
+    { "id": 186, "name": "Under Contract", "orderWeight": 8 },
+    { "id": 187, "name": "Closed", "orderWeight": 9 },
+    { "id": 188, "name": "Trash", "orderWeight": 10 }
+  ],
+  "_metadata": { "total": 10 }
+}

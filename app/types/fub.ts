@@ -175,6 +175,23 @@ export interface FUBStage {
   [key: string]: unknown;
 }
 
+export interface FUBPipelineStage {
+  id: string | number;
+  name: string;
+  closedStage?: boolean;
+  orderWeight?: number;
+  [key: string]: unknown;
+}
+
+export interface FUBPipeline {
+  id: string | number;
+  name: string;
+  description?: string;
+  orderWeight?: number;
+  stages?: FUBPipelineStage[];
+  [key: string]: unknown;
+}
+
 export interface FUBMetadata {
   total?: number;
   page?: number;
@@ -199,6 +216,11 @@ export interface FUBListUsersResponse {
 
 export interface FUBListStagesResponse {
   stages: FUBStage[];
+  _metadata: FUBMetadata;
+}
+
+export interface FUBListPipelinesResponse {
+  pipelines: FUBPipeline[];
   _metadata: FUBMetadata;
 }
 

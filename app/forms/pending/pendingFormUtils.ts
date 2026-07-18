@@ -95,9 +95,7 @@ export type PendingFormState = {
 
 export type PendingFieldErrors = Partial<Record<keyof PendingFormState, string>>;
 
-export const pendingDatePickerBehaviorProps = {
-  closeOnSelect: true,
-} as const;
+export { formDatePickerBehaviorProps as pendingDatePickerBehaviorProps } from "../_core/formDatePickerField";
 
 const requiredFieldsBySection: Record<PendingSection, Array<keyof PendingFormState>> = {
   primary: [

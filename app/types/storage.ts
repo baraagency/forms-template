@@ -42,6 +42,7 @@ export type FormSisuMapping = {
   sisu_field_name: string | null;
   sisu_field_type: string | null;
   custom: boolean;
+  enabled: boolean;
   created_at: Date;
   updated_at: Date;
 };
@@ -52,6 +53,7 @@ export type FormSisuMappingInsert = {
   sisu_field_name?: string | null;
   sisu_field_type?: string | null;
   custom?: boolean;
+  enabled?: boolean;
   created_at?: Date | string;
   updated_at?: Date | string;
 };
@@ -81,6 +83,138 @@ export type AppAuditLogInsert = {
   metadata?: JsonValue | null;
 };
 
+export type RouterForm = {
+  slug: string;
+  name: string;
+  visible: boolean;
+};
+
+export type RouterFormInsert = {
+  slug: string;
+  name: string;
+  visible?: boolean;
+};
+
+export type GmailAccountCredential = {
+  id: number;
+  created_at: Date;
+  updated_at: Date;
+  environment: string;
+  email: string;
+  refresh_token: string;
+  access_token: string | null;
+  expiry_date: Date | null;
+  active: boolean;
+};
+
+export type GmailAccountCredentialInsert = {
+  environment: string;
+  email: string;
+  refresh_token: string;
+  access_token?: string | null;
+  expiry_date?: Date | string | null;
+  active?: boolean;
+  created_at?: Date | string;
+  updated_at?: Date | string;
+};
+
+export type FormEmailRecipient = {
+  id: number;
+  created_at: Date;
+  email: string;
+  form_type: string;
+  active: boolean;
+  environment: string;
+};
+
+export type FormEmailRecipientInsert = {
+  email: string;
+  form_type: string;
+  active?: boolean;
+  environment: string;
+  created_at?: Date | string;
+};
+
+export type FubStageTarget = "person" | "deal";
+
+export type FormFubStage = {
+  id: number;
+  form: FormKind;
+  target: FubStageTarget;
+  client_type: string | null;
+  stage_id: number;
+  stage_name: string | null;
+  enabled: boolean;
+  created_at: Date;
+  updated_at: Date;
+};
+
+export type FormFubStageInsert = {
+  form: FormKind;
+  target: FubStageTarget;
+  client_type?: string | null;
+  stage_id: number;
+  stage_name?: string | null;
+  enabled?: boolean;
+  created_at?: Date | string;
+  updated_at?: Date | string;
+};
+
+export type FormFubTag = {
+  id: number;
+  form: FormKind;
+  tag: string;
+  enabled: boolean;
+  created_at: Date;
+  updated_at: Date;
+};
+
+export type FormFubTagInsert = {
+  form: FormKind;
+  tag: string;
+  enabled?: boolean;
+  created_at?: Date | string;
+  updated_at?: Date | string;
+};
+
+export type FormFubPersonMapping = {
+  id: number;
+  form: FormKind;
+  field_name: string;
+  fub_field_name: string | null;
+  enabled: boolean;
+  created_at: Date;
+  updated_at: Date;
+};
+
+export type FormFubPersonMappingInsert = {
+  form: FormKind;
+  field_name: string;
+  fub_field_name?: string | null;
+  enabled?: boolean;
+  created_at?: Date | string;
+  updated_at?: Date | string;
+};
+
+export type FormFubDealMapping = {
+  id: number;
+  form: FormKind;
+  field_name: string;
+  fub_field_name: string | null;
+  enabled: boolean;
+  created_at: Date;
+  updated_at: Date;
+};
+
+export type FormFubDealMappingInsert = {
+  form: FormKind;
+  field_name: string;
+  fub_field_name?: string | null;
+  enabled?: boolean;
+  created_at?: Date | string;
+  updated_at?: Date | string;
+};
+
 export type DatabaseTables = {
   form_submissions: {
     Row: FormSubmission;
@@ -96,6 +230,41 @@ export type DatabaseTables = {
     Row: AppAuditLog;
     Insert: AppAuditLogInsert;
     Update: Partial<AppAuditLogInsert>;
+  };
+  router_forms: {
+    Row: RouterForm;
+    Insert: RouterFormInsert;
+    Update: Partial<RouterFormInsert>;
+  };
+  gmail_account_credentials: {
+    Row: GmailAccountCredential;
+    Insert: GmailAccountCredentialInsert;
+    Update: Partial<GmailAccountCredentialInsert>;
+  };
+  form_email_recipients: {
+    Row: FormEmailRecipient;
+    Insert: FormEmailRecipientInsert;
+    Update: Partial<FormEmailRecipientInsert>;
+  };
+  form_fub_stages: {
+    Row: FormFubStage;
+    Insert: FormFubStageInsert;
+    Update: Partial<FormFubStageInsert>;
+  };
+  form_fub_tags: {
+    Row: FormFubTag;
+    Insert: FormFubTagInsert;
+    Update: Partial<FormFubTagInsert>;
+  };
+  form_fub_person_mappings: {
+    Row: FormFubPersonMapping;
+    Insert: FormFubPersonMappingInsert;
+    Update: Partial<FormFubPersonMappingInsert>;
+  };
+  form_fub_deal_mappings: {
+    Row: FormFubDealMapping;
+    Insert: FormFubDealMappingInsert;
+    Update: Partial<FormFubDealMappingInsert>;
   };
 };
 

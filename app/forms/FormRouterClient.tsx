@@ -1,12 +1,16 @@
 "use client";
 
 import Alert from "@mui/material/Alert";
+import Link from "next/link";
 import {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
+  useRef,
   useState,
   useSyncExternalStore,
+  type CSSProperties,
 } from "react";
 import {
   Notice,
@@ -35,6 +39,10 @@ import {
   type AgentOption,
   type FormRouterFormKey,
 } from "./_core/formRouterUtils";
+import type { FormRouterFormMeta } from "./_core/formRouterFormRegistry";
+import "./form-router-transitions.css";
+
+const PAGE_SLIDE_MS = 250;
 
 type EmbeddedContextResponse = {
   clientName?: string;
@@ -45,26 +53,6 @@ type EmbeddedContextResponse = {
 };
 
 type FormKey = FormRouterFormKey;
-
-const availableForms: Array<{
-  key: FormKey;
-  title: string;
-  description: string;
-  pathname: string;
-}> = [
-  {
-    key: "pending",
-    title: "Pending",
-    description: "Route to the under-contract transaction intake flow.",
-    pathname: "/forms/pending",
-  },
-  {
-    key: "appointment-set",
-    title: "Appointment Set",
-    description: "Schedule an appointment and capture client intake details.",
-    pathname: "/forms/appointment-set",
-  },
-];
 
 const createNewDealValue = "create-new";
 
@@ -85,7 +73,20 @@ function buildCurrentUrl(clientId: number | null): string {
 }
 
 function subscribeToLocationChanges(onStoreChange: () => void): () => void {
-  const notify = () => onStoreChange();
+  // Defer store updates so history patches during React insertion effects
+  // (e.g. Emotion/MUI style injection + Next navigation) don't call setState
+  // inside useInsertionEffect.
+  let notifyScheduled = false;
+  const notify = () => {
+    if (notifyScheduled) {
+      return;
+    }
+    notifyScheduled = true;
+    queueMicrotask(() => {
+      notifyScheduled = false;
+      onStoreChange();
+    });
+  };
 
   window.addEventListener("popstate", notify);
 
@@ -132,9 +133,13 @@ async function readMessageFromResponse(
 
 export function FormRouterClient({
   localDemoEnabled = false,
+  availableForms,
+  visibilityWarning = null,
 }: {
   localDemoEnabled?: boolean;
-} = {}) {
+  availableForms: FormRouterFormMeta[];
+  visibilityWarning?: string | null;
+}) {
   const locationSearch = useSyncExternalStore(
     subscribeToLocationChanges,
     getLocationSearchSnapshot,
@@ -157,6 +162,14 @@ export function FormRouterClient({
   const [dealsLoading, setDealsLoading] = useState(false);
   const [dealsError, setDealsError] = useState<string | null>(null);
   const [selectedDealId, setSelectedDealId] = useState("");
+  const [routerPage, setRouterPage] = useState<"1" | "2">("1");
+  const [pageExitEnabled, setPageExitEnabled] = useState(false);
+  const slideRef = useRef<HTMLDivElement>(null);
+  const formsPageRef = useRef<HTMLDivElement>(null);
+  const dealsPageRef = useRef<HTMLDivElement>(null);
+  const changeFormTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
 
   const query = useMemo(
     () => parseFormRouterQuery(locationSearch),
@@ -202,7 +215,6 @@ export function FormRouterClient({
   );
   const filteredDeals = selectedForm ? filterDealsForForm(deals) : [];
   const selectedFormSupportsCreateNew = Boolean(selectedFormConfig?.pathname);
-  const shouldShowDealSelection = Boolean(selectedForm && hasValidPersonId);
 
   useEffect(() => {
     if (!query.context || !query.signature) {
@@ -483,22 +495,109 @@ export function FormRouterClient({
     routeToForm(selectedForm, dealId, getDealSisuTransactionId(deal));
   }
 
-  const handleAgentChange = useCallback((agentId: string) => {
-    setAgentOverride(agentId);
-    setClientOverride("");
-    setSelectedDealId("");
-    setDeals([]);
-    setSelectedForm(null);
-  }, []);
-
-  const handleClientChange = useCallback((clientId: string) => {
-    setClientOverride(clientId);
-    setSelectedDealId("");
-    setSelectedForm(null);
-    if (!clientId) {
-      setDeals([]);
+  const clearChangeFormTimeout = useCallback(() => {
+    if (changeFormTimeoutRef.current) {
+      clearTimeout(changeFormTimeoutRef.current);
+      changeFormTimeoutRef.current = null;
     }
   }, []);
+
+  const resetToFormsStep = useCallback(() => {
+    clearChangeFormTimeout();
+    setRouterPage("1");
+    setSelectedForm(null);
+    setSelectedDealId("");
+    setDeals([]);
+    setDealsError(null);
+  }, [clearChangeFormTimeout]);
+
+  const handleSelectForm = useCallback(
+    (formKey: FormKey) => {
+      clearChangeFormTimeout();
+      setSelectedForm(formKey);
+      setSelectedDealId("");
+      setDeals([]);
+      setDealsError(null);
+      setRouterPage("2");
+    },
+    [clearChangeFormTimeout],
+  );
+
+  const handleChangeForm = useCallback(() => {
+    clearChangeFormTimeout();
+    setRouterPage("1");
+    changeFormTimeoutRef.current = setTimeout(() => {
+      setSelectedForm(null);
+      setSelectedDealId("");
+      setDeals([]);
+      setDealsError(null);
+      changeFormTimeoutRef.current = null;
+    }, PAGE_SLIDE_MS);
+  }, [clearChangeFormTimeout]);
+
+  const handleAgentChange = useCallback(
+    (agentId: string) => {
+      setAgentOverride(agentId);
+      setClientOverride("");
+      resetToFormsStep();
+    },
+    [resetToFormsStep],
+  );
+
+  const handleClientChange = useCallback(
+    (clientId: string) => {
+      setClientOverride(clientId);
+      clearChangeFormTimeout();
+      setRouterPage("1");
+      setSelectedDealId("");
+      setSelectedForm(null);
+      setDealsError(null);
+      if (!clientId) {
+        setDeals([]);
+      }
+    },
+    [clearChangeFormTimeout],
+  );
+
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => {
+      setPageExitEnabled(true);
+    });
+    return () => {
+      cancelAnimationFrame(frame);
+      clearChangeFormTimeout();
+    };
+  }, [clearChangeFormTimeout]);
+
+  useLayoutEffect(() => {
+    const slide = slideRef.current;
+    const active =
+      routerPage === "2" ? dealsPageRef.current : formsPageRef.current;
+    if (!slide || !active) {
+      return;
+    }
+
+    const syncHeight = () => {
+      slide.style.height = `${active.offsetHeight}px`;
+    };
+
+    syncHeight();
+    const observer = new ResizeObserver(syncHeight);
+    observer.observe(active);
+    return () => observer.disconnect();
+  }, [
+    routerPage,
+    selectedForm,
+    dealsLoading,
+    filteredDeals.length,
+    dealsError,
+    selectedFormSupportsCreateNew,
+    agentsLoading,
+    clientsLoading,
+    hasValidPersonId,
+  ]);
+
+  const showDealsPageContent = Boolean(selectedForm);
 
   return (
     <main
@@ -513,193 +612,232 @@ export function FormRouterClient({
       </header>
 
       <div className="form-router space-y-6">
-        {!selectedForm ? (
-          <SectionCard title="Forms">
-            <div className="flex flex-col gap-4">
-              <SelectInput
-                id="assigned-agent"
-                label="Agent"
-                value={selectedAgent}
-                disabled={agentsLoading || Boolean(agentsError)}
-                onChange={(event) => handleAgentChange(event.target.value)}
-              >
-                <option value="">
-                  {agentsLoading ? "Loading agents..." : "Select an agent..."}
-                </option>
-                {agents.map((agent) => (
-                  <option key={agent.id} value={String(agent.id)}>
-                    {agent.name}
-                  </option>
-                ))}
-              </SelectInput>
-              {agentsError ? (
-                <Alert severity="warning">{agentsError}</Alert>
-              ) : null}
-              <SelectInput
-                id="client"
-                label="Client"
-                value={selectedClient}
-                disabled={
-                  clientsLoading ||
-                  isWaitingForEmbeddedClientContext ||
-                  (!selectedAgent && !presetClientId)
-                }
-                onChange={(event) => handleClientChange(event.target.value)}
-              >
-                <option value="">
-                  {clientsLoading || isWaitingForEmbeddedClientContext
-                    ? "Loading clients..."
-                    : !selectedAgent && !presetClientId
-                      ? "Select an agent first..."
-                      : "Select client..."}
-                </option>
-                {clients.map((client) => (
-                  <option key={String(client.id)} value={String(client.id)}>
-                    {getPersonLabel(client)}
-                  </option>
-                ))}
-              </SelectInput>
-              {isLocalDemoSession ? (
-                <Notice tone="warning">
-                  Local demo mode — using fixture client{" "}
-                  {localDemoFixtures.personId} and agent{" "}
-                  {localDemoFixtures.agentId}. All API responses are mocked.
-                </Notice>
-              ) : null}
-              {contextLoading ? (
-                <Notice tone="warning">
-                  <span className="inline-flex items-center gap-2">
-                    <Spinner className="h-4 w-4" />
-                    Loading embedded Follow Up Boss context...
-                  </span>
-                </Notice>
-              ) : null}
-              {contextError ? (
-                <Alert severity="warning">{contextError}</Alert>
-              ) : null}
-              {clientsError ? (
-                <Alert severity="warning">{clientsError}</Alert>
-              ) : null}
-              {!hasValidPersonId && !isLocalDemoSession ? (
-                <Notice tone="warning">
-                  A valid clientId is required before a form can be selected.
-                </Notice>
-              ) : null}
-              <div className="form-router-form-choices">
-                {availableForms.map((form) => (
-                  <button
-                    key={form.key}
-                    type="button"
-                    disabled={!hasValidPersonId}
-                    onClick={() => {
-                      setSelectedForm(form.key);
-                      setSelectedDealId("");
-                      setDeals([]);
-                      setDealsError(null);
-                    }}
-                    className="form-router-launch-button app-button-press w-full"
-                  >
-                    <span className="form-router-launch-button__title">
-                      {form.title}
-                    </span>
-                    <span className="form-router-launch-button__description">
-                      {form.description}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          </SectionCard>
-        ) : null}
-
-        {shouldShowDealSelection ? (
-          <SectionCard
-            title={`${selectedFormConfig?.title ?? "Selected Form"} Deals`}
-            description={
-              selectedFormSupportsCreateNew
-                ? "Choose an active matching FUB deal, or start a new deal from this form."
-                : "Choose an active matching FUB deal for this workflow."
-            }
+        <div
+          ref={slideRef}
+          className="t-page-slide"
+          data-page={routerPage}
+          style={
+            {
+              "--page-exit-enabled": pageExitEnabled ? 1 : 0,
+            } as CSSProperties
+          }
+        >
+          <div
+            ref={formsPageRef}
+            className="t-page"
+            data-page-id="1"
+            aria-hidden={routerPage !== "1"}
+            {...(routerPage !== "1" ? { inert: true } : {})}
           >
-            <div className="flex flex-col gap-4">
-              {selectedAgentName || selectedClientName ? (
-                <p className="settings-hint m-0">
-                  {[selectedAgentName, selectedClientName]
-                    .filter(Boolean)
-                    .join(" · ")}
-                </p>
-              ) : null}
-              {dealsError ? (
-                <Alert severity="warning">{dealsError}</Alert>
-              ) : null}
-              {dealsLoading ? (
-                <Notice tone="warning">
-                  <span className="inline-flex items-center gap-2">
-                    <Spinner className="h-4 w-4" />
-                    Loading active deals...
-                  </span>
-                </Notice>
-              ) : null}
-              {!dealsLoading && filteredDeals.length ? (
-                <div className="grid gap-3">
-                  {filteredDeals.map((deal) => {
-                    const stageLabel = getDealStageLabel(deal);
-
-                    return (
-                      <button
-                        key={String(deal.id)}
-                        type="button"
-                        className="form-choice-button w-full"
-                        onClick={() => handleDealClick(deal)}
-                      >
-                        <span className="form-choice-button__title">
-                          {getDealLabel(deal)}
-                        </span>
-                        <span className="form-choice-button__meta">
-                          Type: {getDealTypeLabel(deal)}
-                        </span>
-                        {stageLabel ? (
-                          <span className="form-choice-button__meta">
-                            Stage: {stageLabel}
-                          </span>
-                        ) : null}
-                      </button>
-                    );
-                  })}
+            <SectionCard title="Forms">
+              <div className="flex flex-col gap-4">
+                <SelectInput
+                  id="assigned-agent"
+                  label="Agent"
+                  value={selectedAgent}
+                  disabled={agentsLoading || Boolean(agentsError)}
+                  onChange={(event) => handleAgentChange(event.target.value)}
+                >
+                  <option value="">
+                    {agentsLoading ? "Loading agents..." : "Select an agent..."}
+                  </option>
+                  {agents.map((agent) => (
+                    <option key={agent.id} value={String(agent.id)}>
+                      {agent.name}
+                    </option>
+                  ))}
+                </SelectInput>
+                {agentsError ? (
+                  <Alert severity="warning">{agentsError}</Alert>
+                ) : null}
+                <SelectInput
+                  id="client"
+                  label="Client"
+                  value={selectedClient}
+                  disabled={
+                    clientsLoading ||
+                    isWaitingForEmbeddedClientContext ||
+                    (!selectedAgent && !presetClientId)
+                  }
+                  onChange={(event) => handleClientChange(event.target.value)}
+                >
+                  <option value="">
+                    {clientsLoading || isWaitingForEmbeddedClientContext
+                      ? "Loading clients..."
+                      : !selectedAgent && !presetClientId
+                        ? "Select an agent first..."
+                        : "Select client..."}
+                  </option>
+                  {clients.map((client) => (
+                    <option key={String(client.id)} value={String(client.id)}>
+                      {getPersonLabel(client)}
+                    </option>
+                  ))}
+                </SelectInput>
+                {isLocalDemoSession ? (
+                  <Notice tone="warning">
+                    Local demo mode — using fixture client{" "}
+                    {localDemoFixtures.personId} and agent{" "}
+                    {localDemoFixtures.agentId}. All API responses are mocked.
+                  </Notice>
+                ) : null}
+                {visibilityWarning ? (
+                  <Notice tone="warning">{visibilityWarning}</Notice>
+                ) : null}
+                {availableForms.length === 0 ? (
+                  <Notice tone="warning">
+                    No forms are visible on the router. Enable forms in Settings.
+                  </Notice>
+                ) : null}
+                {contextLoading ? (
+                  <Notice tone="warning">
+                    <span className="inline-flex items-center gap-2">
+                      <Spinner className="h-4 w-4" />
+                      Loading embedded Follow Up Boss context...
+                    </span>
+                  </Notice>
+                ) : null}
+                {contextError ? (
+                  <Alert severity="warning">{contextError}</Alert>
+                ) : null}
+                {clientsError ? (
+                  <Alert severity="warning">{clientsError}</Alert>
+                ) : null}
+                {!hasValidPersonId && !isLocalDemoSession ? (
+                  <Notice tone="warning">
+                    A valid clientId is required before a form can be selected.
+                  </Notice>
+                ) : null}
+                <div className="form-router-form-choices">
+                  {availableForms.map((form) => (
+                    <button
+                      key={form.key}
+                      type="button"
+                      disabled={!hasValidPersonId}
+                      onClick={() => handleSelectForm(form.key)}
+                      className="form-router-launch-button app-button-press w-full"
+                    >
+                      <span className="form-router-launch-button__title">
+                        {form.title}
+                      </span>
+                      <span className="form-router-launch-button__description">
+                        {form.description}
+                      </span>
+                    </button>
+                  ))}
                 </div>
-              ) : null}
-              {!dealsLoading && filteredDeals.length === 0 ? (
-                <Notice tone="warning">
-                  No active matching FUB deals were found. Closed and lost deals
-                  are hidden.
-                </Notice>
-              ) : null}
-              {selectedFormSupportsCreateNew ? (
-                <button
-                  type="button"
-                  className={`app-button-press ${primaryButtonClassName} w-full`}
-                  onClick={handleCreateNewDeal}
-                >
-                  Create New Deal
-                </button>
-              ) : null}
-              <div className="flex justify-start">
-                <button
-                  type="button"
-                  className={secondaryButtonClassName}
-                  onClick={() => {
-                    setSelectedForm(null);
-                    setSelectedDealId("");
-                    setDeals([]);
-                    setDealsError(null);
-                  }}
-                >
-                  Change form
-                </button>
               </div>
-            </div>
-          </SectionCard>
-        ) : null}
+            </SectionCard>
+          </div>
+
+          <div
+            ref={dealsPageRef}
+            className="t-page"
+            data-page-id="2"
+            aria-hidden={routerPage !== "2"}
+            {...(routerPage !== "2" ? { inert: true } : {})}
+          >
+            {showDealsPageContent ? (
+              <section className="bara-section form-router-deals">
+                <div className="mb-6 grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-3 max-sm:grid-cols-1 max-sm:justify-items-start max-sm:gap-y-3">
+                  <button
+                    type="button"
+                    className={`app-button-press min-h-10 whitespace-nowrap ${secondaryButtonClassName}`}
+                    onClick={handleChangeForm}
+                  >
+                    Change form
+                  </button>
+                  <div className="bara-section__header !mb-0 min-w-0">
+                    <h2 className="bara-section__title">
+                      {`${selectedFormConfig?.title ?? "Selected Form"} Deals`}
+                    </h2>
+                    <p className="bara-section__description">
+                      {selectedFormSupportsCreateNew
+                        ? "Choose an active matching FUB deal, or start a new deal from this form."
+                        : "Choose an active matching FUB deal for this workflow."}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    tabIndex={-1}
+                    disabled
+                    aria-hidden="true"
+                    className={`invisible pointer-events-none min-h-10 whitespace-nowrap max-sm:hidden ${secondaryButtonClassName}`}
+                  >
+                    Change form
+                  </button>
+                </div>
+                <div className="bara-section__body">
+                  <div className="flex flex-col gap-4">
+                    {selectedAgentName || selectedClientName ? (
+                      <p className="settings-hint m-0">
+                        {[selectedAgentName, selectedClientName]
+                          .filter(Boolean)
+                          .join(" · ")}
+                      </p>
+                    ) : null}
+                    {dealsError ? (
+                      <Alert severity="warning">{dealsError}</Alert>
+                    ) : null}
+                    {dealsLoading ? (
+                      <Notice tone="warning">
+                        <span className="inline-flex items-center gap-2">
+                          <Spinner className="h-4 w-4" />
+                          Loading active deals...
+                        </span>
+                      </Notice>
+                    ) : null}
+                    {!dealsLoading && filteredDeals.length ? (
+                      <div className="grid gap-3">
+                        {filteredDeals.map((deal) => {
+                          const stageLabel = getDealStageLabel(deal);
+
+                          return (
+                            <button
+                              key={String(deal.id)}
+                              type="button"
+                              className="form-choice-button w-full"
+                              onClick={() => handleDealClick(deal)}
+                            >
+                              <span className="form-choice-button__title">
+                                {getDealLabel(deal)}
+                              </span>
+                              <span className="form-choice-button__meta">
+                                Type: {getDealTypeLabel(deal)}
+                              </span>
+                              {stageLabel ? (
+                                <span className="form-choice-button__meta">
+                                  Stage: {stageLabel}
+                                </span>
+                              ) : null}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    ) : null}
+                    {!dealsLoading && filteredDeals.length === 0 ? (
+                      <Notice tone="warning">
+                        No active matching FUB deals were found. Closed and lost
+                        deals are hidden.
+                      </Notice>
+                    ) : null}
+                    {selectedFormSupportsCreateNew ? (
+                      <button
+                        type="button"
+                        className={`app-button-press ${primaryButtonClassName} w-full`}
+                        onClick={handleCreateNewDeal}
+                      >
+                        Create New Deal
+                      </button>
+                    ) : null}
+                  </div>
+                </div>
+              </section>
+            ) : (
+              <div aria-hidden="true" className="min-h-0" />
+            )}
+          </div>
+        </div>
 
         {hasEmbeddedFubContext ? (
           <div className="flex flex-col gap-3">
@@ -716,6 +854,14 @@ export function FormRouterClient({
             >
               Open Form Router in New Tab
             </button>
+          </div>
+        ) : null}
+
+        {!isEmbeddedInFub ? (
+          <div className="form-router-settings-footer">
+            <Link href="/forms/settings" className="form-router-settings-link">
+              Settings
+            </Link>
           </div>
         ) : null}
       </div>

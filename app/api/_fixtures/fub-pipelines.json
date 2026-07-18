@@ -1,0 +1,34 @@
+{
+  "pipelines": [
+    {
+      "id": 16,
+      "name": "Buyer Pipeline",
+      "orderWeight": 1,
+      "stages": [
+        { "id": 50, "name": "New Lead", "orderWeight": 1 },
+        { "id": 51, "name": "Appointment Set", "orderWeight": 2 },
+        { "id": 52, "name": "Showing", "orderWeight": 3 },
+        { "id": 53, "name": "Offer", "orderWeight": 4 },
+        { "id": 54, "name": "Pending", "orderWeight": 5 },
+        { "id": 55, "name": "Under Contract", "orderWeight": 6 },
+        { "id": 56, "name": "Closed", "orderWeight": 7 },
+        { "id": 57, "name": "Lost", "orderWeight": 8 }
+      ]
+    },
+    {
+      "id": 17,
+      "name": "Seller Pipeline",
+      "orderWeight": 2,
+      "stages": [
+        { "id": 70, "name": "New Listing Lead", "orderWeight": 1 },
+        { "id": 71, "name": "Appointment Set", "orderWeight": 2 },
+        { "id": 72, "name": "Listed", "orderWeight": 3 },
+        { "id": 73, "name": "Pending", "orderWeight": 4 },
+        { "id": 74, "name": "Under Contract", "orderWeight": 5 },
+        { "id": 75, "name": "Closed", "orderWeight": 6 },
+        { "id": 76, "name": "Expired / Withdrawn", "orderWeight": 7 }
+      ]
+    }
+  ],
+  "_metadata": { "total": 2 }
+}

@@ -1,0 +1,22 @@
+{
+  "id": 456,
+  "name": "Jane Client - Pending",
+  "status": "Active",
+  "description": "Buyer under contract",
+  "stageName": "Pending",
+  "stageId": 54,
+  "pipelineId": 16,
+  "pipelineName": "Buyer Pipeline",
+  "price": 425000,
+  "commissionValue": 12750,
+  "agentCommission": 6375,
+  "teamCommission": 6375,
+  "projectedCloseDate": "2026-08-15",
+  "enteredStageAt": "2026-07-01T10:00:00Z",
+  "orderWeight": 5,
+  "customSisuTransactionId": "789",
+  "people": [{ "id": 123, "name": "Jane Client" }],
+  "users": [{ "id": 1, "name": "Alex Agent" }],
+  "createdAt": "2026-06-01T12:00:00Z",
+  "updatedAt": "2026-07-01T12:00:00Z"
+}

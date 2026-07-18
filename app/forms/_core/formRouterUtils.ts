@@ -15,7 +15,11 @@ export type FormRouterFubContext = {
   accountId?: number;
 } | null;
 
-export type FormRouterFormKey = "pending" | "appointment-set";
+export type FormRouterFormKey =
+  | "pending"
+  | "appointment-set"
+  | "appointment-met"
+  | "closed";
 
 export type AgentOption = {
   id: number;

@@ -1,0 +1,90 @@
+/* transitions-dev — page side-by-side (forms ↔ deals) */
+
+:root {
+  --duration-fast: 250ms;
+  --ease-smooth-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --distance-base: 8px;
+  --blur-medium: 3px;
+
+  --page-slide-dur: var(--duration-fast);
+  --page-fade-dur: var(--duration-fast);
+  --page-slide-distance: var(--distance-base);
+  --page-blur: var(--blur-medium);
+  --page-stagger: 0ms;
+  --page-exit-enabled: 1;
+  --page-slide-ease: var(--ease-smooth-out);
+  --page-fade-ease: var(--ease-smooth-out);
+}
+
+.t-page-slide {
+  /* Do not clip — card shadows (0 16px 36px) need to paint past the
+     slide bounds. The page slide only moves 8px, so overflow is safe. */
+  position: relative;
+  transition: height var(--page-slide-dur) var(--page-slide-ease);
+}
+
+/* Soften the cut against the page background; keep depth without a hard band. */
+.page-form .form-router .t-page-slide .bara-section {
+  margin-bottom: 0;
+  box-shadow:
+    0 1px 2px color-mix(in srgb, var(--palette-2) 6%, transparent),
+    0 12px 28px color-mix(in srgb, var(--palette-2) 7%, transparent),
+    0 28px 56px color-mix(in srgb, var(--palette-2) 5%, transparent);
+}
+
+.t-page-slide .t-page[data-page-id="1"] {
+  --t-page-from-x: calc(var(--page-slide-distance) * -1);
+}
+
+.t-page-slide .t-page[data-page-id="2"] {
+  --t-page-from-x: var(--page-slide-distance);
+}
+
+.t-page-slide .t-page {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  width: 100%;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(
+    calc(var(--t-page-from-x, 0px) * var(--page-exit-enabled))
+  );
+  /* Avoid filter / will-change on the resting page — both create a
+     compositor layer that clips the card's box-shadow in Chromium. */
+  filter: none;
+  transition:
+    opacity var(--page-fade-dur) var(--page-fade-ease),
+    transform var(--page-slide-dur) var(--page-slide-ease),
+    filter var(--page-slide-dur) var(--page-slide-ease);
+}
+
+.t-page-slide[data-page="1"] .t-page[data-page-id="1"],
+.t-page-slide[data-page="2"] .t-page[data-page-id="2"] {
+  opacity: 1;
+  pointer-events: auto;
+  /* none — not translateX(0) — so child box-shadows aren't clipped */
+  transform: none;
+  filter: none;
+  transition-delay: var(--page-stagger);
+}
+
+/* Blur only the page that is leaving / waiting off-stage. */
+.t-page-slide[data-page="1"] .t-page[data-page-id="2"],
+.t-page-slide[data-page="2"] .t-page[data-page-id="1"] {
+  filter: blur(calc(var(--page-blur) * var(--page-exit-enabled)));
+  will-change: opacity, transform, filter;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .t-page-slide {
+    transition: none !important;
+  }
+
+  .t-page-slide .t-page {
+    transition: none !important;
+    filter: none !important;
+    transform: none !important;
+  }
+}

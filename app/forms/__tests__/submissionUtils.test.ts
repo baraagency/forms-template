@@ -95,6 +95,8 @@ describe("submissionUtils", () => {
     expect(submissionFormLabels).toEqual({
       pending: "Pending",
       "appointment-set": "Appointment Set",
+      "appointment-met": "Appointment Met",
+      closed: "Closed",
     });
   });
 

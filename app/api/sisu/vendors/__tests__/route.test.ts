@@ -1,9 +1,9 @@
 import { describe, expect, it } from "bun:test";
-import { GET } from "../route";
+import { loader } from "../route";
 
 describe("sisu vendors route (mock)", () => {
   it("returns grouped vendor options", async () => {
-    const response = await GET();
+    const response = await loader();
     const payload = (await response.json()) as {
       vendors?: {
         attorney?: Array<{ value: string }>;

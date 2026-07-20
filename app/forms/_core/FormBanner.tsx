@@ -1,5 +1,3 @@
-"use client";
-
 /** Brand banner — `public/logo-banner.png`. */
 export const FORM_BANNER_SRC = "/logo-banner.png";
 export const FORM_BANNER_ALT = "JCRE";

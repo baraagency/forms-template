@@ -12,9 +12,9 @@ export type SettingsFormKind =
   | "appointmentMet";
 
 export const SETTINGS_TAB_SLUGS: readonly FormRouterSlug[] = [
-  "pending",
   "appointment-set",
   "appointment-met",
+  "pending",
   "closed",
 ] as const;
 

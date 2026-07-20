@@ -1,5 +1,3 @@
-"use client";
-
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Notice, SelectInput, Spinner } from "@baraagency/components";
 import type {

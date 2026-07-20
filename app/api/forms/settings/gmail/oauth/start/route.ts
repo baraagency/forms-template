@@ -1,12 +1,17 @@
-import { NextResponse } from "next/server";
+import { redirect } from "react-router";
 import {
   buildGmailOAuthStartUrl,
   isGmailOAuthConfigured,
 } from "@/app/api/_services/gmailOAuthService";
 
-export async function GET() {
+function setOAuthCookieHeader(state: string) {
+  const secure = process.env.NODE_ENV === "production" ? "; Secure" : "";
+  return `gmail_oauth_state=${state}; Path=/; HttpOnly; SameSite=Lax; Max-Age=600${secure}`;
+}
+
+export async function loader() {
   if (!isGmailOAuthConfigured()) {
-    return NextResponse.json(
+    return Response.json(
       {
         message:
           "Google OAuth is not configured. Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET.",
@@ -19,19 +24,13 @@ export async function GET() {
   const url = buildGmailOAuthStartUrl(state);
 
   if (!url) {
-    return NextResponse.json(
+    return Response.json(
       { message: "Could not build Google OAuth URL." },
       { status: 500 },
     );
   }
 
-  const response = NextResponse.redirect(url);
-  response.cookies.set("gmail_oauth_state", state, {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-    maxAge: 60 * 10,
+  return redirect(url, {
+    headers: { "Set-Cookie": setOAuthCookieHeader(state) },
   });
-  return response;
 }

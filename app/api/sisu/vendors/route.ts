@@ -1,7 +1,6 @@
-import { NextResponse } from "next/server";
 import { loadFixture } from "@/app/api/_mock/loadFixture";
 
-export async function GET() {
+export async function loader() {
   const fixture = loadFixture<{ vendors: Record<string, unknown> }>("sisu-vendors.json");
-  return NextResponse.json(fixture);
+  return Response.json(fixture);
 }

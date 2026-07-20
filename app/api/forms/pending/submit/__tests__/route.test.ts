@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { POST } from "../route";
+import { action } from "../route";
 
 const validPendingPayload = {
   personId: "123",
@@ -34,40 +34,46 @@ const validPendingPayload = {
   grossCommissionTotal: "$13,500.00",
 };
 
-describe("pending submit route (mock)", () => {
+describe("pending submit route", () => {
   it("returns validation errors for an empty payload", async () => {
-    const response = await POST(
-      new Request("http://localhost/api/forms/pending/submit", {
+    const response = await action({
+      request: new Request("http://localhost/api/forms/pending/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({}),
       }),
-    );
+      params: {},
+    });
     const payload = (await response.json()) as { message?: string };
 
     expect(response.status).toBe(400);
     expect(payload.message).toBe("Pending submission has validation errors.");
   });
 
-  it("returns mock success for a valid payload", async () => {
-    const response = await POST(
-      new Request("http://localhost/api/forms/pending/submit", {
+  it("runs the hybrid workflow for a valid payload (skips live APIs without keys)", async () => {
+    const response = await action({
+      request: new Request("http://localhost/api/forms/pending/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(validPendingPayload),
       }),
-    );
+      params: {},
+    });
     const payload = (await response.json()) as {
       formType?: string;
       dealId?: number;
       transaction?: { transaction_id?: number };
-      email?: { sent?: boolean };
+      email?: { sent?: boolean; reason?: string };
+      steps?: Array<{ step: string; status: string }>;
     };
 
     expect(response.status).toBe(200);
     expect(payload.formType).toBe("pending");
-    expect(payload.dealId).toBe(456);
-    expect(payload.transaction?.transaction_id).toBe(789);
+    expect(payload.dealId).toBeUndefined();
+    expect(payload.transaction).toBeUndefined();
     expect(payload.email?.sent).toBe(false);
+    expect(payload.email?.reason).toBeTruthy();
+    expect(Array.isArray(payload.steps)).toBe(true);
+    expect(payload.steps!.some((step) => step.step === "persist")).toBe(true);
   });
 });

@@ -1,6 +1,6 @@
 # FUB Forms Starter
 
-Next.js template for Follow Up Boss embedded forms with MUI and `@baraagency/components`. Use GitHub's **Use this template** button to start a new project from this repo.
+React Router v8 (Framework mode) template for Follow Up Boss embedded forms with MUI and `@baraagency/components`. Use GitHub's **Use this template** button to start a new project from this repo.
 
 ## What's included
 
@@ -11,7 +11,7 @@ Next.js template for Follow Up Boss embedded forms with MUI and `@baraagency/com
 - Appointment Met form example (`/forms/appointment-met`)
 - Closed form example (`/forms/closed`)
 - Shared form core in `app/forms/_core/`
-- Mock API routes for FUB and SISU (no credentials required locally)
+- Mock API resource routes for FUB and SISU (no credentials required locally)
 - Post-submit confirmation page (`/forms/submitted`)
 
 ## Quick start
@@ -22,7 +22,7 @@ bun install
 bun run dev
 ```
 
-Open [http://localhost:3000/forms](http://localhost:3000/forms).
+Open [http://localhost:5173/forms](http://localhost:5173/forms).
 
 With `ENVIRONMENT=LOCAL` (see `.env.example`), opening `/forms` or `/forms/pending` **without** a `clientId` uses fixture agent/client/deal IDs so you can click through the full mock flow.
 
@@ -54,10 +54,11 @@ All other API routes return fixtures from `app/api/_fixtures/`.
 ## Adding a new form
 
 1. Copy `app/forms/pending/` → `app/forms/<your-slug>/`
-2. Register the form in `app/forms/_core/formRouterFormRegistry.ts` and seed `router_forms`
-3. Add field keys to `app/forms/settings/formFieldCatalog.ts` (+ migration seed) when mappings are needed
-4. Add `POST /api/forms/<your-slug>/submit` returning a mock success payload
-5. Import shared UI from `app/forms/_core/` only
+2. Add `app/routes/forms.<your-slug>.tsx` and register it in `app/routes.ts`
+3. Register the form in `app/forms/_core/formRouterFormRegistry.ts` and seed `router_forms`
+4. Add field keys to `app/forms/settings/formFieldCatalog.ts` (+ migration seed) when mappings are needed
+5. Add `app/api/forms/<your-slug>/submit/route.ts` (`action` → `runSubmissionWorkflow`) and register the path in `app/routes.ts`
+6. Import shared UI from `app/forms/_core/` only
 
 See [docs/adding-a-form.md](docs/adding-a-form.md).
 
@@ -75,7 +76,7 @@ Postgres schema lives in `db/migrations/`. Set `DATABASE_URL` in `.env`, then:
 bun run db:migrations
 ```
 
-Creates submissions, SISU mappings, audit log, Gmail credentials, email recipients, `router_forms`, and FUB mapping tables. Form settings CRUD uses these tables; submit routes are still mocked and do not write submissions or apply mappings yet.
+Creates submissions, SISU mappings, audit log, Gmail credentials, email recipients, `router_forms`, and FUB mapping tables.
 
 Optional local test DB (not committed):
 
@@ -85,14 +86,23 @@ docker run --rm -d --name forms-pg \
   -p 5432:5432 postgres:16-alpine
 ```
 
-Gmail OAuth on `/forms/settings` needs `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, and optionally `GOOGLE_REDIRECT_URI` / `APP_BASE_URL`.
+Gmail OAuth on `/forms/settings` needs `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, and optionally `GOOGLE_REDIRECT_URI` / `APP_BASE_URL` (defaults assume `http://localhost:5173`).
+
+## Deploy (Heroku)
+
+- Node `22.22+` (`engines` in `package.json`)
+- `Procfile`: `web: npm run start`
+- Build: `npm run build` (React Router / Vite)
+- Start: `react-router-serve ./build/server/index.js` (binds `PORT`)
+- Set `APP_BASE_URL` and `GOOGLE_REDIRECT_URI` to the Heroku HTTPS origin
 
 ## Scripts
 
 | Command | Purpose |
 |---------|---------|
-| `bun run dev` | Start dev server |
+| `bun run dev` | Start Vite / React Router dev server |
 | `bun run build` | Production build |
+| `bun run start` | Serve production build |
 | `bun test app` | Unit tests |
 | `bun run test:e2e` | Playwright smoke tests |
 | `bun run dev:fub-context` | Print signed `/forms?context=...&signature=...` |

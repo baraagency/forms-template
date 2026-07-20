@@ -36,7 +36,7 @@ console.log(`context=${encodeURIComponent(context)}`);
 console.log(`signature=${signature}\n`);
 console.log("Full /forms URL:");
 console.log(
-  `http://localhost:3000/forms?context=${encodeURIComponent(context)}&signature=${signature}`,
+  `http://localhost:5173/forms?context=${encodeURIComponent(context)}&signature=${signature}`,
 );
 console.log("\nVerification check:", verifyFubContextSignature(context, signature));
 console.log("Decoded payload:", JSON.stringify(JSON.parse(decodeBase64Url(context)), null, 2));

@@ -1,7 +1,5 @@
-"use client";
-
 import Alert from "@mui/material/Alert";
-import Link from "next/link";
+import { Link } from "react-router";
 import {
   useCallback,
   useEffect,
@@ -859,7 +857,7 @@ export function FormRouterClient({
 
         {!isEmbeddedInFub ? (
           <div className="form-router-settings-footer">
-            <Link href="/forms/settings" className="form-router-settings-link">
+            <Link to="/forms/settings" className="form-router-settings-link">
               Settings
             </Link>
           </div>

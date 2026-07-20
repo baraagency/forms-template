@@ -1,5 +1,3 @@
-"use client";
-
 import { secondaryButtonClassName } from "@baraagency/components";
 import type { ReactNode } from "react";
 

@@ -11,10 +11,12 @@ import {
   buildSubmittedRouterHref,
   isSubmissionDebugEnvironment,
   submissionFormLabels,
-} from "../_core/submissionUtils";
-import { FormBanner } from "../_core/FormBanner";
-import { FormRouterBackLink } from "../_core/formRouterBackLink";
-import { SubmissionDebugPanel } from "./SubmissionDebugPanel";
+} from "../forms/_core/submissionUtils";
+import { FormBanner } from "../forms/_core/FormBanner";
+import { FormRouterBackLink } from "../forms/_core/formRouterBackLink";
+import { SubmissionDebugPanel } from "../forms/submitted/SubmissionDebugPanel";
+import { searchParamsFromRequest } from "./formLoaderUtils";
+import type { Route } from "./+types/forms.submitted";
 
 type SearchParamValue = string | string[] | undefined;
 type SubmittedSearchParams = Record<string, SearchParamValue>;
@@ -53,12 +55,12 @@ function SuccessIcon() {
   );
 }
 
-export default async function SubmittedPage({
-  searchParams,
-}: {
-  searchParams: Promise<SubmittedSearchParams>;
-}) {
-  const resolvedSearchParams = await searchParams;
+export async function loader({ request }: Route.LoaderArgs) {
+  return { searchParams: searchParamsFromRequest(request) };
+}
+
+export default function SubmittedPage({ loaderData }: Route.ComponentProps) {
+  const resolvedSearchParams = loaderData.searchParams;
   const personId =
     getSingleSearchParam(resolvedSearchParams, "personId") ||
     getSingleSearchParam(resolvedSearchParams, "clientId");
@@ -73,13 +75,18 @@ export default async function SubmittedPage({
   );
   const debugKey = getSingleSearchParam(resolvedSearchParams, "debugKey");
   const emailWarning = getSingleSearchParam(resolvedSearchParams, "emailWarning");
-  const timeoutWarning = getSingleSearchParam(resolvedSearchParams, "timeoutWarning");
+  const timeoutWarning = getSingleSearchParam(
+    resolvedSearchParams,
+    "timeoutWarning",
+  );
   const formParam = getSingleSearchParam(resolvedSearchParams, "form");
   const formLabel =
     formParam in submissionFormLabels
       ? submissionFormLabels[formParam as keyof typeof submissionFormLabels]
       : submissionFormLabels.pending;
-  const showSubmissionDebug = isSubmissionDebugEnvironment(process.env.ENVIRONMENT);
+  const showSubmissionDebug = isSubmissionDebugEnvironment(
+    process.env.ENVIRONMENT,
+  );
   const routerHref = buildSubmittedRouterHref({
     personId,
   });
@@ -182,7 +189,7 @@ export default async function SubmittedPage({
                   borderRadius: "var(--btn-radius)",
                   color: "var(--warning-color)",
                   fontSize: "0.95rem",
-                  fontWeight: 600,
+                  fontWeight: 700,
                   lineHeight: 1.65,
                   maxWidth: 560,
                   px: 2,
@@ -203,7 +210,7 @@ export default async function SubmittedPage({
                   borderRadius: "var(--btn-radius)",
                   color: "var(--warning-color)",
                   fontSize: "0.95rem",
-                  fontWeight: 600,
+                  fontWeight: 700,
                   lineHeight: 1.65,
                   maxWidth: 560,
                   px: 2,
@@ -258,7 +265,7 @@ export default async function SubmittedPage({
                   sx={{
                     color: "var(--foreground)",
                     fontSize: "0.92rem",
-                    fontWeight: 600,
+                    fontWeight: 700,
                     m: "4px 0 0",
                     overflowWrap: "anywhere",
                   }}

@@ -29,7 +29,11 @@ Do not mix in dramatic multi-layer card shadows or pure white cards on tinted gr
 
 ## Typography
 
-- Section titles: bold, `text-wrap: balance`
+- Face: **Lato** (baraagency.com) via Google Fonts link in `app/root.tsx` — weights 300 / 400 / 700 / 900 only
+- Display / page titles: weight 900, uppercase, wide tracking (`--page-title-tracking`)
+- Section titles: weight 900, slight negative tracking (`--section-title-tracking`)
+- Labels / eyebrows: weight 700; eyebrows use wide tracking (`--eyebrow-tracking`) when uppercase
+- Body: weight 400, line-height ~1.625
 - Descriptions: italic body color, `text-wrap: pretty`, max-width ~620px
 - Field codes: compact monospace-ish via `<code>`, overflow-wrap anywhere
 - Dynamic / status numbers: `font-variant-numeric: tabular-nums`

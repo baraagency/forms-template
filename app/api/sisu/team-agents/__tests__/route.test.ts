@@ -1,9 +1,12 @@
 import { describe, expect, it } from "bun:test";
-import { GET } from "../route";
+import { loader } from "../route";
 
 describe("sisu team agents route (mock)", () => {
   it("returns fixture team agents", async () => {
-    const response = await GET(new Request("http://localhost/api/sisu/team-agents"));
+    const response = await loader({
+      request: new Request("http://localhost/api/sisu/team-agents"),
+      params: {},
+    });
     const payload = (await response.json()) as {
       agents?: Array<{ value: string; isIsa: boolean }>;
     };
@@ -13,9 +16,12 @@ describe("sisu team agents route (mock)", () => {
   });
 
   it("filters ISISA agents when role_filter is present", async () => {
-    const response = await GET(
-      new Request("http://localhost/api/sisu/team-agents?role_filter=ISISA"),
-    );
+    const response = await loader({
+      request: new Request(
+        "http://localhost/api/sisu/team-agents?role_filter=ISISA",
+      ),
+      params: {},
+    });
     const payload = (await response.json()) as {
       agents?: Array<{ isIsa: boolean }>;
     };

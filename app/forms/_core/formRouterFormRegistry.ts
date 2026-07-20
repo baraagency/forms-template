@@ -8,14 +8,8 @@ export type FormRouterFormMeta = {
   pathname: string;
 };
 
-/** Static registry for the four example forms (pathname + copy). */
+/** Static registry for the four example forms (pathname + copy). Order drives /forms. */
 export const FORM_ROUTER_FORM_REGISTRY: FormRouterFormMeta[] = [
-  {
-    key: "pending",
-    title: "Pending",
-    description: "Route to the under-contract transaction intake flow.",
-    pathname: "/forms/pending",
-  },
   {
     key: "appointment-set",
     title: "Appointment Set",
@@ -27,6 +21,12 @@ export const FORM_ROUTER_FORM_REGISTRY: FormRouterFormMeta[] = [
     title: "Appointment Met",
     description: "Capture appointment disposition and next steps for this lead.",
     pathname: "/forms/appointment-met",
+  },
+  {
+    key: "pending",
+    title: "Pending",
+    description: "Route to the under-contract transaction intake flow.",
+    pathname: "/forms/pending",
   },
   {
     key: "closed",

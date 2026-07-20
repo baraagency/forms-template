@@ -1,4 +1,6 @@
 import type {
+  SISUCreateTransactionRequest,
+  SISUCreateTransactionResponse,
   SISUDropdownOption,
   SISUTeamField,
   SISUTeamFieldCatalogEntry,
@@ -153,26 +155,26 @@ function transformFieldOptions(options: unknown): SISUDropdownOption[] | null {
   }
 
   if (Array.isArray(options)) {
-    return options
-      .map((item, index) => {
-        if (typeof item === "string") {
-          return { key: String(index), value: item, label: item };
-        }
-        if (typeof item === "object" && item !== null) {
-          const fallbackValue = String(index);
-          const value = "value" in item ? item.value : fallbackValue;
-          return {
-            key: "key" in item ? String(item.key) : fallbackValue,
-            value: String(value),
-            label: getOptionLabel(
-              "label" in item ? item.label : item,
-              String(value),
-            ),
-          };
-        }
-        return null;
-      })
-      .filter((item): item is SISUDropdownOption => item !== null);
+    const mapped: SISUDropdownOption[] = [];
+    for (const [index, item] of options.entries()) {
+      if (typeof item === "string") {
+        mapped.push({ key: String(index), value: item, label: item });
+        continue;
+      }
+      if (typeof item === "object" && item !== null) {
+        const fallbackValue = String(index);
+        const value = "value" in item ? item.value : fallbackValue;
+        mapped.push({
+          key: "key" in item ? String(item.key) : fallbackValue,
+          value: String(value),
+          label: getOptionLabel(
+            "label" in item ? item.label : item,
+            String(value),
+          ),
+        });
+      }
+    }
+    return mapped;
   }
 
   return null;
@@ -240,5 +242,96 @@ export function normalizeSisuTeamFieldCatalog(
       fieldName,
       normalizeTeamField(fieldName, field),
     ]),
+  );
+}
+
+async function sisuRequest<T>(
+  method: "GET" | "POST" | "PUT",
+  path: string,
+  body?: unknown,
+): Promise<SisuLiveResult<T>> {
+  if (!isSisuApiEnabled()) {
+    return { data: null, error: "SISU_API_KEY is not configured.", status: 503 };
+  }
+
+  const apiKey = process.env.SISU_API_KEY!.trim();
+  const url = `${getSisuBaseUrl()}${path.startsWith("/") ? path : `/${path}`}`;
+
+  try {
+    const response = await fetch(url, {
+      method,
+      headers: {
+        accept: "application/json",
+        "content-type": "application/json",
+        Authorization: `Basic ${apiKey}`,
+      },
+      cache: "no-store",
+      ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
+    });
+
+    const payload = (await response.json().catch(() => ({}))) as T & {
+      status_code?: unknown;
+      status?: unknown;
+      message?: unknown;
+    };
+
+    if (!response.ok) {
+      return {
+        data: null,
+        error:
+          typeof payload.message === "string"
+            ? payload.message
+            : `SISU ${method} ${path} failed (HTTP ${response.status}).`,
+        status: response.status,
+      };
+    }
+
+    const sisuStatus = normalizeSisuStatusCode(payload.status_code);
+    if (sisuStatus !== null && sisuStatus < 0) {
+      return {
+        data: null,
+        error:
+          typeof payload.status === "string"
+            ? payload.status
+            : typeof payload.message === "string"
+              ? payload.message
+              : "SISU returned an error status.",
+        status: 502,
+      };
+    }
+
+    return { data: payload as T, error: null };
+  } catch (error) {
+    return {
+      data: null,
+      error:
+        error instanceof Error
+          ? error.message
+          : `Unable to reach SISU (${method} ${path}).`,
+      status: 502,
+    };
+  }
+}
+
+/**
+ * Create or update a SISU transaction via POST/PUT /v1/client/edit-client.
+ * When `transactionId` is provided, uses PUT to update.
+ */
+export async function createOrUpdateLiveSisuTransaction(
+  payload: SISUCreateTransactionRequest,
+  transactionId?: number,
+): Promise<SisuLiveResult<SISUCreateTransactionResponse>> {
+  if (transactionId !== undefined && Number.isInteger(transactionId) && transactionId > 0) {
+    return sisuRequest<SISUCreateTransactionResponse>(
+      "PUT",
+      `/v1/client/edit-client/${transactionId}`,
+      payload,
+    );
+  }
+
+  return sisuRequest<SISUCreateTransactionResponse>(
+    "POST",
+    "/v1/client/edit-client",
+    payload,
   );
 }

@@ -1,13 +1,15 @@
 # Dependencies
 node_modules/
 
-# Next.js
-.next/
-out/
-
-# Production
+# React Router / Vite
+.react-router/
 build/
 dist/
+.vite/
+
+# Legacy Next.js (if present)
+.next/
+out/
 
 # Testing
 coverage/

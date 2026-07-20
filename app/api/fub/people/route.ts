@@ -1,4 +1,3 @@
-import { NextResponse } from "next/server";
 import { loadFixture } from "@/app/api/_mock/loadFixture";
 import { fetchLiveFubPeople } from "@/app/api/_services/fubLiveClient";
 import { isFubApiEnabled } from "@/app/api/_services/fubApiMode";
@@ -13,7 +12,7 @@ function parsePositiveInteger(value: string | null): number | null {
   return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
 }
 
-export async function GET(request: Request) {
+export async function loader({ request }: { request: Request }) {
   const url = new URL(request.url);
   const assignedUserId = parsePositiveInteger(
     url.searchParams.get("assignedUserId"),
@@ -32,16 +31,16 @@ export async function GET(request: Request) {
         limit: limit ?? 1,
       });
       if (live.error || !live.data) {
-        return NextResponse.json(
+        return Response.json(
           { message: live.error ?? "Failed to load FUB people." },
           { status: live.status ?? 502 },
         );
       }
-      return NextResponse.json(live.data);
+      return Response.json(live.data);
     }
 
     const person = loadFixture<FUBPerson>("fub-person-all-fields.json");
-    return NextResponse.json({
+    return Response.json({
       people: [person],
       _metadata: { total: 1, limit: String(limit ?? 1) },
     });
@@ -53,8 +52,8 @@ export async function GET(request: Request) {
     const filtered = people.filter(
       (person) => Number(person.assignedUserId) === assignedUserId,
     );
-    return NextResponse.json(filtered);
+    return Response.json(filtered);
   }
 
-  return NextResponse.json(people);
+  return Response.json(people);
 }

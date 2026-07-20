@@ -1,10 +1,11 @@
 import { describe, expect, it } from "bun:test";
-import { GET } from "../route";
+import { loader } from "../route";
 
 describe("sisu transactions route (mock)", () => {
   it("returns the template transaction fixture", async () => {
-    const response = await GET(new Request("http://localhost"), {
-      params: Promise.resolve({ transactionId: "789" }),
+    const response = await loader({
+      request: new Request("http://localhost"),
+      params: { transactionId: "789" },
     });
     const payload = (await response.json()) as {
       transaction?: { transaction_id?: number };
@@ -15,8 +16,9 @@ describe("sisu transactions route (mock)", () => {
   });
 
   it("returns 404 for unknown transaction ids", async () => {
-    const response = await GET(new Request("http://localhost"), {
-      params: Promise.resolve({ transactionId: "999" }),
+    const response = await loader({
+      request: new Request("http://localhost"),
+      params: { transactionId: "999" },
     });
 
     expect(response.status).toBe(404);

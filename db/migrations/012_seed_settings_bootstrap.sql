@@ -2,9 +2,9 @@
 -- Keep field lists in sync with app/forms/settings/formFieldCatalog.ts
 
 INSERT INTO "router_forms" ("slug", "name", "visible") VALUES
-  ('pending', 'Pending', TRUE),
   ('appointment-set', 'Appointment Set', TRUE),
   ('appointment-met', 'Appointment Met', TRUE),
+  ('pending', 'Pending', TRUE),
   ('closed', 'Closed', TRUE)
 ON CONFLICT ("slug") DO NOTHING;
 

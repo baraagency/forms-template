@@ -1,8 +1,7 @@
-import { NextResponse } from "next/server";
 import { loadFixture } from "@/app/api/_mock/loadFixture";
 import type { FUBListStagesResponse } from "@/app/types/fub";
 
-export async function GET() {
+export async function loader() {
   const fixture = loadFixture<FUBListStagesResponse>("fub-stages.json");
-  return NextResponse.json(fixture);
+  return Response.json(fixture);
 }

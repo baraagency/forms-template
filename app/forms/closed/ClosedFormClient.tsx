@@ -1,6 +1,4 @@
-"use client";
-
-import { useRouter } from "next/navigation";
+import { useNavigate } from "react-router";
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
@@ -147,7 +145,7 @@ export function ClosedFormClient({
   searchParams: Record<string, string | string[] | undefined>;
   localDemoEnabled?: boolean;
 }) {
-  const router = useRouter();
+  const navigate = useNavigate();
   const [formState, setFormState] = useState<ClosedFormState>(() =>
     getInitialClosedFormState({
       personId:
@@ -327,7 +325,7 @@ export function ClosedFormClient({
         transaction: payload.transaction,
       });
 
-      router.push(
+      navigate(
         buildPostSubmissionHref({
           formType: "closed",
           personId: formState.personId,
@@ -353,7 +351,7 @@ export function ClosedFormClient({
           : "Unable to submit the Closed form.",
       );
     }
-  }, [formState, transactionTypeOptions, router]);
+  }, [formState, transactionTypeOptions, navigate]);
 
   if (submitStatus === "submitting") {
     return (

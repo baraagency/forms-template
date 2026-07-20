@@ -1,26 +1,13 @@
-import { FormsSettingsClient } from "./FormsSettingsClient";
+import { FormsSettingsClient } from "../forms/settings/FormsSettingsClient";
 import { listRouterForms } from "@/app/api/_services/routerFormsRepo";
 import { getGmailStatusForCurrentEnvironment } from "@/app/api/_services/gmailOAuthService";
-import { FORM_ROUTER_FORM_REGISTRY } from "../_core/formRouterFormRegistry";
+import { FORM_ROUTER_FORM_REGISTRY } from "../forms/_core/formRouterFormRegistry";
+import type { Route } from "./+types/forms.settings";
 
-export const dynamic = "force-dynamic";
-
-type SearchParams = Promise<Record<string, string | string[] | undefined>>;
-
-function firstParam(
-  value: string | string[] | undefined,
-): string | undefined {
-  return Array.isArray(value) ? value[0] : value;
-}
-
-export default async function FormsSettingsPage({
-  searchParams,
-}: {
-  searchParams: SearchParams;
-}) {
-  const params = await searchParams;
-  const gmail = firstParam(params.gmail);
-  const message = firstParam(params.message);
+export async function loader({ request }: Route.LoaderArgs) {
+  const url = new URL(request.url);
+  const gmail = url.searchParams.get("gmail") ?? undefined;
+  const message = url.searchParams.get("message") ?? undefined;
 
   let gmailFlash: { tone: "success" | "warning"; message: string } | null =
     null;
@@ -47,11 +34,19 @@ export default async function FormsSettingsPage({
     visible: true,
   }));
 
+  return {
+    initialRouterForms: routerResult.data ?? fallbackRouterForms,
+    initialGmailStatus: gmailStatus.data,
+    gmailFlash,
+  };
+}
+
+export default function FormsSettings({ loaderData }: Route.ComponentProps) {
   return (
     <FormsSettingsClient
-      initialRouterForms={routerResult.data ?? fallbackRouterForms}
-      initialGmailStatus={gmailStatus.data}
-      gmailFlash={gmailFlash}
+      initialRouterForms={loaderData.initialRouterForms}
+      initialGmailStatus={loaderData.initialGmailStatus}
+      gmailFlash={loaderData.gmailFlash}
     />
   );
 }

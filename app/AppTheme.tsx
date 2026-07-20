@@ -1,5 +1,3 @@
-"use client";
-
 import { CssBaseline } from "@mui/material";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import type { ReactNode } from "react";
@@ -42,6 +40,20 @@ const theme = createTheme({
   },
   typography: {
     fontFamily: "var(--font-family), Arial, sans-serif",
+    fontWeightLight: 300,
+    fontWeightRegular: 400,
+    fontWeightMedium: 700,
+    fontWeightBold: 900,
+    h1: { fontWeight: 900, letterSpacing: "-0.025em" },
+    h2: { fontWeight: 900, letterSpacing: "-0.025em" },
+    h3: { fontWeight: 900, letterSpacing: "-0.02em" },
+    h4: { fontWeight: 900, letterSpacing: "-0.02em" },
+    h5: { fontWeight: 700 },
+    h6: { fontWeight: 700 },
+    subtitle1: { fontWeight: 700 },
+    subtitle2: { fontWeight: 700 },
+    body1: { fontWeight: 400, lineHeight: 1.625 },
+    body2: { fontWeight: 400, lineHeight: 1.625 },
     button: {
       textTransform: "none",
       fontWeight: 700,

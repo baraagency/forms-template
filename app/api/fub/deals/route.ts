@@ -1,4 +1,3 @@
-import { NextResponse } from "next/server";
 import { loadFixture } from "@/app/api/_mock/loadFixture";
 import type { FUBDeal } from "@/app/types/fub";
 
@@ -11,7 +10,7 @@ function parsePositiveInteger(value: string | null): string | null {
   return Number.isInteger(parsed) && parsed > 0 ? String(parsed) : null;
 }
 
-export async function GET(request: Request) {
+export async function loader({ request }: { request: Request }) {
   const url = new URL(request.url);
   const personId = parsePositiveInteger(url.searchParams.get("personId"));
   const fields = url.searchParams.get("fields") ?? "";
@@ -23,19 +22,19 @@ export async function GET(request: Request) {
 
   if (wantsAllFields) {
     const deal = loadFixture<FUBDeal>("fub-deal-all-fields.json");
-    return NextResponse.json({
+    return Response.json({
       deals: [deal],
       _metadata: { total: 1, limit: limit ?? "1" },
     });
   }
 
   if (!personId) {
-    return NextResponse.json(
+    return Response.json(
       { message: "A valid personId is required." },
       { status: 400 },
     );
   }
 
   const fixture = loadFixture<{ deals: FUBDeal[] }>("fub-deals.json");
-  return NextResponse.json({ deals: fixture.deals });
+  return Response.json({ deals: fixture.deals });
 }

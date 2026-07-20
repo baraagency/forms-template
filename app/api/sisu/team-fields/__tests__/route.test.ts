@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "bun:test";
-import { GET } from "../route";
+import { loader } from "../route";
 
 const originalSisuKey = process.env.SISU_API_KEY;
 
@@ -15,7 +15,7 @@ describe("sisu team-fields route", () => {
   it("returns fixture team fields when SISU_API_KEY is unset", async () => {
     delete process.env.SISU_API_KEY;
 
-    const response = await GET();
+    const response = await loader();
     const payload = (await response.json()) as {
       fields?: Record<string, unknown>;
     };

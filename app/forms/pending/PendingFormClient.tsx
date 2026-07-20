@@ -1,6 +1,4 @@
-"use client";
-
-import { useRouter } from "next/navigation";
+import { useNavigate } from "react-router";
 import { type ReactNode, useCallback, useEffect, useState } from "react";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
@@ -128,6 +126,23 @@ const usStates = [
   "WY",
 ];
 
+function getSingleSearchParam(
+  searchParams: Record<string, string | string[] | undefined>,
+  key: string,
+): string {
+  const value = searchParams[key];
+  if (Array.isArray(value)) {
+    return value[0] ?? "";
+  }
+  return value ?? "";
+}
+
+function FieldError({ message }: { message?: string }) {
+  return message ? (
+    <p className="mt-1 text-xs font-medium text-[var(--error-color)]">{message}</p>
+  ) : null;
+}
+
 function FieldGroup({
   title,
   children,
@@ -193,7 +208,7 @@ export function PendingFormClient({
   previousSubmissionFormData?: JsonValue | null;
   localDemoEnabled?: boolean;
 }) {
-  const router = useRouter();
+  const navigate = useNavigate();
   const routedAgentName = getSingleSearchParam(searchParams, "agentName");
   const [formState, setFormState] = useState<PendingFormState>(() => {
     const initialState = getInitialPendingFormState({
@@ -235,7 +250,7 @@ export function PendingFormClient({
     contingenciesOptions,
   } = getPendingSelectOptions(teamFields);
   const mortgageCompanyOptions = prioritizeSpecialVendorOptions(mortgageVendors);
-  const showMortgageCompanyOther = isOtherVendorSelection(
+  const showMortgageCompanyOther = isOtherSelection(
     formState.mortgageCompany,
     mortgageCompanyOptions,
   );
@@ -439,7 +454,7 @@ export function PendingFormClient({
       }
 
       const debugKey = storeSubmittedDebugRecord("pending", payload);
-      router.push(
+      navigate(
         buildPostSubmissionHref({
           formType: "pending",
           personId: formState.personId,
@@ -470,7 +485,7 @@ export function PendingFormClient({
           : "Pending submission failed.",
       );
     }
-  }, [formState, routedAgentName, router]);
+  }, [formState, routedAgentName, navigate]);
 
   if (
     submitStatus === "submitting" ||

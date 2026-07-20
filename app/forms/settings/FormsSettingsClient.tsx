@@ -1,5 +1,3 @@
-"use client";
-
 import { useMemo, useState } from "react";
 import { Notice, SectionCard } from "@baraagency/components";
 import type { RouterForm } from "@/app/types/storage";
@@ -31,7 +29,8 @@ export function FormsSettingsClient({
   initialGmailStatus: GmailStatus | null;
   gmailFlash: { tone: "success" | "warning"; message: string } | null;
 }) {
-  const [activeSlug, setActiveSlug] = useState<FormRouterSlug>("pending");
+  const [activeSlug, setActiveSlug] =
+    useState<FormRouterSlug>("appointment-set");
   const [routerForms, setRouterForms] =
     useState<RouterForm[]>(initialRouterForms);
 

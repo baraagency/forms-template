@@ -1,5 +1,3 @@
-"use client";
-
 import { useState } from "react";
 import dayjs from "dayjs";
 import { Button, DialogActions, SvgIcon, type SvgIconProps } from "@mui/material";
@@ -259,7 +257,7 @@ export const datePickerPaperSx = {
       minHeight: "40px",
       minWidth: "72px",
       borderRadius: "var(--btn-radius)",
-      fontWeight: 600,
+      fontWeight: 700,
       textTransform: "none",
       transition: "transform 140ms cubic-bezier(0.23, 1, 0.32, 1)",
     },
@@ -355,7 +353,7 @@ function DatePickerCancelActionBar({ onCancel }: { onCancel: () => void }) {
           minHeight: "40px",
           minWidth: "72px",
           borderRadius: "var(--btn-radius)",
-          fontWeight: 600,
+          fontWeight: 700,
           textTransform: "none",
           color: "var(--btn-outline-color)",
           transition: "transform 140ms cubic-bezier(0.23, 1, 0.32, 1)",

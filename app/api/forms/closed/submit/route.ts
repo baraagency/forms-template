@@ -1,28 +1,31 @@
-import { NextResponse } from "next/server";
 import {
   normalizeClosedPayload,
   validateClosedForm,
   type ClosedFormState,
 } from "@/app/forms/closed/closedFormUtils";
 import { getClosedSelectOptions } from "@/app/forms/closed/closedTeamFieldOptions";
-import { isSubmissionDebugEnvironment } from "@/app/forms/_core/submissionUtils";
-import { loadFixture } from "@/app/api/_mock/loadFixture";
+import { formKindLabel } from "@/app/forms/_core/formIdentity";
+import { runSubmissionWorkflow } from "@/app/api/_services/submissionWorkflow";
 
 function isClosedPayload(payload: unknown): payload is Record<string, unknown> {
   return typeof payload === "object" && payload !== null;
 }
 
-export async function POST(request: Request) {
+export async function action({ request }: { request: Request }) {
+  if (request.method !== "POST") {
+    return Response.json({ message: "Method not allowed." }, { status: 405 });
+  }
+
   let payload: unknown;
 
   try {
     payload = await request.json();
   } catch {
-    return NextResponse.json({ message: "Invalid JSON body." }, { status: 400 });
+    return Response.json({ message: "Invalid JSON body." }, { status: 400 });
   }
 
   if (!isClosedPayload(payload)) {
-    return NextResponse.json(
+    return Response.json(
       { message: "Closed payload is required." },
       { status: 400 },
     );
@@ -38,7 +41,7 @@ export async function POST(request: Request) {
   }
 
   if (Object.keys(errors).length > 0) {
-    return NextResponse.json(
+    return Response.json(
       {
         message: "Closed submission has validation errors.",
         errors,
@@ -47,20 +50,16 @@ export async function POST(request: Request) {
     );
   }
 
-  const mockResponse = loadFixture<Record<string, unknown>>(
-    "closed-submit-success.json",
-  );
-  const debugEnabled = isSubmissionDebugEnvironment(process.env.ENVIRONMENT);
-
-  return NextResponse.json({
-    ...mockResponse,
-    ...(debugEnabled
-      ? {
-          debug: {
-            deal: { id: mockResponse.dealId },
-            transaction: mockResponse.transaction,
-          },
-        }
-      : {}),
+  const result = await runSubmissionWorkflow({
+    form: "closed",
+    formLabel: formKindLabel("closed"),
+    formState: formState as unknown as Record<string, unknown>,
+    personId: formState.personId,
+    dealId: formState.dealId || null,
+    sisuTransactionId: formState.sisuTransactionId || null,
+    agentId: formState.agentId || null,
+    hooks: {},
   });
+
+  return Response.json(result);
 }

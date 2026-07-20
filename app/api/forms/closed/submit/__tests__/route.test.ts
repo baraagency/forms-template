@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { POST } from "../route";
+import { action } from "../route";
 import { getInitialClosedFormState } from "@/app/forms/closed/closedFormUtils";
 
 function buildValidPayload() {
@@ -24,48 +24,55 @@ function buildValidPayload() {
 
 describe("POST /api/forms/closed/submit", () => {
   it("rejects invalid JSON", async () => {
-    const response = await POST(
-      new Request("http://localhost/api/forms/closed/submit", {
+    const response = await action({
+      request: new Request("http://localhost/api/forms/closed/submit", {
         method: "POST",
         body: "not-json",
       }),
-    );
+      params: {},
+    });
     expect(response.status).toBe(400);
   });
 
   it("rejects incomplete payloads", async () => {
-    const response = await POST(
-      new Request("http://localhost/api/forms/closed/submit", {
+    const response = await action({
+      request: new Request("http://localhost/api/forms/closed/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ personId: "123" }),
       }),
-    );
+      params: {},
+    });
     expect(response.status).toBe(400);
     const payload = (await response.json()) as { errors?: Record<string, string> };
     expect(payload.errors).toBeTruthy();
   });
 
-  it("returns mock success for a valid payload", async () => {
-    const response = await POST(
-      new Request("http://localhost/api/forms/closed/submit", {
+  it("runs the hybrid workflow for a valid payload", async () => {
+    const response = await action({
+      request: new Request("http://localhost/api/forms/closed/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(buildValidPayload()),
       }),
-    );
+      params: {},
+    });
     expect(response.status).toBe(200);
     const payload = (await response.json()) as {
       formType?: string;
       dealId?: number;
+      email?: { sent?: boolean };
+      steps?: Array<{ step: string; status: string }>;
     };
     expect(payload.formType).toBe("closed");
     expect(payload.dealId).toBe(456);
+    expect(payload.email?.sent).toBe(false);
+    expect(Array.isArray(payload.steps)).toBe(true);
   });
 
   it("requires lease/rental fields when transaction type is lease", async () => {
-    const response = await POST(
-      new Request("http://localhost/api/forms/closed/submit", {
+    const response = await action({
+      request: new Request("http://localhost/api/forms/closed/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -75,7 +82,8 @@ describe("POST /api/forms/closed/submit", () => {
           monthlyRent: "",
         }),
       }),
-    );
+      params: {},
+    });
     expect(response.status).toBe(400);
     const payload = (await response.json()) as { errors?: Record<string, string> };
     expect(payload.errors?.securityDeposit).toBeTruthy();

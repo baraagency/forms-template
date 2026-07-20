@@ -22,18 +22,26 @@
     --background: #f8faf7;
     --foreground: var(--palette-2);
 
-    /* Typography */
-    --font-family: "Lexend", sans-serif;
+    /* Typography — Lato (baraagency.com): 300 / 400 / 700 / 900 */
+    --font-family: "Lato", sans-serif;
     --page-title-size: 2rem;
-    --page-title-weight: 700;
+    --page-title-weight: 900;
+    --page-title-tracking: 0.12em;
     --page-title-color: var(--palette-2);
     --section-title-size: 1.15rem;
-    --section-title-weight: 700;
+    --section-title-weight: 900;
+    --section-title-tracking: -0.02em;
     --section-title-color: var(--palette-2);
     --label-size: 0.875rem;
+    --label-weight: 700;
     --label-color: var(--palette-2);
     --body-size: 0.875rem;
+    --body-weight: 400;
+    --body-line-height: 1.625;
     --body-color: color-mix(in srgb, var(--palette-2) 70%, #ffffff);
+    --eyebrow-size: 0.875rem;
+    --eyebrow-weight: 700;
+    --eyebrow-tracking: 0.2em;
 
     /* Layout */
     --content-max-width: 920px;
@@ -85,8 +93,8 @@
 @theme inline {
     --color-background: var(--background);
     --color-foreground: var(--foreground);
-    --font-sans: var(--font-geist-sans);
-    --font-mono: var(--font-geist-mono);
+    --font-sans: var(--font-family);
+    --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
 /*@media (prefers-color-scheme: dark) {
@@ -139,6 +147,8 @@ body {
     background: var(--background);
     color: var(--foreground);
     font-family: var(--font-family);
+    font-weight: var(--body-weight);
+    line-height: var(--body-line-height);
     -webkit-font-smoothing: antialiased;
 }
 
@@ -148,6 +158,8 @@ body {
     font-family: var(--font-family);
     color: var(--body-color);
     font-size: var(--body-size);
+    font-weight: var(--body-weight);
+    line-height: var(--body-line-height);
     container-type: inline-size;
     width: min(100%, var(--content-max-width));
     max-width: var(--content-max-width);
@@ -301,7 +313,7 @@ body {
 .form-router-settings-link {
     color: var(--body-color);
     font-size: 0.8125rem;
-    font-weight: 600;
+    font-weight: 700;
     letter-spacing: 0.02em;
     opacity: 0.72;
     text-decoration: none;
@@ -320,7 +332,7 @@ body {
     color: var(--page-title-color);
     text-align: center;
     margin-bottom: var(--section-gap);
-    letter-spacing: 0.02em;
+    letter-spacing: var(--page-title-tracking);
     text-transform: uppercase;
 }
 
@@ -494,7 +506,8 @@ section + .section-card {
 .settings-section-title {
     color: var(--foreground);
     font-size: 1rem;
-    font-weight: 800;
+    font-weight: 900;
+    letter-spacing: var(--section-title-tracking);
     line-height: 1.25;
     margin: 0;
 }
@@ -787,8 +800,8 @@ section + .section-card {
 }
 
 .page-form .bara-section__title {
-    font-weight: 700;
-    letter-spacing: 0.01em;
+    font-weight: var(--section-title-weight);
+    letter-spacing: var(--section-title-tracking);
     text-wrap: balance;
 }
 
@@ -809,7 +822,12 @@ section + .section-card {
 
 .bara-label,
 .bara-radio-group legend,
-.fieldset-legend {
+.fieldset-legend,
+.bara-checkbox__label {
+    font-weight: var(--label-weight);
+}
+
+.bara-button {
     font-weight: 700;
 }
 
@@ -821,7 +839,7 @@ section + .section-card {
     background: var(--palette-1);
     border-color: var(--palette-1);
     color: #ffffff;
-    font-weight: 600;
+    font-weight: 700;
 }
 
 .bara-radio-option--unchecked:hover {

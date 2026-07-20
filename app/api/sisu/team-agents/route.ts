@@ -1,4 +1,3 @@
-import { NextResponse } from "next/server";
 import { loadFixture } from "@/app/api/_mock/loadFixture";
 
 type TeamAgentsFixture = {
@@ -10,15 +9,14 @@ type TeamAgentsFixture = {
   }>;
 };
 
-export async function GET(request?: Request) {
-  const roleFilter = request
-    ? new URL(request.url).searchParams.get("role_filter") ?? undefined
-    : undefined;
+export async function loader({ request }: { request: Request }) {
+  const roleFilter =
+    new URL(request.url).searchParams.get("role_filter") ?? undefined;
   const fixture = loadFixture<TeamAgentsFixture>("sisu-team-agents.json");
   const agents =
     roleFilter === "ISISA"
       ? fixture.agents.filter((agent) => agent.isIsa)
       : fixture.agents;
 
-  return NextResponse.json({ agents });
+  return Response.json({ agents });
 }

@@ -122,6 +122,7 @@ export type FUBAppointmentInput = {
   description?: string;
   typeId?: number;
   outcomeId?: number;
+  createdById?: number;
   invitees?: FUBAppointmentInvitee[];
 };
 

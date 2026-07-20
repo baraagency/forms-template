@@ -1,6 +1,4 @@
-"use client";
-
-import { useRouter } from "next/navigation";
+import { useNavigate } from "react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
@@ -162,7 +160,7 @@ export function AppointmentSetFormClient({
   previousSubmissionFormData?: JsonValue | null;
   localDemoEnabled?: boolean;
 }) {
-  const router = useRouter();
+  const navigate = useNavigate();
   const routedAgentName = getSingleSearchParam(searchParams, "agentName");
   const previousSubmissionFormDataRef = useRef<JsonValue | null>(
     previousSubmissionFormData ?? null,
@@ -462,7 +460,7 @@ export function AppointmentSetFormClient({
         transaction: payload.transaction,
       });
 
-      router.push(
+      navigate(
         buildPostSubmissionHref({
           formType: "appointment-set",
           personId: formState.personId,
@@ -487,7 +485,7 @@ export function AppointmentSetFormClient({
           : "Unable to submit the Appointment Set form.",
       );
     }
-  }, [formState, routedAgentName, router]);
+  }, [formState, routedAgentName, navigate]);
 
   if (submitStatus === "submitting" || submitStatus === "complete") {
     return (

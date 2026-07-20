@@ -17,7 +17,7 @@ export function getAppBaseUrl(): string {
   if (configured) {
     return configured.replace(/\/$/, "");
   }
-  return "http://localhost:3000";
+  return "http://localhost:5173";
 }
 
 export function getGmailOAuthRedirectUri(): string {

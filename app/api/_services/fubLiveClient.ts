@@ -1,4 +1,12 @@
-import type { FUBListPeopleResponse, FUBPerson } from "@/app/types/fub";
+import type {
+  FUBAppointment,
+  FUBAppointmentInput,
+  FUBAppointmentOutcome,
+  FUBDeal,
+  FUBListPeopleResponse,
+  FUBNote,
+  FUBPerson,
+} from "@/app/types/fub";
 import { isFubApiEnabled } from "./fubApiMode";
 
 export type FubLiveResult<T> =
@@ -33,6 +41,72 @@ function buildFubHeaders(): HeadersInit {
   };
 }
 
+async function fubRequest<T>(
+  method: "GET" | "POST" | "PUT" | "PATCH",
+  path: string,
+  body?: unknown,
+  notConfiguredMessage = "FUB_API_KEY is not configured.",
+): Promise<FubLiveResult<T>> {
+  if (!isFubApiEnabled()) {
+    return { data: null, error: notConfiguredMessage, status: 503 };
+  }
+
+  const url = `${getFubBaseUrl()}${path.startsWith("/") ? path : `/${path}`}`;
+
+  try {
+    const response = await fetch(url, {
+      method,
+      headers: buildFubHeaders(),
+      cache: "no-store",
+      ...(body !== undefined
+        ? { body: JSON.stringify(body) }
+        : {}),
+    });
+
+    const payload = (await response.json().catch(() => ({}))) as T & {
+      message?: string;
+      errorMessage?: string;
+    };
+
+    if (!response.ok) {
+      return {
+        data: null,
+        error:
+          typeof payload.message === "string"
+            ? payload.message
+            : typeof payload.errorMessage === "string"
+              ? payload.errorMessage
+              : `FUB ${method} ${path} failed (HTTP ${response.status}).`,
+        status: response.status,
+      };
+    }
+
+    return { data: payload as T, error: null };
+  } catch (error) {
+    return {
+      data: null,
+      error:
+        error instanceof Error
+          ? error.message
+          : `Unable to reach Follow Up Boss (${method} ${path}).`,
+      status: 502,
+    };
+  }
+}
+
+function unwrapDeal(payload: FUBDeal | { deal?: FUBDeal }): FUBDeal {
+  if (
+    typeof payload === "object" &&
+    payload !== null &&
+    "deal" in payload &&
+    typeof (payload as { deal?: unknown }).deal === "object" &&
+    (payload as { deal?: unknown }).deal !== null
+  ) {
+    return (payload as { deal: FUBDeal }).deal;
+  }
+  return payload as FUBDeal;
+}
+
 /**
  * Live GET /people — Authorization: Basic base64("{FUB_API_KEY}:") + X-System headers.
  */
@@ -56,47 +130,147 @@ export async function fetchLiveFubPeople(query: {
     params.set("assignedUserId", String(query.assignedUserId));
   }
 
-  const url = `${getFubBaseUrl()}/people?${params.toString()}`;
+  const result = await fubRequest<FUBListPeopleResponse>(
+    "GET",
+    `/people?${params.toString()}`,
+  );
 
-  try {
-    const response = await fetch(url, {
-      method: "GET",
-      headers: buildFubHeaders(),
-      cache: "no-store",
-    });
+  if (result.error || !result.data) {
+    return result;
+  }
 
-    const payload = (await response.json()) as FUBListPeopleResponse & {
-      message?: string;
-      people?: FUBPerson[];
-    };
+  const people = Array.isArray(result.data.people) ? result.data.people : [];
+  return {
+    data: {
+      people,
+      _metadata: result.data._metadata ?? { total: people.length },
+    },
+    error: null,
+  };
+}
 
-    if (!response.ok) {
-      return {
-        data: null,
-        error:
-          typeof payload.message === "string"
-            ? payload.message
-            : `FUB people request failed (HTTP ${response.status}).`,
-        status: response.status,
-      };
-    }
+export async function createLiveFubNote(
+  noteData: Partial<FUBNote> & { personId: string | number; body: string },
+): Promise<FubLiveResult<FUBNote>> {
+  return fubRequest<FUBNote>("POST", "/notes", {
+    ...noteData,
+    personId: Number(noteData.personId),
+  });
+}
 
-    const people = Array.isArray(payload.people) ? payload.people : [];
+export async function createLiveFubDeal(
+  dealData: Partial<FUBDeal>,
+): Promise<FubLiveResult<FUBDeal>> {
+  const result = await fubRequest<FUBDeal | { deal?: FUBDeal }>(
+    "POST",
+    "/deals",
+    dealData,
+  );
+  if (result.error || !result.data) {
+    return { data: null, error: result.error ?? "FUB create deal failed.", status: result.status };
+  }
+  return { data: unwrapDeal(result.data), error: null };
+}
+
+export async function updateLiveFubDeal(
+  dealId: string | number,
+  dealData: Partial<FUBDeal>,
+): Promise<FubLiveResult<FUBDeal>> {
+  const result = await fubRequest<FUBDeal | { deal?: FUBDeal }>(
+    "PUT",
+    `/deals/${dealId}`,
+    dealData,
+  );
+  if (result.error || !result.data) {
+    return { data: null, error: result.error ?? "FUB update deal failed.", status: result.status };
+  }
+  return { data: unwrapDeal(result.data), error: null };
+}
+
+export async function updateLiveFubPerson(
+  personId: string | number,
+  personData: Partial<FUBPerson>,
+): Promise<FubLiveResult<FUBPerson>> {
+  return fubRequest<FUBPerson>("PUT", `/people/${personId}`, personData);
+}
+
+export async function createLiveFubAppointment(
+  appointmentData: FUBAppointmentInput,
+): Promise<FubLiveResult<FUBAppointment>> {
+  return fubRequest<FUBAppointment>("POST", "/appointments", appointmentData);
+}
+
+export async function getLiveFubAppointment(
+  appointmentId: string | number,
+): Promise<FubLiveResult<FUBAppointment>> {
+  return fubRequest<FUBAppointment>("GET", `/appointments/${appointmentId}`);
+}
+
+export async function updateLiveFubAppointment(
+  appointmentId: string | number,
+  appointmentData: Partial<FUBAppointmentInput>,
+): Promise<FubLiveResult<FUBAppointment>> {
+  return fubRequest<FUBAppointment>(
+    "PUT",
+    `/appointments/${appointmentId}`,
+    appointmentData,
+  );
+}
+
+/**
+ * Update outcome on an existing appointment while preserving start/end
+ * (FUB requires start/end on PUT).
+ */
+export async function updateLiveFubAppointmentOutcome(
+  appointmentId: string | number,
+  outcomeId: number,
+): Promise<FubLiveResult<FUBAppointment>> {
+  const existing = await getLiveFubAppointment(appointmentId);
+  if (existing.error || !existing.data) {
     return {
-      data: {
-        people,
-        _metadata: payload._metadata ?? { total: people.length },
-      },
-      error: null,
+      data: null,
+      error: existing.error ?? "Follow Up Boss appointment not found.",
+      status: existing.status ?? 404,
     };
-  } catch (error) {
+  }
+
+  const start = existing.data.start;
+  const end = existing.data.end;
+  if (typeof start !== "string" || typeof end !== "string" || !start || !end) {
     return {
       data: null,
       error:
-        error instanceof Error
-          ? error.message
-          : "Unable to reach Follow Up Boss people.",
-      status: 502,
+        "Follow Up Boss appointment is missing required start and end times.",
+      status: 400,
     };
   }
+
+  return updateLiveFubAppointment(appointmentId, {
+    outcomeId,
+    start,
+    end,
+  });
+}
+
+export async function fetchLiveFubAppointmentOutcomes(): Promise<
+  FubLiveResult<FUBAppointmentOutcome[]>
+> {
+  const result = await fubRequest<{
+    appointmentoutcomes?: FUBAppointmentOutcome[];
+  }>("GET", "/appointmentOutcomes?limit=100&sort=orderWeight");
+
+  if (result.error || !result.data) {
+    return {
+      data: null,
+      error: result.error ?? "Failed to load FUB appointment outcomes.",
+      status: result.status,
+    };
+  }
+
+  return {
+    data: Array.isArray(result.data.appointmentoutcomes)
+      ? result.data.appointmentoutcomes
+      : [],
+    error: null,
+  };
 }

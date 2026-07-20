@@ -12,9 +12,17 @@ export async function listRouterForms(): Promise<StorageResult<RouterForm[]>> {
 
   try {
     const result = await poolResult.data.query<RouterForm>(
-      `SELECT slug, name, visible FROM router_forms ORDER BY slug ASC`,
+      `SELECT slug, name, visible FROM router_forms`,
     );
-    return { data: result.rows, error: null };
+    const orderIndex = new Map(
+      FORM_ROUTER_FORM_REGISTRY.map((form, index) => [form.key, index]),
+    );
+    const rows = [...result.rows].sort((a, b) => {
+      const aIndex = orderIndex.get(a.slug as FormRouterFormMeta["key"]) ?? 999;
+      const bIndex = orderIndex.get(b.slug as FormRouterFormMeta["key"]) ?? 999;
+      return aIndex - bIndex;
+    });
+    return { data: rows, error: null };
   } catch (error) {
     return {
       data: null,

@@ -1,4 +1,3 @@
-import { NextResponse } from "next/server";
 import {
   createEmailRecipient,
   listEmailRecipients,
@@ -13,13 +12,13 @@ function isValidEmail(value: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 }
 
-export async function GET(request: Request) {
+export async function loader({ request }: { request: Request }) {
   const environment = normalizeSettingsEnvironment();
   const formParam = new URL(request.url).searchParams.get("form");
   const formType = formParam ? parseFormKindParam(formParam) : null;
 
   if (formParam && !formType) {
-    return NextResponse.json(
+    return Response.json(
       { message: "Query form must be a valid FormKind or slug." },
       { status: 400 },
     );
@@ -31,29 +30,33 @@ export async function GET(request: Request) {
   );
 
   if (result.error || !result.data) {
-    return NextResponse.json(
+    return Response.json(
       { message: result.error ?? "Failed to list recipients." },
       { status: 500 },
     );
   }
 
-  return NextResponse.json({
+  return Response.json({
     environment,
     form: formType,
     recipients: result.data,
   });
 }
 
-export async function POST(request: Request) {
+export async function action({ request }: { request: Request }) {
+  if (request.method !== "POST") {
+    return Response.json({ message: "Method not allowed." }, { status: 405 });
+  }
+
   let body: unknown;
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ message: "Invalid JSON body." }, { status: 400 });
+    return Response.json({ message: "Invalid JSON body." }, { status: 400 });
   }
 
   if (typeof body !== "object" || body === null) {
-    return NextResponse.json({ message: "Invalid body." }, { status: 400 });
+    return Response.json({ message: "Invalid body." }, { status: 400 });
   }
 
   const email =
@@ -69,14 +72,14 @@ export async function POST(request: Request) {
   const form_type = formTypeRaw ? parseFormKindParam(formTypeRaw) : null;
 
   if (!email || !isValidEmail(email)) {
-    return NextResponse.json(
+    return Response.json(
       { message: "A valid email is required." },
       { status: 400 },
     );
   }
 
   if (!form_type || !isSettingsFormKind(form_type)) {
-    return NextResponse.json(
+    return Response.json(
       { message: "form_type is required (FormKind)." },
       { status: 400 },
     );
@@ -91,11 +94,11 @@ export async function POST(request: Request) {
   });
 
   if (result.error || !result.data) {
-    return NextResponse.json(
+    return Response.json(
       { message: result.error ?? "Failed to create recipient." },
       { status: 500 },
     );
   }
 
-  return NextResponse.json({ recipient: result.data }, { status: 201 });
+  return Response.json({ recipient: result.data }, { status: 201 });
 }

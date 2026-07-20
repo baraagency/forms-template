@@ -1,23 +1,28 @@
-import { NextResponse } from "next/server";
 import { updateRouterFormVisibility } from "@/app/api/_services/routerFormsRepo";
 import { isFormRouterSlug } from "@/app/forms/_core/formIdentity";
 
-type RouteContext = {
-  params: Promise<{ slug: string }>;
-};
+export async function action({
+  request,
+  params,
+}: {
+  request: Request;
+  params: { slug: string };
+}) {
+  if (request.method !== "PATCH") {
+    return Response.json({ message: "Method not allowed." }, { status: 405 });
+  }
 
-export async function PATCH(request: Request, context: RouteContext) {
-  const { slug } = await context.params;
+  const slug = params.slug;
 
   if (!isFormRouterSlug(slug)) {
-    return NextResponse.json({ message: "Unknown form slug." }, { status: 400 });
+    return Response.json({ message: "Unknown form slug." }, { status: 400 });
   }
 
   let body: unknown;
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ message: "Invalid JSON body." }, { status: 400 });
+    return Response.json({ message: "Invalid JSON body." }, { status: 400 });
   }
 
   if (
@@ -25,7 +30,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     body === null ||
     typeof (body as { visible?: unknown }).visible !== "boolean"
   ) {
-    return NextResponse.json(
+    return Response.json(
       { message: "Body must include boolean visible." },
       { status: 400 },
     );
@@ -38,11 +43,11 @@ export async function PATCH(request: Request, context: RouteContext) {
 
   if (result.error || !result.data) {
     const status = result.error === "Router form not found." ? 404 : 500;
-    return NextResponse.json(
+    return Response.json(
       { message: result.error ?? "Failed to update router form." },
       { status },
     );
   }
 
-  return NextResponse.json({ form: result.data });
+  return Response.json({ form: result.data });
 }

@@ -1,15 +1,14 @@
-import { NextResponse } from "next/server";
 import { listRouterForms } from "@/app/api/_services/routerFormsRepo";
 
-export async function GET() {
+export async function loader() {
   const result = await listRouterForms();
 
   if (result.error || !result.data) {
-    return NextResponse.json(
+    return Response.json(
       { message: result.error ?? "Failed to load router forms." },
       { status: 500 },
     );
   }
 
-  return NextResponse.json({ forms: result.data });
+  return Response.json({ forms: result.data });
 }

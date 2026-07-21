@@ -70,12 +70,15 @@ APIs, conventions, and file structure may differ from Next.js or older React Rou
 - Email recipients: no Active toggle—remove a row to disable; editable emails; add-email input above the list.
 - Prefer paginated settings mapping tables (5 rows/page), matching the usaj-app pattern.
 - Keep local Docker/Postgres test database setup out of the repo; use it only for local testing.
+- Form display order on `/forms` and `/forms/settings`: Appointment Set, Appointment Met, Pending, Closed.
+- Brand colors should match baraagency.com (navy/sky/orange), not the old green palette.
 
 ## Learned Workspace Facts
 
 - This repo is the reusable forms template (GitHub slug `forms-template`) for future form projects.
 - Production form layouts are often referenced from sibling apps such as `jeff-cook-app` and `usaj-app`; implement against this template's patterns and styling.
 - Settings SISU team-fields and FUB person/deal field option catalogs use live APIs when the corresponding API keys are set; otherwise fixtures.
+- SISU write sets `agent_id` by resolving the submitting FUB user's email via `POST /v1/agent/find-agent` (omit on failure; appointment-met uses `agentSubmitting || agentId`).
 - FUB form settings split into Person (stage, tags, mappings) and Deal (stage, mappings; no tags); person stages from `/api/fub/stages`, deal stages from `/api/fub/pipelines`.
 - Email recipients are per-form via `form_type` and need not be unique across forms.
 - Deploy target is Heroku (Node 22.22+, `Procfile` → `npm run start` / `@react-router/serve`).

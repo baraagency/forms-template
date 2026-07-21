@@ -6,6 +6,7 @@ import {
 import { formKindLabel } from "@/app/forms/_core/formIdentity";
 import { runSubmissionWorkflow } from "@/app/api/_services/submissionWorkflow";
 import { runAppointmentMetFubAppointmentSideEffect } from "@/app/api/forms/appointment-met/appointmentMetFubAppointment";
+import { resolveAppointmentMetSubmittingAgentId } from "@/app/api/forms/appointment-met/appointmentMetSubmittingAgentId";
 
 function isAppointmentMetPayload(
   payload: unknown,
@@ -58,7 +59,10 @@ export async function action({ request }: { request: Request }) {
     personId: formState.personId,
     dealId: formState.dealId || null,
     sisuTransactionId: formState.sisuTransactionId || null,
-    agentId: formState.agentId || null,
+    agentId: resolveAppointmentMetSubmittingAgentId({
+      agentSubmitting: formState.agentSubmitting,
+      agentId: formState.agentId,
+    }),
     leadType: formState.leadType || null,
     hooks: {
       extraSideEffects: runAppointmentMetFubAppointmentSideEffect,

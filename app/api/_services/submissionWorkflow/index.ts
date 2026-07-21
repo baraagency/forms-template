@@ -1,4 +1,5 @@
 export { runSubmissionWorkflow } from "./runSubmissionWorkflow";
+export { resolveSisuAgentIdForFubAgentId } from "./resolveSisuAgentId";
 export { buildFormSubmissionSummary } from "./buildFormSubmissionSummary";
 export {
   applyFubFieldMappings,

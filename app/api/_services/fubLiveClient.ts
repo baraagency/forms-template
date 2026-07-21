@@ -6,6 +6,7 @@ import type {
   FUBListPeopleResponse,
   FUBNote,
   FUBPerson,
+  FUBUser,
 } from "@/app/types/fub";
 import { isFubApiEnabled } from "./fubApiMode";
 
@@ -147,6 +148,20 @@ export async function fetchLiveFubPeople(query: {
     },
     error: null,
   };
+}
+
+/**
+ * Live GET /users/{id}.
+ */
+export async function fetchLiveFubUser(
+  userId: string,
+): Promise<FubLiveResult<FUBUser>> {
+  const trimmed = userId.trim();
+  if (!trimmed) {
+    return { data: null, error: "FUB user id is required.", status: 400 };
+  }
+
+  return fubRequest<FUBUser>("GET", `/users/${encodeURIComponent(trimmed)}`);
 }
 
 export async function createLiveFubNote(

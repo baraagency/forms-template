@@ -35,7 +35,9 @@ import {
   listSisuMappings,
 } from "@/app/api/_services/settingsQueries";
 import { applyFubFieldMappings, applySisuFieldMappings } from "./applyFieldMappings";
+import { applyResolvedSisuAgentId } from "./applyResolvedSisuAgentId";
 import { buildFormSubmissionSummary } from "./buildFormSubmissionSummary";
+import { resolveSisuAgentIdForFubAgentId } from "./resolveSisuAgentId";
 import type {
   RunSubmissionWorkflowInput,
   RunSubmissionWorkflowResult,
@@ -631,6 +633,11 @@ export async function runSubmissionWorkflow(
     try {
       if (ctx.dealId && !ctx.sisuPayload.fub_deal_id) {
         ctx.sisuPayload.fub_deal_id = String(ctx.dealId);
+      }
+
+      if (ctx.agentId) {
+        const sisuAgentId = await resolveSisuAgentIdForFubAgentId(ctx.agentId);
+        applyResolvedSisuAgentId(ctx.sisuPayload, sisuAgentId);
       }
 
       const result = await createOrUpdateLiveSisuTransaction(

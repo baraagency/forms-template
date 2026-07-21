@@ -2,6 +2,8 @@ import type {
   SISUCreateTransactionRequest,
   SISUCreateTransactionResponse,
   SISUDropdownOption,
+  SISUFindAgentRequest,
+  SISUFindAgentResponse,
   SISUTeamField,
   SISUTeamFieldCatalogEntry,
   SISUTeamFieldsCatalogResponse,
@@ -334,4 +336,69 @@ export async function createOrUpdateLiveSisuTransaction(
     "/v1/client/edit-client",
     payload,
   );
+}
+
+export function pickSisuAgentIdFromFindResponse(
+  payload: SISUFindAgentResponse | null | undefined,
+  email: string,
+): number | undefined {
+  const agents = payload?.agents;
+  if (!agents || agents.length === 0) {
+    return undefined;
+  }
+
+  const target = email.trim().toLowerCase();
+  const exactMatch = agents.find((agent) => {
+    const agentEmail = agent.email?.toLowerCase() || "";
+    const archivedEmail = agent.archived_email?.toLowerCase() || "";
+    return agentEmail === target || archivedEmail === target;
+  });
+
+  const bestAgent = exactMatch || agents[0];
+  const agentId = bestAgent?.agent_id;
+  return typeof agentId === "number" && Number.isFinite(agentId)
+    ? agentId
+    : undefined;
+}
+
+/**
+ * Live POST /v1/agent/find-agent — body: { email }.
+ */
+export async function findLiveSisuAgentByEmail(
+  email: string,
+): Promise<SisuLiveResult<SISUFindAgentResponse>> {
+  const trimmed = email.trim();
+  if (!trimmed) {
+    return { data: null, error: "Agent email is required.", status: 400 };
+  }
+
+  const body = { email: trimmed } satisfies SISUFindAgentRequest;
+  return sisuRequest<SISUFindAgentResponse>("POST", "/v1/agent/find-agent", body);
+}
+
+/**
+ * Resolve best SISU agent_id for an email (exact / archived match, else first).
+ */
+export async function resolveLiveSisuAgentIdByEmail(
+  email: string,
+): Promise<SisuLiveResult<number>> {
+  const result = await findLiveSisuAgentByEmail(email);
+  if (result.error || !result.data) {
+    return {
+      data: null,
+      error: result.error ?? "Failed to find SISU agent.",
+      status: result.status,
+    };
+  }
+
+  const agentId = pickSisuAgentIdFromFindResponse(result.data, email);
+  if (agentId === undefined) {
+    return {
+      data: null,
+      error: `No SISU agent found for email: ${email.trim()}`,
+      status: 404,
+    };
+  }
+
+  return { data: agentId, error: null };
 }

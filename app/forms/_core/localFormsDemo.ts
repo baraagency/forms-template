@@ -5,32 +5,24 @@ import {
   MOCK_TRANSACTION_ID,
 } from "@/app/api/_fixtures/constants";
 
-export const LOCAL_DEMO_CLIENT_NAME = "Jane Client";
-export const LOCAL_DEMO_AGENT_NAME = "Alex Agent";
+export const DEMO_CLIENT_NAME = "Jane Client";
+export const DEMO_AGENT_NAME = "Alex Agent";
 
-/** True for local/dev sessions where fixture IDs may stand in for missing query params. */
-export function isLocalFormsDemoEnvironment(
-  environment?: string,
-  nodeEnv: string | undefined = process.env.NODE_ENV,
+/** True only when DEMO_MODE is explicitly set to "true" (case-insensitive). */
+export function isFormsDemoMode(
+  demoMode: string | undefined = process.env.DEMO_MODE,
 ): boolean {
-  const env = environment?.trim().toUpperCase();
-  if (env === "LOCAL") {
-    return true;
-  }
-  if (env === "PRODUCTION" || env === "STAGING") {
-    return false;
-  }
-  return nodeEnv === "development";
+  return demoMode?.trim().toLowerCase() === "true";
 }
 
-export function getLocalDemoFixtureIds() {
+export function getDemoFixtureIds() {
   return {
     personId: String(MOCK_PERSON_ID),
     agentId: String(MOCK_AGENT_ID),
     dealId: String(MOCK_DEAL_ID),
     sisuTransactionId: String(MOCK_TRANSACTION_ID),
-    clientName: LOCAL_DEMO_CLIENT_NAME,
-    agentName: LOCAL_DEMO_AGENT_NAME,
+    clientName: DEMO_CLIENT_NAME,
+    agentName: DEMO_AGENT_NAME,
   } as const;
 }
 
@@ -47,12 +39,12 @@ function readSingleParam(
   return value?.trim() ?? "";
 }
 
-/** When local demo is on and no client is in the URL, fill fixture query params. */
-export function applyLocalDemoSearchParams(
+/** When demo mode is on and no client is in the URL, fill fixture query params. */
+export function applyDemoSearchParams(
   searchParams: Record<string, SearchParamValue>,
-  localDemoEnabled: boolean,
+  demoModeEnabled: boolean,
 ): Record<string, SearchParamValue> {
-  if (!localDemoEnabled) {
+  if (!demoModeEnabled) {
     return searchParams;
   }
 
@@ -63,7 +55,7 @@ export function applyLocalDemoSearchParams(
     return searchParams;
   }
 
-  const fixtures = getLocalDemoFixtureIds();
+  const fixtures = getDemoFixtureIds();
   return {
     ...searchParams,
     clientId: fixtures.personId,

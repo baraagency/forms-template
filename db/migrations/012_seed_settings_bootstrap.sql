@@ -70,24 +70,24 @@ INSERT INTO "form_sisu_mappings" ("form", "field_name", "sisu_field_name", "sisu
 ON CONFLICT ("form", "field_name") DO NOTHING;
 
 INSERT INTO "form_sisu_mappings" ("form", "field_name", "sisu_field_name", "sisu_field_type", "custom", "enabled") VALUES
-  ('appointmentSet', 'clientFirstName', NULL, NULL, FALSE, TRUE),
-  ('appointmentSet', 'clientLastName', NULL, NULL, FALSE, TRUE),
-  ('appointmentSet', 'clientPhone', NULL, NULL, FALSE, TRUE),
-  ('appointmentSet', 'clientEmail', NULL, NULL, FALSE, TRUE),
-  ('appointmentSet', 'leadType', NULL, NULL, FALSE, TRUE),
+  ('appointmentSet', 'clientFirstName', 'first_name', NULL, FALSE, TRUE),
+  ('appointmentSet', 'clientLastName', 'last_name', NULL, FALSE, TRUE),
+  ('appointmentSet', 'clientPhone', 'mobile_phone', NULL, FALSE, TRUE),
+  ('appointmentSet', 'clientEmail', 'email', NULL, FALSE, TRUE),
+  ('appointmentSet', 'leadType', 'client_type', NULL, FALSE, TRUE),
   ('appointmentSet', 'apptSetBy', NULL, NULL, FALSE, TRUE),
   ('appointmentSet', 'assignedIsa', NULL, NULL, FALSE, TRUE),
   ('appointmentSet', 'assignedOsa', NULL, NULL, FALSE, TRUE),
-  ('appointmentSet', 'notes', NULL, NULL, FALSE, TRUE),
+  ('appointmentSet', 'notes', 'note', NULL, FALSE, TRUE),
   ('appointmentSet', 'appointmentDate', NULL, NULL, FALSE, TRUE),
   ('appointmentSet', 'appointmentStartTime', NULL, NULL, FALSE, TRUE),
   ('appointmentSet', 'appointmentEndTime', NULL, NULL, FALSE, TRUE),
   ('appointmentSet', 'appointmentLocation', NULL, NULL, FALSE, TRUE),
-  ('appointmentSet', 'streetAddress', NULL, NULL, FALSE, TRUE),
-  ('appointmentSet', 'addressLine2', NULL, NULL, FALSE, TRUE),
-  ('appointmentSet', 'city', NULL, NULL, FALSE, TRUE),
-  ('appointmentSet', 'state', NULL, NULL, FALSE, TRUE),
-  ('appointmentSet', 'postalCode', NULL, NULL, FALSE, TRUE),
+  ('appointmentSet', 'streetAddress', 'address_1', NULL, FALSE, TRUE),
+  ('appointmentSet', 'addressLine2', 'address_2', NULL, FALSE, TRUE),
+  ('appointmentSet', 'city', 'city', NULL, FALSE, TRUE),
+  ('appointmentSet', 'state', 'state', NULL, FALSE, TRUE),
+  ('appointmentSet', 'postalCode', 'postal_code', NULL, FALSE, TRUE),
   ('appointmentSet', 'appointmentType', NULL, NULL, FALSE, TRUE)
 ON CONFLICT ("form", "field_name") DO NOTHING;
 

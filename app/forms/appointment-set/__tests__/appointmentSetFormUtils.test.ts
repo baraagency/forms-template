@@ -35,7 +35,7 @@ const completeState = {
   appointmentDate: "2026-06-15",
   appointmentStartTime: "10:00",
   appointmentEndTime: "11:00",
-  appointmentLocation: "Charleston Office",
+  appointmentLocation: "Phone",
   appointmentType: "Buyer Consultation",
 };
 
@@ -127,6 +127,8 @@ describe("appointment set SISU option mappings", () => {
   it("maps appointment types to FUB typeId values", () => {
     expect(toFubAppointmentTypeId("Buyer Consultation")).toBe(1);
     expect(toFubAppointmentTypeId("Listing")).toBe(2);
+    expect(toFubAppointmentTypeId("1")).toBe(1);
+    expect(toFubAppointmentTypeId("buyer consultation")).toBe(1);
   });
 });
 
@@ -286,12 +288,12 @@ describe("validateAppointmentSetSection", () => {
     });
   });
 
-  it("does not require address fields when Appointment Location is an office", () => {
+  it("does not require address fields when Appointment Location is Phone", () => {
     expect(
       validateAppointmentSetSection(
         {
           ...completeState,
-          appointmentLocation: "Charleston Office",
+          appointmentLocation: "Phone",
           streetAddress: "",
           city: "",
           state: "",
@@ -329,7 +331,7 @@ describe("validateAppointmentSetForm", () => {
 describe("isOtherAddressLocation", () => {
   it("identifies the Other Address location option", () => {
     expect(isOtherAddressLocation("Other Address")).toBe(true);
-    expect(isOtherAddressLocation("Charleston Office")).toBe(false);
+    expect(isOtherAddressLocation("Phone")).toBe(false);
   });
 });
 
@@ -349,7 +351,7 @@ describe("resolveAppointmentSetLocation", () => {
   });
 
   it("returns the selected location option otherwise", () => {
-    expect(resolveAppointmentSetLocation(completeState)).toBe("Charleston Office");
+    expect(resolveAppointmentSetLocation(completeState)).toBe("Phone");
   });
 });
 

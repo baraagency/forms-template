@@ -8,7 +8,9 @@ import {
   formatClientDisplayName,
   isOsaApptSetBy,
   resolveAppointmentSetLocation,
+  resolveAppointmentTypeName,
   toFubAppointmentTypeId,
+  type FubAppointmentTypeOption,
 } from "@/app/forms/appointment-set/appointmentSetFormUtils";
 
 function parsePositiveInteger(value: unknown): number | undefined {
@@ -28,6 +30,7 @@ function resolveInviteeUserId(state: AppointmentSetFormState): string {
 
 export function buildFubAppointmentSetPayload(
   state: AppointmentSetFormState,
+  appointmentTypes: ReadonlyArray<FubAppointmentTypeOption> = [],
 ): FUBAppointmentInput {
   const clientName = formatClientDisplayName(state);
   const invitees: FUBAppointmentInvitee[] = [];
@@ -47,12 +50,16 @@ export function buildFubAppointmentSetPayload(
   }
 
   const createdById = parsePositiveInteger(state.agentId);
-  const typeId = toFubAppointmentTypeId(state.appointmentType);
+  const typeId = toFubAppointmentTypeId(state.appointmentType, appointmentTypes);
+  const typeName = resolveAppointmentTypeName(
+    state.appointmentType,
+    appointmentTypes,
+  );
   const location = resolveAppointmentSetLocation(state);
   const description = state.notes.trim();
 
   return {
-    title: `${state.appointmentType} - ${clientName}`.trim(),
+    title: `${typeName} - ${clientName}`.trim(),
     start: buildAppointmentDateTimeIso(
       state.appointmentDate,
       state.appointmentStartTime,

@@ -4,6 +4,18 @@
 
 Ops settings for real-estate form workflows (SISU + Follow Up Boss). Calm, dense enough for mapping tables, quiet elevation — not a marketing dashboard. Agent/admin configuring router visibility, email, and field mappings between desk work.
 
+## Color (baraagency.com)
+
+| Token | Hex | Role |
+| --- | --- | --- |
+| `--palette-1` | `#000000` | Black accent / primary CTAs |
+| `--palette-2` | `#003A55` | Deep navy text & structure |
+| `--palette-3` | `#404040` | Charcoal errors |
+| `--brand-sky` | `#0099CC` | Brand blue (focus, outlines, success tint) |
+| `--background` | `#F0F7FA` | Cool blue-tinted page wash |
+
+Keep Lato; prefer CSS variables over hard-coded hex in components.
+
 ## Depth strategy
 
 **Layered subtle shadows + low-opacity edge rings** (not harsh solid borders).
@@ -29,10 +41,11 @@ Do not mix in dramatic multi-layer card shadows or pure white cards on tinted gr
 
 ## Typography
 
-- Face: **Lato** (baraagency.com) via Google Fonts link in `app/root.tsx` — weights 300 / 400 / 700 / 900 only
-- Display / page titles: weight 900, uppercase, wide tracking (`--page-title-tracking`)
-- Section titles: weight 900, slight negative tracking (`--section-title-tracking`)
-- Labels / eyebrows: weight 700; eyebrows use wide tracking (`--eyebrow-tracking`) when uppercase
+- Body face: **Lato** (baraagency.com) via Google Fonts in `app/root.tsx` — weights 300 / 400 / 700 / 900
+- Headers / display: **DM Serif Display** via `--font-display` — page titles and container (`SectionCard`) headers only on settings; nested settings section / subsection titles use Lato weight 700
+- Display / page titles: uppercase, wide tracking (`--page-title-tracking`)
+- Section titles (forms): slight negative tracking (`--section-title-tracking`) on container headers
+- Labels / eyebrows: Lato weight 700; eyebrows use wide tracking (`--eyebrow-tracking`) when uppercase
 - Body: weight 400, line-height ~1.625
 - Descriptions: italic body color, `text-wrap: pretty`, max-width ~620px
 - Field codes: compact monospace-ish via `<code>`, overflow-wrap anywhere
@@ -41,9 +54,13 @@ Do not mix in dramatic multi-layer card shadows or pure white cards on tinted gr
 
 ## Motion
 
-- Press feedback: `scale(0.96)` only (never below 0.95)
+- Press feedback: `scale(0.96)` / `var(--scale-large)` only (never below 0.95)
 - Transitions: specific properties (`transform`, `color`, etc.) — never `transition: all`
-- Easing: decelerating cubic-bezier (~`0.23, 1, 0.32, 1`) for tabs/toggles
+- Shared tokens: `app/component-transitions.css` (`--duration-*`, `--ease-smooth-out`, `--distance-*`, `--scale-*`, `--blur-*`)
+- Easing: `--ease-smooth-out` (`cubic-bezier(0.22, 1, 0.36, 1)`) for surface motion
+- Focus / hover accents: `--brand-sky` / `--brand-sky-soft` (not the primary CTA fill) so CTAs stay the only black moments
+- Primary CTAs (form launch, Submit, Create New Deal, settings saves): shared black vertical gradient + 2px border via `.form-router-launch-button` / `.bara-button--primary`
+- Select menus: open `--duration-fast` fade+scale; close is the reverse at `--duration-quick` (slightly faster) via `useSelectMenuMotion` + `.bara-select__menu--closing`
 - Respect `prefers-reduced-motion`
 
 ## Hit areas
@@ -57,25 +74,31 @@ Interactive controls (pagination, toggles, icon buttons) ≥ **40×40px**.
 ### Settings form tabs
 
 - File: `app/forms/settings/settings-tabs.css`
-- 4-column grid of tabs; sliding indicator under active tab
+- Form-level: 4-column grid of tabs; sliding indicator under active tab
+- Nested mapping destinations: `.settings-tabs--3` (SISU | FUB Person | FUB Deal) inside one **Field mappings** section
 - Active: foreground color; press: `scale(0.96)`
+- Inactive mapping panels stay mounted (`hidden`) so draft mapping edits survive tab switches
+- No panel enter animation on destination switch (frequent ops action — keep instant)
 
 ### Mapping table (SISU / FUB)
 
-- Shared layout: search → optional loading hint → MUI table (5 rows/page) → pagination with tabular nums
-- Columns: Form field (label + `field_name` code) → target Select → Save (primary only when dirty)
+- Shared layout: search + Save mappings (same row) → optional loading hint → MUI table (5 rows/page) → pagination
+- Row order: form-field appearance order from `formFieldCatalog.ts` (`FORM_FIELD_OPTIONS` array order), not A–Z `field_name`
+- Columns: Form field (label only) → target Select (+ SISU Type / Custom)
+- No per-row Actions column — edit freely, then **Save mappings** beside search commits all dirty rows
+- Status under the Save button: “No unsaved changes” or “N unsaved change(s)”; primary CTA only when dirty
 - Cleared SISU / FUB field = `enabled: false` on save; selecting a field = `enabled: true`
 - SISU: also Type + Custom (auto from team-fields catalog)
 - FUB person/deal: Select options = top-level keys from one sample (`/api/fub/people?fields=allFields&limit=1`, `/api/fub/deals?fields=allFields&limit=1`). Person sample uses live FUB when `FUB_API_KEY` is set; otherwise fixture.
 - SISU field Select: live `/api/sisu/team-fields` when `SISU_API_KEY` is set; otherwise fixture
 - Components: `SisuMappingsTable.tsx`, `FubMappingsTable.tsx`
 
-### FUB Person / FUB Deal blocks
+### FUB Person / FUB Deal (mapping tabs)
 
 - File: `FormSettingsPanel.tsx` (+ `FubStagePicker.tsx`, `FubMappingsTable.tsx`)
-- Two peer sections after SISU mappings — not a single “FUB stages” list
-- **FUB Person:** Stage → Tags → Mappings
-- **FUB Deal:** Stage → Mappings (no Tags)
+- Live inside **Field mappings** destination tabs — not stacked peer sections
+- **FUB Person** tab: Stage → Tags → Mappings
+- **FUB Deal** tab: Stage → Mappings (no Tags)
 - Subsections use `.settings-fub-subsection` inset surface (see Depth)
 - Person stages: flat list from `/api/fub/stages`
 - Deal stages: from `/api/fub/pipelines` nested stages; display label `Pipeline · Stage` (SelectInput flattens optgroups)
@@ -90,6 +113,7 @@ Interactive controls (pagination, toggles, icon buttons) ≥ **40×40px**.
 
 - `.settings-section` gap 14px; adjacent sections get top border + 24px padding-top
 - No decorative “FUB note” / env explainer cards — credentials stay in env docs, not the UI
+- Back to Form Router: fixed top-left (`settings-back-link`, 16px inset, z-index 40)
 
 ### Per-form email recipients
 

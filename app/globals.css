@@ -6,10 +6,10 @@
    ──────────────────────────────────────────────────────────────────────────── */
 
 :root {
-    /* Brand palette (edit these three to rebrand) */
-    --palette-1: #67ad4b;
-    --palette-2: #003c18;
-    --palette-3: #410000;
+    /* Brand palette */
+    --palette-1: #000000; /* primary accent (CTAs) */
+    --palette-2: #003a55; /* deep navy (text / structure) */
+    --palette-3: #404040; /* charcoal (errors / danger) */
 
     /* Brand (mapped to palette) */
     --brand-charcoal: var(--palette-2);
@@ -17,19 +17,22 @@
     --brand-cyan: var(--palette-1);
     --brand-cyan-dark: color-mix(in srgb, var(--palette-1) 78%, #000000);
     --brand-cyan-soft: color-mix(in srgb, var(--palette-1) 14%, #ffffff);
+    --brand-sky: #0099cc;
+    --brand-sky-soft: #d4ecf7;
 
     /* Page chrome */
-    --background: #f8faf7;
+    --background: #f0f7fa;
     --foreground: var(--palette-2);
 
-    /* Typography — Lato (baraagency.com): 300 / 400 / 700 / 900 */
+    /* Typography — Lato body + DM Serif Display headers (baraagency.com) */
     --font-family: "Lato", sans-serif;
+    --font-display: "DM Serif Display", serif;
     --page-title-size: 2rem;
-    --page-title-weight: 900;
+    --page-title-weight: 500;
     --page-title-tracking: 0.12em;
     --page-title-color: var(--palette-2);
-    --section-title-size: 1.15rem;
-    --section-title-weight: 900;
+    --section-title-size: 1.25rem;
+    --section-title-weight: 400;
     --section-title-tracking: -0.02em;
     --section-title-color: var(--palette-2);
     --label-size: 0.875rem;
@@ -56,36 +59,41 @@
     --card-radius: 8px;
     --card-shadow: 0 16px 36px color-mix(in srgb, var(--palette-2) 8%, transparent);
     --card-border: 1px solid color-mix(in srgb, var(--palette-2) 12%, #ffffff);
-    --field-shadow: 0 2px 6px color-mix(in srgb, var(--palette-2) 8%, transparent);
-    --field-hover-border: color-mix(in srgb, var(--palette-1) 45%, #ffffff);
-    --field-focus-ring: color-mix(in srgb, var(--palette-1) 24%, transparent);
+    /* Soft layered elevation — same light as cards (down, not diagonal sticker) */
+    --field-shadow:
+        0 1px 2px rgb(0 58 85 / 0.07),
+        0 5px 14px rgb(0 58 85 / 0.06);
+    --field-hover-border: color-mix(in srgb, var(--brand-sky) 45%, #ffffff);
+    --field-focus-ring: color-mix(in srgb, var(--brand-sky) 28%, transparent);
     --disabled-bg: color-mix(in srgb, var(--palette-2) 6%, #ffffff);
 
     /* Indent / conditional blocks */
     --indent-border-width: 3px;
-    --indent-border-color: var(--palette-1);
+    --indent-border-color: var(--brand-sky);
     --indent-padding-left: 16px;
 
     /* Dividers */
     --divider-color: color-mix(in srgb, var(--palette-2) 14%, #ffffff);
 
     /* Buttons */
-    --btn-primary-bg: var(--palette-2);
+    --btn-primary-bg: var(--palette-1);
     --btn-primary-color: #fff;
-    --btn-primary-hover-bg: var(--brand-charcoal-dark);
+    --btn-primary-hover-bg: var(--palette-1);
     --btn-outline-color: var(--palette-2);
-    --btn-outline-border: var(--palette-1);
+    --btn-outline-border: var(--brand-sky);
     --btn-radius: 6px;
+    /* TextInput control height — beside-field CTAs match this */
+    --settings-field-control-height: 2.625rem;
     --highlight-color: var(--palette-1);
     --highlight-bg: var(--brand-cyan-soft);
-    --menu-hover-bg: color-mix(in srgb, var(--palette-1) 10%, #ffffff);
+    --menu-hover-bg: color-mix(in srgb, var(--brand-sky) 12%, #ffffff);
     --icon-muted: color-mix(in srgb, var(--palette-2) 55%, #ffffff);
 
     /* Status colours */
-    --success-bg: color-mix(in srgb, var(--palette-1) 12%, #ffffff);
+    --success-bg: color-mix(in srgb, var(--brand-sky) 14%, #ffffff);
     --success-color: var(--palette-2);
-    --warning-bg: color-mix(in srgb, var(--palette-1) 8%, #ffffff);
-    --warning-color: var(--palette-2);
+    --warning-bg: color-mix(in srgb, var(--palette-1) 12%, #ffffff);
+    --warning-color: color-mix(in srgb, var(--palette-3) 85%, #000000);
     --error-color: var(--palette-3);
     --placeholder-color: color-mix(in srgb, var(--palette-2) 45%, #ffffff);
 }
@@ -245,62 +253,92 @@ body {
 .form-router-form-choices {
     display: grid;
     gap: 12px;
+    padding-top: 8px;
     width: 100%;
 }
 
-.form-router-launch-button {
+/* Primary CTAs — fill gradient + darker solid border (Uiverse anatomy pattern) */
+.form-router-launch-button,
+.bara-button--primary {
+    /* Top lighter → bottom darker; border = primary */
+    --btn-cta-top: color-mix(in srgb, var(--palette-1) 72%, #ffffff);
+    --btn-cta-bottom: color-mix(in srgb, var(--palette-1) 90%, #ffffff);
+    --btn-cta-border: var(--palette-1);
+    --btn-cta-hover-bg: var(--palette-1);
+    /* Same light family as fields; slightly stronger for dark fills */
+    --btn-cta-shadow:
+        0 1px 2px rgb(0 58 85 / 0.12),
+        0 6px 16px rgb(0 58 85 / 0.1);
+    --btn-cta-shadow-active: 0 1px 2px rgb(0 58 85 / 0.16);
+    --btn-cta-arrow-shift: 0.75rem;
+    --btn-cta-label-shift: var(--distance-small, 6px);
     appearance: none;
-    align-items: center;
-    background: var(--palette-1);
-    border: none;
+    background-color: var(--btn-cta-bottom);
+    background-image: linear-gradient(var(--btn-cta-top), var(--btn-cta-bottom));
+    border: solid 2px var(--btn-cta-border);
     border-radius: var(--btn-radius);
-    box-shadow:
-        0 1px 2px rgba(0, 0, 0, 0.08),
-        0 4px 14px color-mix(in srgb, var(--palette-1) 36%, transparent);
+    box-shadow: var(--btn-cta-shadow);
     color: #ffffff;
     cursor: pointer;
     display: flex;
-    flex-direction: column;
-    gap: 0.125rem;
+    flex-direction: row;
+    gap: 0.25rem;
+    font-size: 0.9375rem;
+    font-weight: 700;
     justify-content: center;
-    min-height: 2.75rem;
-    padding: 0.625rem 1rem;
+    letter-spacing: 0.04em;
+    line-height: 1.2;
+    min-height: 3.125rem;
+    overflow: visible;
+    padding: 14px 16px;
+    position: relative;
+    align-items: center;
     text-align: center;
-    transition:
-        transform 150ms ease-out,
-        background-color 150ms ease,
-        box-shadow 150ms ease;
+    /* Press + hover arrow: component-transitions.css */
 }
 
-.form-router-launch-button:hover:not(:disabled) {
-    background: color-mix(in srgb, var(--palette-1) 86%, #000000);
-    box-shadow:
-        0 2px 4px rgba(0, 0, 0, 0.1),
-        0 6px 18px color-mix(in srgb, var(--palette-1) 42%, transparent);
+.bara-button--primary {
+    text-transform: uppercase;
 }
 
-.form-router-launch-button:disabled {
+.bara-button--secondary {
+    box-shadow: var(--field-shadow);
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .form-router-launch-button:hover:not(:disabled),
+    .form-router-launch-button:focus-visible:not(:disabled),
+    .bara-button--primary:hover:not(:disabled),
+    .bara-button--primary:focus-visible:not(:disabled) {
+        background-color: var(--btn-cta-hover-bg);
+        background-image: none;
+        border-color: var(--btn-cta-border);
+        box-shadow: var(--btn-cta-shadow);
+    }
+}
+
+.form-router-launch-button:not(:disabled):active,
+.bara-button--primary:not(:disabled):active {
+    background-color: var(--btn-cta-hover-bg);
+    background-image: none;
+    border-color: var(--btn-cta-border);
+    box-shadow: var(--btn-cta-shadow-active);
+}
+
+.form-router-launch-button:disabled,
+.bara-button--primary:disabled {
     box-shadow: none;
     cursor: not-allowed;
     opacity: 0.45;
 }
 
 .form-router-launch-button__title {
-    display: block;
+    display: inline-block;
     font-size: 0.9375rem;
     font-weight: 700;
     letter-spacing: 0.04em;
     line-height: 1.2;
     text-transform: uppercase;
-}
-
-.form-router-launch-button__description {
-    display: block;
-    font-size: 0.75rem;
-    font-weight: 400;
-    line-height: 1.3;
-    opacity: 0.92;
-    text-wrap: pretty;
 }
 
 .form-router-settings-footer {
@@ -317,7 +355,9 @@ body {
     letter-spacing: 0.02em;
     opacity: 0.72;
     text-decoration: none;
-    transition: color 150ms ease, opacity 150ms ease;
+    transition:
+        color var(--duration-quick) var(--ease-smooth-out),
+        opacity var(--duration-quick) var(--ease-smooth-out);
 }
 
 .form-router-settings-link:hover {
@@ -327,12 +367,14 @@ body {
 }
 
 .page-title {
+    font-family: var(--font-display);
     font-size: var(--page-title-size);
     font-weight: var(--page-title-weight);
     color: var(--page-title-color);
     text-align: center;
     margin-bottom: var(--section-gap);
     letter-spacing: var(--page-title-tracking);
+    line-height: 1.25;
     text-transform: uppercase;
 }
 
@@ -428,6 +470,19 @@ section + .section-card {
     gap: var(--field-gap);
 }
 
+.form-field-group > h3 {
+    border-bottom: 1px solid var(--divider-color);
+    color: var(--body-color);
+    font-family: var(--font-display);
+    font-size: 0.75rem;
+    font-weight: var(--section-title-weight);
+    letter-spacing: 0.04em;
+    line-height: 1.25;
+    margin: 0;
+    padding-bottom: 0.5rem;
+    text-transform: uppercase;
+}
+
 .form-field-group-fields {
     display: grid;
     gap: var(--field-gap);
@@ -486,6 +541,13 @@ section + .section-card {
     gap: 24px;
 }
 
+.settings-back-link {
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    z-index: 40;
+}
+
 .settings-section {
     display: grid;
     gap: 14px;
@@ -505,9 +567,10 @@ section + .section-card {
 
 .settings-section-title {
     color: var(--foreground);
+    font-family: var(--font-family), Arial, Helvetica, sans-serif;
     font-size: 1rem;
-    font-weight: 900;
-    letter-spacing: var(--section-title-tracking);
+    font-weight: 700;
+    letter-spacing: 0;
     line-height: 1.25;
     margin: 0;
 }
@@ -565,7 +628,7 @@ section + .section-card {
 .settings-dynamic-recipient-form {
     display: grid;
     grid-template-columns: minmax(280px, 1fr) auto;
-    align-items: start;
+    align-items: end;
     column-gap: 16px;
     row-gap: 8px;
 }
@@ -576,7 +639,25 @@ section + .section-card {
 }
 
 .settings-dynamic-recipient-actions {
-    padding-top: 37px;
+    display: flex;
+    align-items: center;
+    min-height: 0;
+}
+
+/* Match beside-field CTAs to TextInput control height (not full launch-button chrome) */
+.settings-dynamic-recipient-actions .bara-button--primary,
+.settings-dynamic-recipient-actions .bara-button--secondary,
+.settings-dynamic-recipient-actions .form-router-launch-button,
+.settings-recipient-actions .bara-button--primary,
+.settings-recipient-actions .bara-button--secondary,
+.settings-recipient-actions .form-router-launch-button {
+    box-sizing: border-box;
+    flex-direction: row;
+    gap: 0;
+    height: var(--settings-field-control-height);
+    min-height: var(--settings-field-control-height);
+    padding-block: 0;
+    padding-inline: 14px;
 }
 
 .settings-gmail-panel {
@@ -613,7 +694,7 @@ section + .section-card {
 
 .settings-recipient-row {
     display: flex;
-    align-items: flex-start;
+    align-items: end;
     justify-content: space-between;
     gap: 16px;
     border: var(--card-border);
@@ -631,10 +712,9 @@ section + .section-card {
 
 .settings-recipient-actions {
     display: flex;
-    align-items: flex-end;
+    align-items: center;
     gap: 8px;
     flex-wrap: wrap;
-    padding-top: 28px;
 }
 
 .settings-recipient-email {
@@ -800,17 +880,35 @@ section + .section-card {
 }
 
 .page-form .bara-section__title {
+    color: var(--section-title-color);
+    font-family: var(--font-display);
+    font-size: var(--section-title-size);
     font-weight: var(--section-title-weight);
     letter-spacing: var(--section-title-tracking);
+    line-height: 1.25;
     text-wrap: balance;
+}
+
+.page-form .bara-section__header {
+    border-bottom: 1px solid var(--divider-color);
+    padding-bottom: 0.75rem;
 }
 
 .page-form .form-router .bara-section__header {
     text-align: center;
 }
 
+.page-form .form-router .t-page[data-page-id="1"] .bara-section__header {
+    margin-bottom: 12px;
+}
+
 .page-form .form-router .bara-section__title {
     text-align: center;
+}
+
+.page-form .form-router .t-page[data-page-id="1"] .bara-section__title {
+    font-size: 1.5rem;
+    text-transform: uppercase;
 }
 
 .page-form .form-router .bara-section__description {
@@ -825,6 +923,10 @@ section + .section-card {
 .fieldset-legend,
 .bara-checkbox__label {
     font-weight: var(--label-weight);
+}
+
+.bara-field__label-row {
+    margin-bottom: 6px;
 }
 
 .bara-button {
@@ -859,7 +961,7 @@ section + .section-card {
 
 .bara-input:focus,
 .bara-select__control--is-focused {
-    border-color: var(--palette-1);
+    border-color: var(--brand-sky);
     box-shadow: var(--field-shadow), 0 0 0 4px var(--field-focus-ring);
 }
 
@@ -875,20 +977,6 @@ section + .section-card {
     color: var(--success-color);
 }
 
-.bara-button--primary,
-.app-button-press {
-    transition:
-        transform 150ms ease-out,
-        background-color 150ms ease,
-        border-color 150ms ease,
-        box-shadow 150ms ease;
-}
-
-.bara-button--primary:not(:disabled):active,
-.app-button-press:not(:disabled):active {
-    transform: scale(0.96);
-}
-
 .form-choice-button {
     border-radius: var(--card-radius);
     border: 1px solid var(--divider-color);
@@ -897,20 +985,11 @@ section + .section-card {
     cursor: pointer;
     padding: 0.875rem 1rem;
     text-align: left;
-    transition:
-        transform 150ms ease-out,
-        border-color 150ms ease,
-        background-color 150ms ease,
-        box-shadow 150ms ease;
 }
 
 .form-choice-button:hover:not(:disabled) {
-    border-color: var(--btn-outline-border);
-    background: var(--highlight-bg);
-}
-
-.form-choice-button:active:not(:disabled) {
-    transform: scale(0.98);
+    border-color: var(--brand-sky);
+    background: var(--brand-sky-soft);
 }
 
 .form-choice-button:disabled {

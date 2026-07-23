@@ -1,4 +1,3 @@
-import { primaryButtonClassName } from "@baraagency/components";
 import {
   Box,
   Divider,
@@ -13,7 +12,7 @@ import {
   submissionFormLabels,
 } from "../forms/_core/submissionUtils";
 import { FormBanner } from "../forms/_core/FormBanner";
-import { FormRouterBackLink } from "../forms/_core/formRouterBackLink";
+import { PrimaryButton } from "../forms/_core/PrimaryButton";
 import { SubmissionDebugPanel } from "../forms/submitted/SubmissionDebugPanel";
 import { searchParamsFromRequest } from "./formLoaderUtils";
 import type { Route } from "./+types/forms.submitted";
@@ -56,11 +55,15 @@ function SuccessIcon() {
 }
 
 export async function loader({ request }: Route.LoaderArgs) {
-  return { searchParams: searchParamsFromRequest(request) };
+  return {
+    searchParams: searchParamsFromRequest(request),
+    showSubmissionDebug: isSubmissionDebugEnvironment(process.env.ENVIRONMENT),
+  };
 }
 
 export default function SubmittedPage({ loaderData }: Route.ComponentProps) {
   const resolvedSearchParams = loaderData.searchParams;
+  const showSubmissionDebug = loaderData.showSubmissionDebug;
   const personId =
     getSingleSearchParam(resolvedSearchParams, "personId") ||
     getSingleSearchParam(resolvedSearchParams, "clientId");
@@ -84,9 +87,6 @@ export default function SubmittedPage({ loaderData }: Route.ComponentProps) {
     formParam in submissionFormLabels
       ? submissionFormLabels[formParam as keyof typeof submissionFormLabels]
       : submissionFormLabels.pending;
-  const showSubmissionDebug = isSubmissionDebugEnvironment(
-    process.env.ENVIRONMENT,
-  );
   const routerHref = buildSubmittedRouterHref({
     personId,
   });
@@ -160,8 +160,9 @@ export default function SubmittedPage({ loaderData }: Route.ComponentProps) {
               component="h1"
               sx={{
                 color: "var(--page-title-color)",
+                fontFamily: "var(--font-display)",
                 fontSize: { xs: "1.7rem", sm: "2rem" },
-                fontWeight: 700,
+                fontWeight: "var(--page-title-weight)",
                 letterSpacing: "0.02em",
                 lineHeight: 1.15,
                 textTransform: "uppercase",
@@ -298,10 +299,16 @@ export default function SubmittedPage({ loaderData }: Route.ComponentProps) {
           ) : null}
 
           <Stack sx={{ width: "100%" }}>
-            <FormRouterBackLink
+            <PrimaryButton
               href={routerHref}
-              className={`app-button-press ${primaryButtonClassName} w-full py-[0.85rem]`}
-            />
+              className="w-full py-[0.85rem]"
+              onClick={(event) => {
+                event.preventDefault();
+                window.location.assign(routerHref);
+              }}
+            >
+              Back to Form Router
+            </PrimaryButton>
           </Stack>
         </Stack>
       </Paper>

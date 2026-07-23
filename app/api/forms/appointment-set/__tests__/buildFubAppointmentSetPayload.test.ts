@@ -15,14 +15,14 @@ describe("buildFubAppointmentSetPayload", () => {
       appointmentDate: "2026-06-15",
       appointmentStartTime: "10:00",
       appointmentEndTime: "11:00",
-      appointmentLocation: "Charleston Office",
+      appointmentLocation: "Phone",
       notes: "Motivated buyer",
       apptSetBy: "Admin",
     };
 
     expect(buildFubAppointmentSetPayload(state)).toMatchObject({
       title: "Buyer Consultation - Jane Client",
-      location: "Charleston Office",
+      location: "Phone",
       description: "Motivated buyer",
       typeId: 1,
       createdById: 9,

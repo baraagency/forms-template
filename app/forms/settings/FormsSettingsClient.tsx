@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Notice, SectionCard } from "@baraagency/components";
+import { Notice, SectionCard, secondaryButtonClassName } from "@baraagency/components";
 import type { RouterForm } from "@/app/types/storage";
 import { FormBanner } from "../_core/FormBanner";
 import { FormRouterBackLink } from "../_core/formRouterBackLink";
@@ -43,13 +43,16 @@ export function FormsSettingsClient({
   return (
     <main className="page-form">
       <title>Form Settings</title>
+      <FormRouterBackLink
+        href="/forms"
+        className={`settings-back-link app-button-press ${secondaryButtonClassName}`}
+      />
+
       <header className="page-header">
         <FormBanner />
       </header>
 
       <div className="settings-page-stack">
-        <FormRouterBackLink href="/forms" />
-
         <div>
           <h1 className="page-title">Form Settings</h1>
           <p className="page-intro">

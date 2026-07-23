@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Notice, SelectInput, Spinner } from "@baraagency/components";
+import {
+  Notice,
+  Spinner,
+} from "@baraagency/components";
+import { FormSelectInput } from "../_core/formSelectInput";
 import type {
   FUBListPipelinesResponse,
   FUBListStagesResponse,
@@ -119,7 +123,7 @@ export function DesiredStagePicker({
           Loading stages…
         </p>
       ) : (
-        <SelectInput
+        <FormSelectInput
           id={`${formKind}-${target}-desired-stage`}
           label={label}
           value={selectedId}
@@ -177,7 +181,7 @@ export function DesiredStagePicker({
               {option.name}
             </option>
           ))}
-        </SelectInput>
+        </FormSelectInput>
       )}
       {saving ? (
         <p className="settings-hint tabular-nums">Saving stage…</p>

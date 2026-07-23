@@ -2,35 +2,45 @@ import { CssBaseline } from "@mui/material";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import type { ReactNode } from "react";
 
+/** Colors aligned with forms-template palette (black accent + navy + sky) */
+const BARA_NAVY = "#003a55";
+const BARA_ACCENT = "#000000";
+const BARA_SKY = "#0099cc";
+const BARA_CHARCOAL = "#404040";
+const BARA_BG = "#f0f7fa";
+
 const theme = createTheme({
   cssVariables: true,
   colorSchemes: {
     light: {
       palette: {
         background: {
-          default: "#f8faf7",
+          default: BARA_BG,
           paper: "#ffffff",
         },
         primary: {
-          main: "#003c18",
+          main: BARA_NAVY,
           contrastText: "#ffffff",
         },
         secondary: {
-          main: "#67ad4b",
+          main: BARA_ACCENT,
           contrastText: "#ffffff",
         },
+        info: {
+          main: BARA_SKY,
+        },
         text: {
-          primary: "#003c18",
-          secondary: "#3d5c4a",
+          primary: BARA_NAVY,
+          secondary: "#4a6b7c",
         },
         warning: {
-          main: "#003c18",
+          main: BARA_CHARCOAL,
         },
         success: {
-          main: "#67ad4b",
+          main: BARA_SKY,
         },
         error: {
-          main: "#410000",
+          main: BARA_CHARCOAL,
         },
       },
     },
@@ -44,10 +54,26 @@ const theme = createTheme({
     fontWeightRegular: 400,
     fontWeightMedium: 700,
     fontWeightBold: 900,
-    h1: { fontWeight: 900, letterSpacing: "-0.025em" },
-    h2: { fontWeight: 900, letterSpacing: "-0.025em" },
-    h3: { fontWeight: 900, letterSpacing: "-0.02em" },
-    h4: { fontWeight: 900, letterSpacing: "-0.02em" },
+    h1: {
+      fontFamily: "var(--font-display), serif",
+      fontWeight: 500,
+      letterSpacing: "-0.025em",
+    },
+    h2: {
+      fontFamily: "var(--font-display), serif",
+      fontWeight: 400,
+      letterSpacing: "-0.025em",
+    },
+    h3: {
+      fontFamily: "var(--font-display), serif",
+      fontWeight: 400,
+      letterSpacing: "-0.02em",
+    },
+    h4: {
+      fontFamily: "var(--font-display), serif",
+      fontWeight: 400,
+      letterSpacing: "-0.02em",
+    },
     h5: { fontWeight: 700 },
     h6: { fontWeight: 700 },
     subtitle1: { fontWeight: 700 },

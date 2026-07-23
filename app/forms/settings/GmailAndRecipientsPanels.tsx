@@ -3,7 +3,6 @@ import {
   Notice,
   Spinner,
   TextInput,
-  primaryButtonClassName,
   secondaryButtonClassName,
 } from "@baraagency/components";
 import type { FormEmailRecipient } from "@/app/types/storage";
@@ -11,6 +10,7 @@ import {
   formKindLabel,
   type SettingsFormKind,
 } from "../_core/formIdentity";
+import { PrimaryButton } from "../_core/PrimaryButton";
 
 type GmailStatus = {
   environment: string;
@@ -114,15 +114,12 @@ export function GmailAccountPanel({
               Disconnect
             </button>
           ) : (
-            <a
-              className={`app-button-press ${primaryButtonClassName}${
-                !status?.oauthConfigured ? " opacity-50 pointer-events-none" : ""
-              }`}
+            <PrimaryButton
               href="/api/forms/settings/gmail/oauth/start"
-              aria-disabled={!status?.oauthConfigured}
+              disabled={!status?.oauthConfigured}
             >
               Connect Gmail
-            </a>
+            </PrimaryButton>
           )}
         </div>
       </div>
@@ -234,13 +231,9 @@ export function FormRecipientsPanel({
           required
         />
         <div className="settings-dynamic-recipient-actions">
-          <button
-            type="submit"
-            className={`app-button-press ${primaryButtonClassName}`}
-            disabled={busy}
-          >
-            {busy ? <Spinner /> : "Add recipient"}
-          </button>
+          <PrimaryButton type="submit" disabled={busy} loading={busy}>
+            Add recipient
+          </PrimaryButton>
         </div>
       </form>
 
@@ -275,50 +268,56 @@ export function FormRecipientsPanel({
                     />
                   </div>
                   <div className="settings-recipient-actions">
-                    <button
-                      type="button"
-                      className={`app-button-press ${
-                        dirty
-                          ? primaryButtonClassName
-                          : secondaryButtonClassName
-                      }`}
-                      disabled={!dirty || savingId === recipient.id}
-                      onClick={async () => {
-                        setSavingId(recipient.id);
-                        setError(null);
-                        try {
-                          const response = await fetch(
-                            `/api/forms/settings/recipients/${recipient.id}`,
-                            {
-                              method: "PATCH",
-                              headers: { "Content-Type": "application/json" },
-                              body: JSON.stringify({
-                                email: draftEmail.trim(),
-                              }),
-                            },
-                          );
-                          const payload = (await response.json()) as {
-                            message?: string;
-                          };
-                          if (!response.ok) {
-                            throw new Error(
-                              payload.message ?? "Failed to update recipient.",
+                    {dirty ? (
+                      <PrimaryButton
+                        type="button"
+                        disabled={savingId === recipient.id}
+                        onClick={async () => {
+                          setSavingId(recipient.id);
+                          setError(null);
+                          try {
+                            const response = await fetch(
+                              `/api/forms/settings/recipients/${recipient.id}`,
+                              {
+                                method: "PATCH",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({
+                                  email: draftEmail.trim(),
+                                }),
+                              },
                             );
+                            const payload = (await response.json()) as {
+                              message?: string;
+                            };
+                            if (!response.ok) {
+                              throw new Error(
+                                payload.message ??
+                                  "Failed to update recipient.",
+                              );
+                            }
+                            await reload();
+                          } catch (saveError) {
+                            setError(
+                              saveError instanceof Error
+                                ? saveError.message
+                                : "Failed to update recipient.",
+                            );
+                          } finally {
+                            setSavingId(null);
                           }
-                          await reload();
-                        } catch (saveError) {
-                          setError(
-                            saveError instanceof Error
-                              ? saveError.message
-                              : "Failed to update recipient.",
-                          );
-                        } finally {
-                          setSavingId(null);
-                        }
-                      }}
-                    >
-                      {savingId === recipient.id ? "Saving…" : "Save"}
-                    </button>
+                        }}
+                      >
+                        {savingId === recipient.id ? "Saving…" : "Save"}
+                      </PrimaryButton>
+                    ) : (
+                      <button
+                        type="button"
+                        className={`app-button-press ${secondaryButtonClassName}`}
+                        disabled
+                      >
+                        Save
+                      </button>
+                    )}
                     <button
                       type="button"
                       className={`app-button-press ${secondaryButtonClassName}`}

@@ -31,7 +31,7 @@ export const datePickerTextFieldSx = {
     letterSpacing: 0,
     padding: "0 6px 0 12px",
     transition:
-      "border-color 150ms cubic-bezier(0.23, 1, 0.32, 1), box-shadow 150ms cubic-bezier(0.23, 1, 0.32, 1)",
+      "border-color var(--duration-quick, 150ms) var(--ease-smooth-out, cubic-bezier(0.22, 1, 0.36, 1)), box-shadow var(--duration-quick, 150ms) var(--ease-smooth-out, cubic-bezier(0.22, 1, 0.36, 1))",
   },
   "& .MuiPickersOutlinedInput-notchedOutline": {
     borderColor: "var(--divider-color)",
@@ -41,11 +41,11 @@ export const datePickerTextFieldSx = {
   },
   "& .MuiPickersInputBase-root.Mui-focused": {
     boxShadow:
-      "var(--field-shadow), 0 0 0 4px color-mix(in srgb, var(--btn-outline-color) 15%, transparent)",
+      "var(--field-shadow), 0 0 0 4px var(--field-focus-ring)",
   },
   "& .MuiPickersInputBase-root.Mui-focused .MuiPickersOutlinedInput-notchedOutline":
     {
-      borderColor: "var(--btn-outline-border)",
+      borderColor: "var(--brand-sky)",
       borderWidth: "1px",
     },
   "& .MuiPickersInputBase-root.Mui-error .MuiPickersOutlinedInput-notchedOutline":
@@ -80,16 +80,15 @@ export const datePickerTextFieldSx = {
     padding: "10px",
     color: "var(--icon-muted)",
     transition:
-      "transform 140ms cubic-bezier(0.23, 1, 0.32, 1), color 140ms ease, background-color 140ms ease",
+      "transform var(--duration-quick, 150ms) var(--ease-smooth-out, cubic-bezier(0.22, 1, 0.36, 1)), color var(--duration-quick, 150ms) var(--ease-out, ease), background-color var(--duration-quick, 150ms) var(--ease-out, ease)",
   },
   "& .MuiIconButton-root:active": {
-    transform: "scale(0.97)",
+    transform: "scale(var(--scale-medium, 0.97))",
   },
   "@media (hover: hover) and (pointer: fine)": {
     "& .MuiIconButton-root:hover": {
-      color: "var(--btn-outline-color)",
-      backgroundColor:
-        "color-mix(in srgb, var(--btn-outline-color) 8%, transparent)",
+      color: "var(--brand-sky)",
+      backgroundColor: "var(--brand-sky-soft)",
     },
   },
   "& .MuiSvgIcon-root": {
@@ -105,7 +104,7 @@ const dayButtonSx = {
   color: "var(--foreground)",
   fontSize: "0.8125rem",
   transition:
-    "transform 140ms cubic-bezier(0.23, 1, 0.32, 1), background-color 140ms ease",
+    "transform var(--duration-quick, 150ms) var(--ease-smooth-out, cubic-bezier(0.22, 1, 0.36, 1)), background-color var(--duration-quick, 150ms) var(--ease-out, ease)",
 };
 
 export const datePickerPaperSx = {
@@ -221,12 +220,11 @@ export const datePickerPaperSx = {
     opacity: 0.4,
   },
   "& .MuiPickersDay-root:active, & .MuiPickerDay-root:active": {
-    transform: "scale(0.97)",
+    transform: "scale(var(--scale-medium, 0.97))",
   },
   "@media (hover: hover) and (pointer: fine)": {
     "& .MuiPickersDay-root:hover, & .MuiPickerDay-root:hover": {
-      backgroundColor:
-        "color-mix(in srgb, var(--btn-outline-color) 8%, transparent)",
+      backgroundColor: "var(--brand-sky-soft)",
     },
   },
   "& .MuiPickersDay-root.Mui-selected, & .MuiPickerDay-root.Mui-selected": {
@@ -259,11 +257,11 @@ export const datePickerPaperSx = {
       borderRadius: "var(--btn-radius)",
       fontWeight: 700,
       textTransform: "none",
-      transition: "transform 140ms cubic-bezier(0.23, 1, 0.32, 1)",
+      transition: "transform var(--duration-quick, 150ms) var(--ease-smooth-out, cubic-bezier(0.22, 1, 0.36, 1))",
     },
   "& .MuiDialogActions-root .MuiButton-root:active, & .MuiPickersLayout-actionBar .MuiButton-root:active":
     {
-      transform: "scale(0.97)",
+      transform: "scale(var(--scale-medium, 0.97))",
     },
   "@media (max-height: 480px)": {
     "& .MuiDateCalendar-root": {
@@ -355,11 +353,11 @@ function DatePickerCancelActionBar({ onCancel }: { onCancel: () => void }) {
           borderRadius: "var(--btn-radius)",
           fontWeight: 700,
           textTransform: "none",
-          color: "var(--btn-outline-color)",
-          transition: "transform 140ms cubic-bezier(0.23, 1, 0.32, 1)",
+          color: "var(--brand-sky)",
+          transition: "transform var(--duration-quick, 150ms) var(--ease-smooth-out, cubic-bezier(0.22, 1, 0.36, 1))",
         },
         "& .MuiButton-root:active": {
-          transform: "scale(0.97)",
+          transform: "scale(var(--scale-medium, 0.97))",
         },
       }}
     >

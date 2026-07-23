@@ -17,7 +17,7 @@ export default defineConfig({
     video: "retain-on-failure",
   },
   webServer: {
-    command: "ENVIRONMENT=LOCAL bun run dev",
+    command: "DEMO_MODE=true bun run dev",
     url: baseURL,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,

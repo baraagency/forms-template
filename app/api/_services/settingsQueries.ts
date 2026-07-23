@@ -9,6 +9,8 @@ import type {
   FubStageTarget,
   GmailAccountCredential,
 } from "@/app/types/storage";
+import { isSettingsFormKind } from "@/app/forms/_core/formIdentity";
+import { sortByFormFieldAppearanceOrder } from "@/app/forms/settings/formFieldCatalog";
 import { requireDbPool, type StorageResult } from "./dbPool";
 
 export async function getGmailCredentialForEnvironment(
@@ -264,7 +266,10 @@ export async function listSisuMappings(
        ORDER BY field_name ASC`,
       [form],
     );
-    return { data: result.rows, error: null };
+    const rows = isSettingsFormKind(form)
+      ? sortByFormFieldAppearanceOrder(form, result.rows)
+      : result.rows;
+    return { data: rows, error: null };
   } catch (error) {
     return {
       data: null,
@@ -671,7 +676,10 @@ async function listFieldMappings<T extends FormFubPersonMapping | FormFubDealMap
        ORDER BY field_name ASC`,
       [form],
     );
-    return { data: result.rows, error: null };
+    const rows = isSettingsFormKind(form)
+      ? sortByFormFieldAppearanceOrder(form, result.rows)
+      : result.rows;
+    return { data: rows, error: null };
   } catch (error) {
     return {
       data: null,

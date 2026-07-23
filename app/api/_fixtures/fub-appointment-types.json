@@ -1,0 +1,6 @@
+{
+  "appointmentTypes": [
+    { "id": 1, "name": "Buyer Consultation" },
+    { "id": 2, "name": "Listing" }
+  ]
+}

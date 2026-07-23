@@ -46,6 +46,21 @@ export async function loader({ request }: { request: Request }) {
     });
   }
 
+  if (isFubApiEnabled()) {
+    const live = await fetchLiveFubPeople({
+      limit: limit ?? 100,
+      ...(assignedUserId ? { assignedUserId } : {}),
+    });
+    if (live.error || !live.data) {
+      return Response.json(
+        { message: live.error ?? "Failed to load FUB people." },
+        { status: live.status ?? 502 },
+      );
+    }
+    // Form router expects a bare people array (fixture shape).
+    return Response.json(live.data.people);
+  }
+
   const people = loadFixture<FUBPerson[]>("fub-people.json");
 
   if (assignedUserId) {

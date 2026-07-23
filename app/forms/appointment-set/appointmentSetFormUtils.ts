@@ -50,15 +50,9 @@ export type AppointmentSetFieldErrors = Partial<
 >;
 
 export const APPOINTMENT_LOCATION_OPTIONS = [
-  "Charleston Office",
-  "Greenville Office",
-  "Central Carolina Office",
-  "Nexton Office",
-  "West Ashley Office",
-  "Operations Office",
-  "Other Address",
-  "Video Call",
   "Phone",
+  "Video Call",
+  "Other Address",
 ] as const;
 
 export const APPOINTMENT_TYPE_OPTIONS = [
@@ -66,30 +60,81 @@ export const APPOINTMENT_TYPE_OPTIONS = [
   "Listing",
 ] as const;
 
-const FUB_APPOINTMENT_TYPE_IDS: Record<(typeof APPOINTMENT_TYPE_OPTIONS)[number], number> =
-  {
-    "Buyer Consultation": 1,
-    Listing: 2,
-  };
+export type FubAppointmentTypeOption = {
+  id: number;
+  name: string;
+};
 
-export function toFubAppointmentTypeId(appointmentType: string): number | undefined {
+/** Fixture / legacy options when FUB appointment types are unavailable. */
+export const DEFAULT_APPOINTMENT_TYPE_OPTIONS: ReadonlyArray<FubAppointmentTypeOption> =
+  [
+    { id: 1, name: "Buyer Consultation" },
+    { id: 2, name: "Listing" },
+  ];
+
+const FUB_APPOINTMENT_TYPE_FALLBACKS = DEFAULT_APPOINTMENT_TYPE_OPTIONS;
+
+export function toFubAppointmentTypeId(
+  appointmentType: string,
+  appointmentTypes: ReadonlyArray<FubAppointmentTypeOption> = FUB_APPOINTMENT_TYPE_FALLBACKS,
+): number | undefined {
   const trimmedValue = appointmentType.trim();
   if (!trimmedValue) {
     return undefined;
   }
 
-  if (trimmedValue in FUB_APPOINTMENT_TYPE_IDS) {
-    return FUB_APPOINTMENT_TYPE_IDS[trimmedValue as keyof typeof FUB_APPOINTMENT_TYPE_IDS];
+  const asNumber = Number(trimmedValue);
+  if (Number.isInteger(asNumber) && asNumber > 0) {
+    if (
+      appointmentTypes.length === 0 ||
+      appointmentTypes.some((type) => type.id === asNumber)
+    ) {
+      return asNumber;
+    }
   }
 
+  const catalog =
+    appointmentTypes.length > 0 ? appointmentTypes : FUB_APPOINTMENT_TYPE_FALLBACKS;
   const normalizedValue = trimmedValue.toLowerCase();
-  for (const [label, typeId] of Object.entries(FUB_APPOINTMENT_TYPE_IDS)) {
-    if (label.toLowerCase() === normalizedValue) {
-      return typeId;
+  for (const type of catalog) {
+    if (type.name.toLowerCase() === normalizedValue) {
+      return type.id;
+    }
+  }
+
+  for (const type of FUB_APPOINTMENT_TYPE_FALLBACKS) {
+    if (type.name.toLowerCase() === normalizedValue) {
+      return type.id;
     }
   }
 
   return undefined;
+}
+
+export function resolveAppointmentTypeName(
+  appointmentType: string,
+  appointmentTypes: ReadonlyArray<FubAppointmentTypeOption> = FUB_APPOINTMENT_TYPE_FALLBACKS,
+): string {
+  const trimmedValue = appointmentType.trim();
+  if (!trimmedValue) {
+    return "";
+  }
+
+  const typeId = toFubAppointmentTypeId(trimmedValue, appointmentTypes);
+  if (typeId !== undefined) {
+    const fromCatalog = appointmentTypes.find((type) => type.id === typeId);
+    if (fromCatalog) {
+      return fromCatalog.name;
+    }
+    const fromFallback = FUB_APPOINTMENT_TYPE_FALLBACKS.find(
+      (type) => type.id === typeId,
+    );
+    if (fromFallback) {
+      return fromFallback.name;
+    }
+  }
+
+  return trimmedValue;
 }
 
 export const APPT_SET_BY_OPTIONS = ["ISA", "OSA", "Admin"] as const;

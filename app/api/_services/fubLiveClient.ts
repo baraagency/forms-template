@@ -2,8 +2,11 @@ import type {
   FUBAppointment,
   FUBAppointmentInput,
   FUBAppointmentOutcome,
+  FUBAppointmentType,
   FUBDeal,
+  FUBListDealsResponse,
   FUBListPeopleResponse,
+  FUBListUsersResponse,
   FUBNote,
   FUBPerson,
   FUBUser,
@@ -151,6 +154,42 @@ export async function fetchLiveFubPeople(query: {
 }
 
 /**
+ * Live GET /users — list agents/users for form selects.
+ */
+export async function fetchLiveFubUsers(query?: {
+  limit?: number;
+  offset?: number;
+}): Promise<FubLiveResult<FUBListUsersResponse>> {
+  if (!isFubApiEnabled()) {
+    return { data: null, error: "FUB_API_KEY is not configured.", status: 503 };
+  }
+
+  const params = new URLSearchParams();
+  params.set("limit", String(query?.limit ?? 100));
+  if (query?.offset !== undefined) {
+    params.set("offset", String(query.offset));
+  }
+
+  const result = await fubRequest<FUBListUsersResponse>(
+    "GET",
+    `/users?${params.toString()}`,
+  );
+
+  if (result.error || !result.data) {
+    return result;
+  }
+
+  const users = Array.isArray(result.data.users) ? result.data.users : [];
+  return {
+    data: {
+      users,
+      _metadata: result.data._metadata ?? { total: users.length },
+    },
+    error: null,
+  };
+}
+
+/**
  * Live GET /users/{id}.
  */
 export async function fetchLiveFubUser(
@@ -162,6 +201,30 @@ export async function fetchLiveFubUser(
   }
 
   return fubRequest<FUBUser>("GET", `/users/${encodeURIComponent(trimmed)}`);
+}
+
+/**
+ * Live GET /people/{id}.
+ */
+export async function fetchLiveFubPerson(
+  personId: string,
+  fields?: string,
+): Promise<FubLiveResult<FUBPerson>> {
+  const trimmed = personId.trim();
+  if (!trimmed) {
+    return { data: null, error: "FUB person id is required.", status: 400 };
+  }
+
+  const params = new URLSearchParams();
+  if (fields?.trim()) {
+    params.set("fields", fields.trim());
+  }
+  const query = params.toString();
+  const path = `/people/${encodeURIComponent(trimmed)}${
+    query ? `?${query}` : ""
+  }`;
+
+  return fubRequest<FUBPerson>("GET", path);
 }
 
 export async function createLiveFubNote(
@@ -185,6 +248,56 @@ export async function createLiveFubDeal(
     return { data: null, error: result.error ?? "FUB create deal failed.", status: result.status };
   }
   return { data: unwrapDeal(result.data), error: null };
+}
+
+/**
+ * Live GET /deals — optional personId / status / fields / limit filters.
+ */
+export async function fetchLiveFubDeals(query: {
+  personId?: number;
+  status?: "Active" | "Archived" | "Deleted";
+  fields?: string;
+  limit?: number;
+  offset?: number;
+}): Promise<FubLiveResult<FUBListDealsResponse>> {
+  if (!isFubApiEnabled()) {
+    return { data: null, error: "FUB_API_KEY is not configured.", status: 503 };
+  }
+
+  const params = new URLSearchParams();
+  if (query.personId !== undefined) {
+    params.set("personId", String(query.personId));
+  }
+  if (query.status) {
+    params.set("status", query.status);
+  }
+  if (query.fields) {
+    params.set("fields", query.fields);
+  }
+  if (query.limit !== undefined) {
+    params.set("limit", String(query.limit));
+  }
+  if (query.offset !== undefined) {
+    params.set("offset", String(query.offset));
+  }
+
+  const result = await fubRequest<FUBListDealsResponse>(
+    "GET",
+    `/deals?${params.toString()}`,
+  );
+
+  if (result.error || !result.data) {
+    return result;
+  }
+
+  const deals = Array.isArray(result.data.deals) ? result.data.deals : [];
+  return {
+    data: {
+      deals,
+      _metadata: result.data._metadata ?? { total: deals.length },
+    },
+    error: null,
+  };
 }
 
 export async function updateLiveFubDeal(
@@ -285,6 +398,29 @@ export async function fetchLiveFubAppointmentOutcomes(): Promise<
   return {
     data: Array.isArray(result.data.appointmentoutcomes)
       ? result.data.appointmentoutcomes
+      : [],
+    error: null,
+  };
+}
+
+export async function fetchLiveFubAppointmentTypes(): Promise<
+  FubLiveResult<FUBAppointmentType[]>
+> {
+  const result = await fubRequest<{
+    appointmenttypes?: FUBAppointmentType[];
+  }>("GET", "/appointmentTypes?limit=100&sort=orderWeight");
+
+  if (result.error || !result.data) {
+    return {
+      data: null,
+      error: result.error ?? "Failed to load FUB appointment types.",
+      status: result.status,
+    };
+  }
+
+  return {
+    data: Array.isArray(result.data.appointmenttypes)
+      ? result.data.appointmenttypes
       : [],
     error: null,
   };

@@ -1,6 +1,6 @@
 import {
-  applyLocalDemoSearchParams,
-  isLocalFormsDemoEnvironment,
+  applyDemoSearchParams,
+  isFormsDemoMode,
 } from "../forms/_core/localFormsDemo";
 
 type SearchParamValue = string | string[] | undefined;
@@ -19,18 +19,18 @@ export function searchParamsFromRequest(
 
 export function buildLocalDemoFormLoaderData(request: Request) {
   const resolvedSearchParams = searchParamsFromRequest(request);
-  const localDemoEnabled = isLocalFormsDemoEnvironment(process.env.ENVIRONMENT);
-  const effectiveSearchParams = applyLocalDemoSearchParams(
+  const demoModeEnabled = isFormsDemoMode(process.env.DEMO_MODE);
+  const effectiveSearchParams = applyDemoSearchParams(
     resolvedSearchParams,
-    localDemoEnabled,
+    demoModeEnabled,
   );
-  const appliedLocalDemo =
-    localDemoEnabled &&
+  const appliedDemoMode =
+    demoModeEnabled &&
     !resolvedSearchParams.clientId &&
     !resolvedSearchParams.personId;
 
   return {
     searchParams: effectiveSearchParams,
-    localDemoEnabled: appliedLocalDemo,
+    localDemoEnabled: appliedDemoMode,
   };
 }

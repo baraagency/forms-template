@@ -14,6 +14,7 @@ import { createEmotionCache } from "./emotionCache";
 import type { Route } from "./+types/root";
 import "@baraagency/components/styles.css";
 import "./globals.css";
+import "./component-transitions.css";
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -24,7 +25,7 @@ export const links: Route.LinksFunction = () => [
   },
   {
     rel: "stylesheet",
-    href: "https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&display=swap",
+    href: "https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Lato:wght@300;400;700;900&display=swap",
   },
 ];
 

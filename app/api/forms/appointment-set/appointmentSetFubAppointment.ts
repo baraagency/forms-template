@@ -1,6 +1,7 @@
 import type { SubmissionWorkflowContext } from "@/app/api/_services/submissionWorkflow";
 import {
   createLiveFubAppointment,
+  fetchLiveFubAppointmentTypes,
   getLiveFubAppointment,
   updateLiveFubAppointment,
 } from "@/app/api/_services/fubLiveClient";
@@ -36,7 +37,15 @@ export async function runAppointmentSetFubAppointmentSideEffect(
   }
 
   const state = ctx.formState as unknown as AppointmentSetFormState;
-  const payload = buildFubAppointmentSetPayload(state);
+  const appointmentTypesResult = await fetchLiveFubAppointmentTypes();
+  const appointmentTypes =
+    appointmentTypesResult.error || !appointmentTypesResult.data
+      ? []
+      : appointmentTypesResult.data.map((type) => ({
+          id: type.id,
+          name: type.name,
+        }));
+  const payload = buildFubAppointmentSetPayload(state, appointmentTypes);
 
   let existingAppointmentId: string | null = null;
   if (ctx.dealId) {

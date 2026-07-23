@@ -6,16 +6,17 @@ import {
   Notice,
   Row,
   SectionCard,
-  SelectInput,
   Spinner,
   TextAreaInput,
   TextInput,
-  primaryButtonClassName,
   secondaryButtonClassName,
 } from "@baraagency/components";
+import { PrimaryButton } from "../_core/PrimaryButton";
+import { FormSelectInput } from "../_core/formSelectInput";
 import type { SISUTeamFieldsCatalogResponse } from "@/app/types/sisu";
 import type { TeamFieldCatalog } from "../_core/teamFieldOptions";
 import { FormDatePickerField } from "../_core/formDatePickerField";
+import { FormExpand } from "../_core/FormExpand";
 import { getMaxFormDateTodayForPicker } from "../_core/formDateValidation";
 import { formatCurrencyInput } from "../_core/formatUtils";
 import {
@@ -384,7 +385,7 @@ export function ClosedFormClient({
           />
         </div>
         <title>Closed</title>
-        <div className="mb-6 border-b border-[var(--divider-color)] pb-6">
+        <div className="mb-6">
           <h1 className="page-title mb-0 text-balance">Closed</h1>
           <p className="page-intro text-pretty">
             Capture closed transaction details for this lead.
@@ -393,7 +394,7 @@ export function ClosedFormClient({
 
         {localDemoEnabled ? (
           <Notice tone="warning">
-            Local demo mode — fixture client/deal/SISU IDs were applied because no
+            Demo mode — fixture client/deal/SISU IDs were applied because no
             clientId was provided.
           </Notice>
         ) : null}
@@ -420,11 +421,11 @@ export function ClosedFormClient({
             void handleSubmit();
           }}
         >
-          <div className="divide-y divide-[var(--divider-color)]">
+          <div>
             <SectionCard title="Transaction Data">
               <FieldGroup>
                 <div>
-                  <SelectInput
+                  <FormSelectInput
                     id="transactionType"
                     label={CLOSED_TRANSACTION_TYPE_FIELD_LABEL}
                     value={formState.transactionType}
@@ -439,7 +440,7 @@ export function ClosedFormClient({
                         {option.label}
                       </option>
                     ))}
-                  </SelectInput>
+                  </FormSelectInput>
                   <FieldError message={errors.transactionType} />
                 </div>
               </FieldGroup>
@@ -469,7 +470,7 @@ export function ClosedFormClient({
                     <FieldError message={errors.city} />
                   </div>
                   <div>
-                    <SelectInput
+                    <FormSelectInput
                       id="state"
                       label="State"
                       value={formState.state}
@@ -482,7 +483,7 @@ export function ClosedFormClient({
                           {state}
                         </option>
                       ))}
-                    </SelectInput>
+                    </FormSelectInput>
                     <FieldError message={errors.state} />
                   </div>
                   <div>
@@ -539,52 +540,51 @@ export function ClosedFormClient({
                     <FieldError message={errors.totalCommissionGci} />
                   </div>
                 </Row>
+                {showLeaseRentalFields ? (
+                  <FormExpand>
+                    <Row>
+                      <div>
+                        <TextInput
+                          id="securityDeposit"
+                          label="Security Deposit"
+                          inputMode="decimal"
+                          value={formState.securityDeposit}
+                          required
+                          onBlur={() =>
+                            updateField(
+                              "securityDeposit",
+                              formatCurrencyInput(formState.securityDeposit),
+                            )
+                          }
+                          onChange={(event) =>
+                            updateField("securityDeposit", event.target.value)
+                          }
+                        />
+                        <FieldError message={errors.securityDeposit} />
+                      </div>
+                      <div>
+                        <TextInput
+                          id="monthlyRent"
+                          label="Monthly Rent"
+                          inputMode="decimal"
+                          value={formState.monthlyRent}
+                          required
+                          onBlur={() =>
+                            updateField(
+                              "monthlyRent",
+                              formatCurrencyInput(formState.monthlyRent),
+                            )
+                          }
+                          onChange={(event) =>
+                            updateField("monthlyRent", event.target.value)
+                          }
+                        />
+                        <FieldError message={errors.monthlyRent} />
+                      </div>
+                    </Row>
+                  </FormExpand>
+                ) : null}
               </FieldGroup>
-
-              {showLeaseRentalFields ? (
-                <FieldGroup>
-                  <Row>
-                    <div>
-                      <TextInput
-                        id="securityDeposit"
-                        label="Security Deposit"
-                        inputMode="decimal"
-                        value={formState.securityDeposit}
-                        required
-                        onBlur={() =>
-                          updateField(
-                            "securityDeposit",
-                            formatCurrencyInput(formState.securityDeposit),
-                          )
-                        }
-                        onChange={(event) =>
-                          updateField("securityDeposit", event.target.value)
-                        }
-                      />
-                      <FieldError message={errors.securityDeposit} />
-                    </div>
-                    <div>
-                      <TextInput
-                        id="monthlyRent"
-                        label="Monthly Rent"
-                        inputMode="decimal"
-                        value={formState.monthlyRent}
-                        required
-                        onBlur={() =>
-                          updateField(
-                            "monthlyRent",
-                            formatCurrencyInput(formState.monthlyRent),
-                          )
-                        }
-                        onChange={(event) =>
-                          updateField("monthlyRent", event.target.value)
-                        }
-                      />
-                      <FieldError message={errors.monthlyRent} />
-                    </div>
-                  </Row>
-                </FieldGroup>
-              ) : null}
             </SectionCard>
 
             <SectionCard title="Transaction Dates">
@@ -613,12 +613,9 @@ export function ClosedFormClient({
           </div>
 
           <div className="form-actions mt-6">
-            <button
-              type="submit"
-              className={`app-button-press ${primaryButtonClassName} w-full`}
-            >
+            <PrimaryButton type="submit" className="w-full">
               Submit
-            </button>
+            </PrimaryButton>
           </div>
         </form>
       </main>

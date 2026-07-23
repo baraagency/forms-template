@@ -373,9 +373,6 @@ export function validateAppointmentMetForm(
   if (!isPresent(state.leadType)) {
     errors.leadType = "This field is required.";
   }
-  if (!isPresent(state.agentSubmitting)) {
-    errors.agentSubmitting = "This field is required.";
-  }
   if (!isPresent(state.apptDisposition)) {
     errors.apptDisposition = "This field is required.";
   }

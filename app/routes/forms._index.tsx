@@ -1,10 +1,10 @@
 import { FormRouterClient } from "../forms/FormRouterClient";
-import { isLocalFormsDemoEnvironment } from "../forms/_core/localFormsDemo";
+import { isFormsDemoMode } from "../forms/_core/localFormsDemo";
 import { listVisibleFormRouterForms } from "@/app/api/_services/routerFormsRepo";
 import type { Route } from "./+types/forms._index";
 
 export async function loader(_args: Route.LoaderArgs) {
-  const localDemoEnabled = isLocalFormsDemoEnvironment(process.env.ENVIRONMENT);
+  const localDemoEnabled = isFormsDemoMode(process.env.DEMO_MODE);
   const { forms, warning } = await listVisibleFormRouterForms();
   return {
     localDemoEnabled,

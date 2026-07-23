@@ -1,11 +1,7 @@
-/* transitions-dev — page side-by-side (forms ↔ deals) */
+/* transitions-dev — page side-by-side (forms ↔ deals)
+   Shared motion tokens live in component-transitions.css */
 
 :root {
-  --duration-fast: 250ms;
-  --ease-smooth-out: cubic-bezier(0.22, 1, 0.36, 1);
-  --distance-base: 8px;
-  --blur-medium: 3px;
-
   --page-slide-dur: var(--duration-fast);
   --page-fade-dur: var(--duration-fast);
   --page-slide-distance: var(--distance-base);

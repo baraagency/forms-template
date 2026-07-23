@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { type ReactNode, useCallback, useEffect, useRef, useState } from "react";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import {
@@ -7,22 +7,23 @@ import {
   Notice,
   Row,
   SectionCard,
-  SelectInput,
   Spinner,
   TextAreaInput,
   TextInput,
-  primaryButtonClassName,
   secondaryButtonClassName,
 } from "@baraagency/components";
+import { PrimaryButton } from "../_core/PrimaryButton";
+import { FormSelectInput } from "../_core/formSelectInput";
 import type { FUBPerson } from "@/app/types/fub";
 import type { JsonValue } from "@/app/types/storage";
 import { FormDatePickerField } from "../_core/formDatePickerField";
+import { FormExpand } from "../_core/FormExpand";
 import { FormTimePickerField } from "../_core/formTimePickerField";
 import { formatPhoneInput } from "../_core/formatUtils";
 import {
   APPOINTMENT_LOCATION_OPTIONS,
-  APPOINTMENT_TYPE_OPTIONS,
   APPT_SET_BY_OPTIONS,
+  DEFAULT_APPOINTMENT_TYPE_OPTIONS,
   LEAD_TYPE_OPTIONS,
   applyAppointmentSetPersonPrefill,
   applyAppointmentSetPreviousSubmissionPrefill,
@@ -36,6 +37,7 @@ import {
   validateAppointmentSetForm,
   type AppointmentSetFieldErrors,
   type AppointmentSetFormState,
+  type FubAppointmentTypeOption,
 } from "./appointmentSetFormUtils";
 import {
   buildPostSubmissionHref,
@@ -138,6 +140,14 @@ function FieldError({ message }: { message?: string }) {
   ) : null;
 }
 
+function FieldGroup({ children }: { children: ReactNode }) {
+  return (
+    <div className="form-field-group">
+      <div className="form-field-group-fields">{children}</div>
+    </div>
+  );
+}
+
 function toSelectOptions(values: readonly string[]): SelectOption[] {
   return values.map((value) => ({ value, label: value }));
 }
@@ -192,6 +202,9 @@ export function AppointmentSetFormClient({
   const [errors, setErrors] = useState<AppointmentSetFieldErrors>({});
   const [isaOptions, setIsaOptions] = useState<SelectOption[]>([]);
   const [osaOptions, setOsaOptions] = useState<SelectOption[]>([]);
+  const [appointmentTypeOptions, setAppointmentTypeOptions] = useState<
+    FubAppointmentTypeOption[]
+  >([...DEFAULT_APPOINTMENT_TYPE_OPTIONS]);
   const [isaOptionsUnavailable, setIsaOptionsUnavailable] = useState(false);
   const [osaOptionsUnavailable, setOsaOptionsUnavailable] = useState(false);
   const [loadingLead, setLoadingLead] = useState(Boolean(formState.personId));
@@ -293,12 +306,14 @@ export function AppointmentSetFormClient({
         setIsaOptionsUnavailable(false);
         setOsaOptionsUnavailable(false);
 
-        const [agentsResponse, usersResponse] = await Promise.all([
-          fetch("/api/sisu/team-agents?role_filter=ISISA", {
-            signal: controller.signal,
-          }),
-          fetch("/api/fub/users", { signal: controller.signal }),
-        ]);
+        const [agentsResponse, usersResponse, appointmentTypesResponse] =
+          await Promise.all([
+            fetch("/api/sisu/team-agents?role_filter=ISISA", {
+              signal: controller.signal,
+            }),
+            fetch("/api/fub/users", { signal: controller.signal }),
+            fetch("/api/fub/appointment-types", { signal: controller.signal }),
+          ]);
 
         if (agentsResponse.ok) {
           const agentsPayload = (await agentsResponse.json()) as {
@@ -344,6 +359,25 @@ export function AppointmentSetFormClient({
               : `Unable to load FUB users (HTTP ${usersResponse.status}). Using placeholders.`,
           );
         }
+
+        if (appointmentTypesResponse.ok) {
+          const typesPayload = (await appointmentTypesResponse.json()) as {
+            appointmentTypes: FubAppointmentTypeOption[];
+          };
+          const types = typesPayload.appointmentTypes ?? [];
+          if (types.length > 0) {
+            setAppointmentTypeOptions(types);
+          } else {
+            setAppointmentTypeOptions([...DEFAULT_APPOINTMENT_TYPE_OPTIONS]);
+          }
+        } else {
+          setAppointmentTypeOptions([...DEFAULT_APPOINTMENT_TYPE_OPTIONS]);
+          setOptionsError((current) =>
+            current
+              ? `${current} Appointment types also unavailable.`
+              : `Unable to load FUB appointment types (HTTP ${appointmentTypesResponse.status}). Using placeholders.`,
+          );
+        }
       } catch (requestError) {
         if (
           requestError instanceof DOMException &&
@@ -355,9 +389,10 @@ export function AppointmentSetFormClient({
         setOsaOptionsUnavailable(true);
         setIsaOptions([]);
         setOsaOptions([]);
+        setAppointmentTypeOptions([...DEFAULT_APPOINTMENT_TYPE_OPTIONS]);
         setOptionsError(
           requestError instanceof Error
-            ? `${requestError.message} Using placeholder options for ISA/OSA.`
+            ? `${requestError.message} Using placeholder options for ISA/OSA/types.`
             : "Unable to load dropdown options. Using placeholders.",
         );
       }
@@ -532,7 +567,7 @@ export function AppointmentSetFormClient({
           />
         </div>
         <title>Appointment Set</title>
-        <div className="mb-6 border-b border-[var(--divider-color)] pb-6">
+        <div className="mb-6">
           <h1 className="page-title mb-0 text-balance">Appointment Set</h1>
           <p className="page-intro">
             Schedule the client appointment and capture intake details for this lead.
@@ -541,7 +576,7 @@ export function AppointmentSetFormClient({
 
         {localDemoEnabled ? (
           <Notice tone="warning">
-            Local demo mode — fixture client/deal/SISU IDs were applied because no
+            Demo mode — fixture client/deal/SISU IDs were applied because no
             clientId was provided.
           </Notice>
         ) : null}
@@ -568,7 +603,7 @@ export function AppointmentSetFormClient({
             void handleSubmit();
           }}
         >
-          <div className="divide-y divide-[var(--divider-color)]">
+          <div>
             <SectionCard title="Client Info">
               <Row>
                 <div>
@@ -632,7 +667,7 @@ export function AppointmentSetFormClient({
               </Row>
               <Row>
                 <div>
-                  <SelectInput
+                  <FormSelectInput
                     id="leadType"
                     label="Client Type"
                     value={formState.leadType}
@@ -645,266 +680,271 @@ export function AppointmentSetFormClient({
                         {option.label}
                       </option>
                     ))}
-                  </SelectInput>
+                  </FormSelectInput>
                   <FieldError message={errors.leadType} />
                 </div>
               </Row>
             </SectionCard>
 
             <SectionCard title="Appointment Information">
-              <Row>
-                <div>
-                  <SelectInput
-                    id="apptSetBy"
-                    label="Appointment Set By"
-                    value={formState.apptSetBy}
-                    required
-                    onChange={(event) => updateField("apptSetBy", event.target.value)}
-                  >
-                    <option value="">Select who set the appointment...</option>
-                    {toSelectOptions(APPT_SET_BY_OPTIONS).map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </SelectInput>
-                  <FieldError message={errors.apptSetBy} />
-                </div>
-                <div>
-                  <SelectInput
-                    id="appointmentType"
-                    label="Appointment Type"
-                    value={formState.appointmentType}
-                    required
-                    onChange={(event) =>
-                      updateField("appointmentType", event.target.value)
-                    }
-                  >
-                    <option value="">Select appointment type...</option>
-                    {toSelectOptions(APPOINTMENT_TYPE_OPTIONS).map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </SelectInput>
-                  <FieldError message={errors.appointmentType} />
-                </div>
-              </Row>
-
-              {showAssignedIsa || showAssignedOsa ? (
+              <FieldGroup>
                 <Row>
                   <div>
-                    {showAssignedIsa ? (
-                      <>
-                        <SelectInput
-                          id="assignedIsa"
-                          label="Assigned ISA"
-                          value={formState.assignedIsa}
-                          required
-                          disabled={isaOptionsUnavailable}
-                          onChange={(event) =>
-                            updateField("assignedIsa", event.target.value)
-                          }
-                        >
-                          <option value="">
-                            {isaOptionsUnavailable
-                              ? "SISU ISA options unavailable"
-                              : "Select ISA..."}
-                          </option>
-                          {!isaOptionsUnavailable
-                            ? isaOptions.map((option) => (
-                                <option key={option.value} value={option.value}>
-                                  {option.label}
-                                </option>
-                              ))
-                            : null}
-                        </SelectInput>
-                        <FieldError message={errors.assignedIsa} />
-                      </>
-                    ) : (
-                      <>
-                        <SelectInput
-                          id="assignedOsa"
-                          label="Assigned OSA"
-                          value={formState.assignedOsa}
-                          required
-                          disabled={osaOptionsUnavailable}
-                          onChange={(event) =>
-                            updateField("assignedOsa", event.target.value)
-                          }
-                        >
-                          <option value="">
-                            {osaOptionsUnavailable
-                              ? "FUB user options unavailable"
-                              : "Select OSA..."}
-                          </option>
-                          {!osaOptionsUnavailable
-                            ? osaOptions.map((option) => (
-                                <option key={option.value} value={option.value}>
-                                  {option.label}
-                                </option>
-                              ))
-                            : null}
-                        </SelectInput>
-                        <FieldError message={errors.assignedOsa} />
-                      </>
-                    )}
+                    <FormSelectInput
+                      id="apptSetBy"
+                      label="Appointment Set By"
+                      value={formState.apptSetBy}
+                      required
+                      onChange={(event) => updateField("apptSetBy", event.target.value)}
+                    >
+                      <option value="">Select who set the appointment...</option>
+                      {toSelectOptions(APPT_SET_BY_OPTIONS).map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </FormSelectInput>
+                    <FieldError message={errors.apptSetBy} />
+                  </div>
+                  <div>
+                    <FormSelectInput
+                      id="appointmentType"
+                      label="Appointment Type"
+                      value={formState.appointmentType}
+                      required
+                      onChange={(event) =>
+                        updateField("appointmentType", event.target.value)
+                      }
+                    >
+                      <option value="">Select appointment type...</option>
+                      {appointmentTypeOptions.map((option) => (
+                        <option key={option.id} value={String(option.id)}>
+                          {option.name}
+                        </option>
+                      ))}
+                    </FormSelectInput>
+                    <FieldError message={errors.appointmentType} />
                   </div>
                 </Row>
-              ) : null}
 
-              <Row>
-                <div>
-                  <FormDatePickerField
-                    id="appointmentDate"
-                    label="Appointment Date"
-                    value={formState.appointmentDate}
-                    required
-                    error={errors.appointmentDate}
-                    onChange={(value) => updateField("appointmentDate", value)}
-                  />
-                  <FieldError message={errors.appointmentDate} />
-                </div>
-              </Row>
+                {showAssignedIsa || showAssignedOsa ? (
+                  <FormExpand>
+                    <Row>
+                      <div>
+                        {showAssignedIsa ? (
+                          <>
+                            <FormSelectInput
+                              id="assignedIsa"
+                              label="Assigned ISA"
+                              value={formState.assignedIsa}
+                              required
+                              disabled={isaOptionsUnavailable}
+                              onChange={(event) =>
+                                updateField("assignedIsa", event.target.value)
+                              }
+                            >
+                              <option value="">
+                                {isaOptionsUnavailable
+                                  ? "SISU ISA options unavailable"
+                                  : "Select ISA..."}
+                              </option>
+                              {!isaOptionsUnavailable
+                                ? isaOptions.map((option) => (
+                                    <option key={option.value} value={option.value}>
+                                      {option.label}
+                                    </option>
+                                  ))
+                                : null}
+                            </FormSelectInput>
+                            <FieldError message={errors.assignedIsa} />
+                          </>
+                        ) : (
+                          <>
+                            <FormSelectInput
+                              id="assignedOsa"
+                              label="Assigned OSA"
+                              value={formState.assignedOsa}
+                              required
+                              disabled={osaOptionsUnavailable}
+                              onChange={(event) =>
+                                updateField("assignedOsa", event.target.value)
+                              }
+                            >
+                              <option value="">
+                                {osaOptionsUnavailable
+                                  ? "FUB user options unavailable"
+                                  : "Select OSA..."}
+                              </option>
+                              {!osaOptionsUnavailable
+                                ? osaOptions.map((option) => (
+                                    <option key={option.value} value={option.value}>
+                                      {option.label}
+                                    </option>
+                                  ))
+                                : null}
+                            </FormSelectInput>
+                            <FieldError message={errors.assignedOsa} />
+                          </>
+                        )}
+                      </div>
+                    </Row>
+                  </FormExpand>
+                ) : null}
+              </FieldGroup>
 
-              <Row>
-                <div>
-                  <FormTimePickerField
-                    id="appointmentStartTime"
-                    label="Start Time"
-                    value={formState.appointmentStartTime}
-                    required
-                    error={errors.appointmentStartTime}
-                    onChange={(value) => updateField("appointmentStartTime", value)}
-                  />
-                  <FieldError message={errors.appointmentStartTime} />
-                </div>
-                <div>
-                  <FormTimePickerField
-                    id="appointmentEndTime"
-                    label="End Time"
-                    value={formState.appointmentEndTime}
-                    required
-                    error={errors.appointmentEndTime}
-                    onChange={(value) => updateField("appointmentEndTime", value)}
-                  />
-                  <FieldError message={errors.appointmentEndTime} />
-                </div>
-              </Row>
-
-              <Row>
-                <div>
-                  <SelectInput
-                    id="appointmentLocation"
-                    label="Appointment Location"
-                    value={formState.appointmentLocation}
-                    required
-                    onChange={(event) =>
-                      updateField("appointmentLocation", event.target.value)
-                    }
-                  >
-                    <option value="">Select location...</option>
-                    {toSelectOptions(APPOINTMENT_LOCATION_OPTIONS).map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </SelectInput>
-                  <FieldError message={errors.appointmentLocation} />
-                </div>
-              </Row>
-
-              {showOtherAddress ? (
-                <>
-                  <Divider />
-                  <div className="form-address-grid">
-                    <div>
-                      <TextInput
-                        id="streetAddress"
-                        label="Street Address"
-                        value={formState.streetAddress}
-                        required
-                        onChange={(event) =>
-                          updateField("streetAddress", event.target.value)
-                        }
-                      />
-                      <FieldError message={errors.streetAddress} />
-                    </div>
-                    <div>
-                      <TextInput
-                        id="addressLine2"
-                        label="Address Line 2"
-                        value={formState.addressLine2}
-                        onChange={(event) =>
-                          updateField("addressLine2", event.target.value)
-                        }
-                      />
-                    </div>
+              <FieldGroup>
+                <Row>
+                  <div>
+                    <FormDatePickerField
+                      id="appointmentDate"
+                      label="Appointment Date"
+                      value={formState.appointmentDate}
+                      required
+                      error={errors.appointmentDate}
+                      onChange={(value) => updateField("appointmentDate", value)}
+                    />
+                    <FieldError message={errors.appointmentDate} />
                   </div>
-                  <div className="form-grid-three">
-                    <div>
-                      <TextInput
-                        id="city"
-                        label="City"
-                        value={formState.city}
-                        required
-                        onChange={(event) => updateField("city", event.target.value)}
-                      />
-                      <FieldError message={errors.city} />
-                    </div>
-                    <div>
-                      <SelectInput
-                        id="state"
-                        label="State/Province/Region"
-                        value={formState.state}
-                        required
-                        onChange={(event) =>
-                          updateField("state", event.target.value)
-                        }
-                      >
-                        <option value="">Select state...</option>
-                        {usStates.map((state) => (
-                          <option key={state} value={state}>
-                            {state}
-                          </option>
-                        ))}
-                      </SelectInput>
-                      <FieldError message={errors.state} />
-                    </div>
-                    <div>
-                      <TextInput
-                        id="postalCode"
-                        label="Postal Code"
-                        value={formState.postalCode}
-                        required
-                        onChange={(event) =>
-                          updateField("postalCode", event.target.value)
-                        }
-                      />
-                      <FieldError message={errors.postalCode} />
-                    </div>
-                  </div>
-                </>
-              ) : null}
+                </Row>
 
-              <div>
-                <TextAreaInput
-                  id="notes"
-                  label="Notes (Location, Timeframe, Motivation, Price, etc.)"
-                  value={formState.notes}
-                  onChange={(event) => updateField("notes", event.target.value)}
-                />
-              </div>
+                <Row>
+                  <div>
+                    <FormTimePickerField
+                      id="appointmentStartTime"
+                      label="Start Time"
+                      value={formState.appointmentStartTime}
+                      required
+                      error={errors.appointmentStartTime}
+                      onChange={(value) => updateField("appointmentStartTime", value)}
+                    />
+                    <FieldError message={errors.appointmentStartTime} />
+                  </div>
+                  <div>
+                    <FormTimePickerField
+                      id="appointmentEndTime"
+                      label="End Time"
+                      value={formState.appointmentEndTime}
+                      required
+                      error={errors.appointmentEndTime}
+                      onChange={(value) => updateField("appointmentEndTime", value)}
+                    />
+                    <FieldError message={errors.appointmentEndTime} />
+                  </div>
+                </Row>
+
+                <Row>
+                  <div>
+                    <FormSelectInput
+                      id="appointmentLocation"
+                      label="Appointment Location"
+                      value={formState.appointmentLocation}
+                      required
+                      onChange={(event) =>
+                        updateField("appointmentLocation", event.target.value)
+                      }
+                    >
+                      <option value="">Select location...</option>
+                      {toSelectOptions(APPOINTMENT_LOCATION_OPTIONS).map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </FormSelectInput>
+                    <FieldError message={errors.appointmentLocation} />
+                  </div>
+                </Row>
+
+                {showOtherAddress ? (
+                  <FormExpand className="flex flex-col gap-4">
+                    <Divider />
+                    <div className="form-address-grid">
+                      <div>
+                        <TextInput
+                          id="streetAddress"
+                          label="Street Address"
+                          value={formState.streetAddress}
+                          required
+                          onChange={(event) =>
+                            updateField("streetAddress", event.target.value)
+                          }
+                        />
+                        <FieldError message={errors.streetAddress} />
+                      </div>
+                      <div>
+                        <TextInput
+                          id="addressLine2"
+                          label="Address Line 2"
+                          value={formState.addressLine2}
+                          onChange={(event) =>
+                            updateField("addressLine2", event.target.value)
+                          }
+                        />
+                      </div>
+                    </div>
+                    <div className="form-grid-three">
+                      <div>
+                        <TextInput
+                          id="city"
+                          label="City"
+                          value={formState.city}
+                          required
+                          onChange={(event) => updateField("city", event.target.value)}
+                        />
+                        <FieldError message={errors.city} />
+                      </div>
+                      <div>
+                        <FormSelectInput
+                          id="state"
+                          label="State/Province/Region"
+                          value={formState.state}
+                          required
+                          onChange={(event) =>
+                            updateField("state", event.target.value)
+                          }
+                        >
+                          <option value="">Select state...</option>
+                          {usStates.map((state) => (
+                            <option key={state} value={state}>
+                              {state}
+                            </option>
+                          ))}
+                        </FormSelectInput>
+                        <FieldError message={errors.state} />
+                      </div>
+                      <div>
+                        <TextInput
+                          id="postalCode"
+                          label="Postal Code"
+                          value={formState.postalCode}
+                          required
+                          onChange={(event) =>
+                            updateField("postalCode", event.target.value)
+                          }
+                        />
+                        <FieldError message={errors.postalCode} />
+                      </div>
+                    </div>
+                  </FormExpand>
+                ) : null}
+              </FieldGroup>
+
+              <FieldGroup>
+                <div>
+                  <TextAreaInput
+                    id="notes"
+                    label="Notes (Location, Timeframe, Motivation, Price, etc.)"
+                    value={formState.notes}
+                    onChange={(event) => updateField("notes", event.target.value)}
+                  />
+                </div>
+              </FieldGroup>
             </SectionCard>
           </div>
 
           <div className="form-actions mt-6">
-            <button
-              type="submit"
-              className={`app-button-press ${primaryButtonClassName} w-full`}
-            >
+            <PrimaryButton type="submit" className="w-full">
               Submit
-            </button>
+            </PrimaryButton>
           </div>
         </form>
       </main>

@@ -7,13 +7,13 @@ import {
   Notice,
   Row,
   SectionCard,
-  SelectInput,
   Spinner,
   TextAreaInput,
   TextInput,
-  primaryButtonClassName,
   secondaryButtonClassName,
 } from "@baraagency/components";
+import { PrimaryButton } from "../_core/PrimaryButton";
+import { FormSelectInput } from "../_core/formSelectInput";
 import type { FUBPerson } from "@/app/types/fub";
 import type { SISUDropdownOption, SISUTeamFieldsCatalogResponse } from "@/app/types/sisu";
 import {
@@ -22,6 +22,7 @@ import {
   limitPercentageInputPrecision,
 } from "../_core/formatUtils";
 import { FormDatePickerField } from "../_core/formDatePickerField";
+import { FormExpand } from "../_core/FormExpand";
 import type { TeamFieldCatalog } from "../_core/teamFieldOptions";
 import {
   applyPendingPersonPrefill,
@@ -126,6 +127,24 @@ const usStates = [
   "WY",
 ];
 
+function normalizeSisuOptions(options: SISUDropdownOption[]): SelectOption[] {
+  return options.map((option) => ({
+    value: String(option.value),
+    label: option.label,
+  }));
+}
+
+function isOtherVendorSelection(value: string, options: SelectOption[]): boolean {
+  return (
+    isOtherSelection(value) ||
+    options.some(
+      (option) =>
+        option.value === value &&
+        (isOtherSelection(option.value) || isOtherSelection(option.label)),
+    )
+  );
+}
+
 function getSingleSearchParam(
   searchParams: Record<string, string | string[] | undefined>,
   key: string,
@@ -146,15 +165,19 @@ function FieldError({ message }: { message?: string }) {
 function FieldGroup({
   title,
   children,
+  className,
 }: {
-  title: string;
+  title?: string;
   children: ReactNode;
+  className?: string;
 }) {
   return (
-    <div className="form-field-group">
-      <h3 className="border-b border-[var(--divider-color)] pb-2 text-xs font-semibold uppercase text-[var(--body-color)]">
-        {title}
-      </h3>
+    <div
+      className={
+        className ? `form-field-group ${className}` : "form-field-group"
+      }
+    >
+      {title ? <h3>{title}</h3> : null}
       <div className="form-field-group-fields">{children}</div>
     </div>
   );
@@ -250,7 +273,7 @@ export function PendingFormClient({
     contingenciesOptions,
   } = getPendingSelectOptions(teamFields);
   const mortgageCompanyOptions = prioritizeSpecialVendorOptions(mortgageVendors);
-  const showMortgageCompanyOther = isOtherSelection(
+  const showMortgageCompanyOther = isOtherVendorSelection(
     formState.mortgageCompany,
     mortgageCompanyOptions,
   );
@@ -535,7 +558,7 @@ export function PendingFormClient({
           />
         </div>
         <title>Pending Form</title>
-        <div className="mb-6 border-b border-[var(--divider-color)] pb-6">
+        <div className="mb-6">
           <h1 className="page-title mb-0 text-balance">Pending</h1>
           <p className="page-intro">
             Complete the under-contract transaction intake for this client.
@@ -544,7 +567,7 @@ export function PendingFormClient({
 
         {localDemoEnabled ? (
           <Notice tone="warning">
-            Local demo mode — fixture client/deal/SISU IDs were applied because no
+            Demo mode — fixture client/deal/SISU IDs were applied because no
             clientId was provided.
           </Notice>
         ) : null}
@@ -571,253 +594,268 @@ export function PendingFormClient({
             void handleSubmit();
           }}
         >
-          <div className="divide-y divide-[var(--divider-color)]">
+          <div>
             <SectionCard title="Client Info">
-              <Row>
-                <div>
-                  <TextInput
-                    id="clientFirstName"
-                    label="Client First Name"
-                    value={formState.clientFirstName}
-                    required
-                    onChange={(event) =>
-                      updateField("clientFirstName", event.target.value)
-                    }
-                  />
-                  <FieldError message={errors.clientFirstName} />
-                </div>
-                <div>
-                  <TextInput
-                    id="clientLastName"
-                    label="Client Last Name"
-                    value={formState.clientLastName}
-                    required
-                    onChange={(event) =>
-                      updateField("clientLastName", event.target.value)
-                    }
-                  />
-                  <FieldError message={errors.clientLastName} />
-                </div>
-              </Row>
-              <Row>
-                <div>
-                  <TextInput
-                    id="clientPhone"
-                    label="Client Phone Number"
-                    type="tel"
-                    value={formState.clientPhone}
-                    required
-                    onBlur={() =>
-                      updateField(
-                        "clientPhone",
-                        formatPendingPhoneField(formState.clientPhone),
-                      )
-                    }
-                    onChange={(event) =>
-                      updateField("clientPhone", event.target.value)
-                    }
-                  />
-                  <FieldError message={errors.clientPhone} />
-                </div>
-                <div>
-                  <TextInput
-                    id="clientEmail"
-                    label="Client Email"
-                    type="email"
-                    value={formState.clientEmail}
-                    required
-                    onChange={(event) =>
-                      updateField("clientEmail", event.target.value)
-                    }
-                  />
-                  <FieldError message={errors.clientEmail} />
-                </div>
-              </Row>
-              <div>
-                <SelectInput
-                  id="hasSecondaryClient"
-                  label="Is there a secondary client?"
-                  value={formState.hasSecondaryClient}
-                  required
-                  onChange={(event) =>
-                    updateField("hasSecondaryClient", event.target.value)
-                  }
-                >
-                  <option value="">Select...</option>
-                  {hasSecondaryClientOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </SelectInput>
-                <FieldError message={errors.hasSecondaryClient} />
-              </div>
-              {isYesSelection(formState.hasSecondaryClient) ? (
-                <div className="space-y-4 border-l-[var(--indent-border-width)] border-l-[var(--indent-border-color)] pl-[var(--indent-padding-left)]">
+              <FieldGroup>
+                <Row>
                   <div>
                     <TextInput
-                      id="secondaryContact"
-                      label="Secondary Client Name"
-                      value={formState.secondaryContact}
+                      id="clientFirstName"
+                      label="Client First Name"
+                      value={formState.clientFirstName}
                       required
                       onChange={(event) =>
-                        updateField("secondaryContact", event.target.value)
+                        updateField("clientFirstName", event.target.value)
                       }
                     />
-                    <FieldError message={errors.secondaryContact} />
+                    <FieldError message={errors.clientFirstName} />
                   </div>
-                  <Row>
-                    <div>
-                      <TextInput
-                        id="secondaryContactPhone"
-                        label="Secondary Client Phone"
-                        type="tel"
-                        value={formState.secondaryContactPhone}
-                        required
-                        onBlur={() =>
-                          updateField(
-                            "secondaryContactPhone",
-                            formatPendingPhoneField(formState.secondaryContactPhone),
-                          )
-                        }
-                        onChange={(event) =>
-                          updateField("secondaryContactPhone", event.target.value)
-                        }
-                      />
-                      <FieldError message={errors.secondaryContactPhone} />
-                    </div>
-                    <div>
-                      <TextInput
-                        id="secondaryContactEmail"
-                        label="Secondary Client Email"
-                        type="email"
-                        value={formState.secondaryContactEmail}
-                        required
-                        onChange={(event) =>
-                          updateField("secondaryContactEmail", event.target.value)
-                        }
-                      />
-                      <FieldError message={errors.secondaryContactEmail} />
-                    </div>
-                  </Row>
-                </div>
-              ) : null}
-              <Row>
+                  <div>
+                    <TextInput
+                      id="clientLastName"
+                      label="Client Last Name"
+                      value={formState.clientLastName}
+                      required
+                      onChange={(event) =>
+                        updateField("clientLastName", event.target.value)
+                      }
+                    />
+                    <FieldError message={errors.clientLastName} />
+                  </div>
+                </Row>
+                <Row>
+                  <div>
+                    <TextInput
+                      id="clientPhone"
+                      label="Client Phone Number"
+                      type="tel"
+                      value={formState.clientPhone}
+                      required
+                      onBlur={() =>
+                        updateField(
+                          "clientPhone",
+                          formatPendingPhoneField(formState.clientPhone),
+                        )
+                      }
+                      onChange={(event) =>
+                        updateField("clientPhone", event.target.value)
+                      }
+                    />
+                    <FieldError message={errors.clientPhone} />
+                  </div>
+                  <div>
+                    <TextInput
+                      id="clientEmail"
+                      label="Client Email"
+                      type="email"
+                      value={formState.clientEmail}
+                      required
+                      onChange={(event) =>
+                        updateField("clientEmail", event.target.value)
+                      }
+                    />
+                    <FieldError message={errors.clientEmail} />
+                  </div>
+                </Row>
                 <div>
-                  <TextInput
-                    id="transactionAmount"
-                    label="Transaction Amount"
-                    inputMode="decimal"
-                    value={formState.transactionAmount}
-                    required
-                    onBlur={() =>
-                      updateField(
-                        "transactionAmount",
-                        formatCurrencyInput(formState.transactionAmount),
-                      )
-                    }
-                    onChange={(event) =>
-                      updateField("transactionAmount", event.target.value)
-                    }
-                  />
-                  <FieldError message={errors.transactionAmount} />
-                </div>
-                <div>
-                  <SelectInput
-                    id="clientType"
-                    label="Client Type"
-                    value={formState.clientType}
+                  <FormSelectInput
+                    id="hasSecondaryClient"
+                    label="Is there a secondary client?"
+                    value={formState.hasSecondaryClient}
                     required
                     onChange={(event) =>
-                      updateField("clientType", event.target.value)
+                      updateField("hasSecondaryClient", event.target.value)
                     }
                   >
-                    <option value="">Select type...</option>
-                    {clientTypeOptions.map((option) => (
+                    <option value="">Select...</option>
+                    {hasSecondaryClientOptions.map((option) => (
                       <option key={option.value} value={option.value}>
                         {option.label}
                       </option>
                     ))}
-                  </SelectInput>
-                  <FieldError message={errors.clientType} />
+                  </FormSelectInput>
+                  <FieldError message={errors.hasSecondaryClient} />
                 </div>
-              </Row>
-              <input
-                type="hidden"
-                name="transactionStage"
-                value={formState.transactionStage}
-              />
-              <div className="form-address-grid">
-                <div>
-                  <TextInput
-                    id="addressLine1"
-                    label="Street Address"
-                    value={formState.addressLine1}
-                    required
-                    onChange={(event) =>
-                      updateField("addressLine1", event.target.value)
-                    }
-                  />
-                  <FieldError message={errors.addressLine1} />
-                </div>
-                <TextInput
-                  id="addressLine2"
-                  label="Address Line 2"
-                  value={formState.addressLine2}
-                  onChange={(event) =>
-                    updateField("addressLine2", event.target.value)
-                  }
+                {isYesSelection(formState.hasSecondaryClient) ? (
+                  <FormExpand className="space-y-4 border-l-[var(--indent-border-width)] border-l-[var(--indent-border-color)] pl-[var(--indent-padding-left)]">
+                    <div>
+                      <TextInput
+                        id="secondaryContact"
+                        label="Secondary Client Name"
+                        value={formState.secondaryContact}
+                        required
+                        onChange={(event) =>
+                          updateField("secondaryContact", event.target.value)
+                        }
+                      />
+                      <FieldError message={errors.secondaryContact} />
+                    </div>
+                    <Row>
+                      <div>
+                        <TextInput
+                          id="secondaryContactPhone"
+                          label="Secondary Client Phone"
+                          type="tel"
+                          value={formState.secondaryContactPhone}
+                          required
+                          onBlur={() =>
+                            updateField(
+                              "secondaryContactPhone",
+                              formatPendingPhoneField(
+                                formState.secondaryContactPhone,
+                              ),
+                            )
+                          }
+                          onChange={(event) =>
+                            updateField(
+                              "secondaryContactPhone",
+                              event.target.value,
+                            )
+                          }
+                        />
+                        <FieldError message={errors.secondaryContactPhone} />
+                      </div>
+                      <div>
+                        <TextInput
+                          id="secondaryContactEmail"
+                          label="Secondary Client Email"
+                          type="email"
+                          value={formState.secondaryContactEmail}
+                          required
+                          onChange={(event) =>
+                            updateField(
+                              "secondaryContactEmail",
+                              event.target.value,
+                            )
+                          }
+                        />
+                        <FieldError message={errors.secondaryContactEmail} />
+                      </div>
+                    </Row>
+                  </FormExpand>
+                ) : null}
+                <input
+                  type="hidden"
+                  name="transactionStage"
+                  value={formState.transactionStage}
                 />
-              </div>
-              <div className="form-grid-three">
-                <div>
+              </FieldGroup>
+
+              <FieldGroup>
+                <Row>
+                  <div>
+                    <FormSelectInput
+                      id="clientType"
+                      label="Client Type"
+                      value={formState.clientType}
+                      required
+                      onChange={(event) =>
+                        updateField("clientType", event.target.value)
+                      }
+                    >
+                      <option value="">Select type...</option>
+                      {clientTypeOptions.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </FormSelectInput>
+                    <FieldError message={errors.clientType} />
+                  </div>
+                  <div>
+                    <TextInput
+                      id="transactionAmount"
+                      label="Transaction Amount"
+                      inputMode="decimal"
+                      value={formState.transactionAmount}
+                      required
+                      onBlur={() =>
+                        updateField(
+                          "transactionAmount",
+                          formatCurrencyInput(formState.transactionAmount),
+                        )
+                      }
+                      onChange={(event) =>
+                        updateField("transactionAmount", event.target.value)
+                      }
+                    />
+                    <FieldError message={errors.transactionAmount} />
+                  </div>
+                </Row>
+              </FieldGroup>
+
+              <FieldGroup>                <div className="form-address-grid">
+                  <div>
+                    <TextInput
+                      id="addressLine1"
+                      label="Street Address"
+                      value={formState.addressLine1}
+                      required
+                      onChange={(event) =>
+                        updateField("addressLine1", event.target.value)
+                      }
+                    />
+                    <FieldError message={errors.addressLine1} />
+                  </div>
                   <TextInput
-                    id="city"
-                    label="City"
-                    value={formState.city}
-                    required
-                    onChange={(event) => updateField("city", event.target.value)}
-                  />
-                  <FieldError message={errors.city} />
-                </div>
-                <div>
-                  <SelectInput
-                    id="state"
-                    label="State/Province/Region"
-                    value={formState.state}
-                    required
+                    id="addressLine2"
+                    label="Address Line 2"
+                    value={formState.addressLine2}
                     onChange={(event) =>
-                      updateField("state", event.target.value)
-                    }
-                  >
-                    <option value="">Select state...</option>
-                    {usStates.map((state) => (
-                      <option key={state} value={state}>
-                        {state}
-                      </option>
-                    ))}
-                  </SelectInput>
-                  <FieldError message={errors.state} />
-                </div>
-                <div>
-                  <TextInput
-                    id="postal"
-                    label="Postal Code"
-                    value={formState.postal}
-                    required
-                    onChange={(event) =>
-                      updateField("postal", event.target.value)
+                      updateField("addressLine2", event.target.value)
                     }
                   />
-                  <FieldError message={errors.postal} />
                 </div>
-              </div>
+                <div className="form-grid-three">
+                  <div>
+                    <TextInput
+                      id="city"
+                      label="City"
+                      value={formState.city}
+                      required
+                      onChange={(event) => updateField("city", event.target.value)}
+                    />
+                    <FieldError message={errors.city} />
+                  </div>
+                  <div>
+                    <FormSelectInput
+                      id="state"
+                      label="State/Province/Region"
+                      value={formState.state}
+                      required
+                      onChange={(event) =>
+                        updateField("state", event.target.value)
+                      }
+                    >
+                      <option value="">Select state...</option>
+                      {usStates.map((state) => (
+                        <option key={state} value={state}>
+                          {state}
+                        </option>
+                      ))}
+                    </FormSelectInput>
+                    <FieldError message={errors.state} />
+                  </div>
+                  <div>
+                    <TextInput
+                      id="postal"
+                      label="Postal Code"
+                      value={formState.postal}
+                      required
+                      onChange={(event) =>
+                        updateField("postal", event.target.value)
+                      }
+                    />
+                    <FieldError message={errors.postal} />
+                  </div>
+                </div>
+              </FieldGroup>
             </SectionCard>
 
             <SectionCard title="Financing">
               <Row>
                 <div>
-                  <SelectInput
+                  <FormSelectInput
                     id="financingType"
                     label="Financing Type"
                     value={formState.financingType}
@@ -832,11 +870,11 @@ export function PendingFormClient({
                         {option.label}
                       </option>
                     ))}
-                  </SelectInput>
+                  </FormSelectInput>
                   <FieldError message={errors.financingType} />
                 </div>
                 <div>
-                  <SelectInput
+                  <FormSelectInput
                     id="mortgageCompany"
                     label="Mortgage Company"
                     value={formState.mortgageCompany}
@@ -851,12 +889,12 @@ export function PendingFormClient({
                         {option.label}
                       </option>
                     ))}
-                  </SelectInput>
+                  </FormSelectInput>
                   <FieldError message={errors.mortgageCompany} />
                 </div>
               </Row>
               {showMortgageCompanyOther ? (
-                <div className="space-y-4 border-l-[var(--indent-border-width)] border-l-[var(--indent-border-color)] pl-[var(--indent-padding-left)]">
+                <FormExpand className="space-y-4 border-l-[var(--indent-border-width)] border-l-[var(--indent-border-color)] pl-[var(--indent-padding-left)]">
                   <div>
                     <TextInput
                       id="mortgageCompanyName"
@@ -891,12 +929,12 @@ export function PendingFormClient({
                       <FieldError message={errors.loanOfficerEmail} />
                     </div>
                   </Row>
-                </div>
+                </FormExpand>
               ) : null}
             </SectionCard>
 
             <SectionCard title="Additional Details">
-              <FieldGroup title="Timeline & Source">
+              <FieldGroup>
                 <Row>
                   <MuiDateField
                     id="underContractDate"
@@ -917,7 +955,7 @@ export function PendingFormClient({
                 </Row>
                 <Row>
                   <div>
-                    <SelectInput
+                    <FormSelectInput
                       id="outsideReferral"
                       label="Outside Referral/Rebate?"
                       value={formState.outsideReferral}
@@ -932,13 +970,13 @@ export function PendingFormClient({
                           {option.label}
                         </option>
                       ))}
-                    </SelectInput>
+                    </FormSelectInput>
                     <FieldError message={errors.outsideReferral} />
                   </div>
                   <div aria-hidden className="form-hidden-placeholder" />
                 </Row>
                 {isOutsideReferralSelected(formState.outsideReferral) ? (
-                  <div className="space-y-4 border-l-[var(--indent-border-width)] border-l-[var(--indent-border-color)] pl-[var(--indent-padding-left)]">
+                  <FormExpand className="space-y-4 border-l-[var(--indent-border-width)] border-l-[var(--indent-border-color)] pl-[var(--indent-padding-left)]">
                     <Row>
                       <div>
                         <TextInput
@@ -991,11 +1029,11 @@ export function PendingFormClient({
                       />
                       <FieldError message={errors.referralMailingAddress} />
                     </div>
-                  </div>
+                  </FormExpand>
                 ) : null}
               </FieldGroup>
 
-              <FieldGroup title="Cooperating Agent">
+              <FieldGroup>
                 <Row>
                   <div>
                     <TextInput
@@ -1054,10 +1092,10 @@ export function PendingFormClient({
               </FieldGroup>
 
               {isSellerSelection(formState.clientType) ? (
-                <FieldGroup title="Seller Terms">
+                <FieldGroup>
                   <Row>
                     <div>
-                      <SelectInput
+                      <FormSelectInput
                         id="dueDiligencePeriod"
                         label="Is there a due diligence period?"
                         value={formState.dueDiligencePeriod}
@@ -1071,7 +1109,7 @@ export function PendingFormClient({
                             {option.label}
                           </option>
                         ))}
-                      </SelectInput>
+                      </FormSelectInput>
                     </div>
                     {isYesSelection(formState.dueDiligencePeriod) ? (
                       <MuiDateField
@@ -1089,7 +1127,7 @@ export function PendingFormClient({
                     )}
                   </Row>
                   <Row>
-                    <SelectInput
+                    <FormSelectInput
                       id="contingencies"
                       label="Are there contingencies?"
                       value={formState.contingencies}
@@ -1103,7 +1141,7 @@ export function PendingFormClient({
                           {option.label}
                         </option>
                       ))}
-                    </SelectInput>
+                    </FormSelectInput>
                     <div>
                       <TextInput
                         id="sellerCompensationPercent"
@@ -1146,12 +1184,9 @@ export function PendingFormClient({
           </div>
 
           <div className="form-actions mt-6">
-            <button
-              type="submit"
-              className={`app-button-press ${primaryButtonClassName} w-full`}
-            >
+            <PrimaryButton type="submit" className="w-full">
               Submit
-            </button>
+            </PrimaryButton>
           </div>
         </form>
       </main>

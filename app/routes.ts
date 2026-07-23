@@ -17,6 +17,7 @@ export default [
   // FUB
   route("api/fub/context", "api/fub/context/route.ts"),
   route("api/fub/users", "api/fub/users/route.ts"),
+  route("api/fub/appointment-types", "api/fub/appointment-types/route.ts"),
   route("api/fub/stages", "api/fub/stages/route.ts"),
   route("api/fub/pipelines", "api/fub/pipelines/route.ts"),
   route("api/fub/people", "api/fub/people/route.ts"),

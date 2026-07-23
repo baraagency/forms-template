@@ -20,7 +20,7 @@ function buildValidPayload() {
     appointmentDate: "2026-06-15",
     appointmentStartTime: "10:00",
     appointmentEndTime: "11:00",
-    appointmentLocation: "Charleston Office",
+    appointmentLocation: "Phone",
     appointmentType: "Buyer Consultation",
   };
 }

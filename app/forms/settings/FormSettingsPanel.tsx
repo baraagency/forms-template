@@ -3,9 +3,9 @@ import {
   Notice,
   Spinner,
   TextInput,
-  primaryButtonClassName,
   secondaryButtonClassName,
 } from "@baraagency/components";
+import { PrimaryButton } from "../_core/PrimaryButton";
 import type {
   FormFubDealMapping,
   FormFubPersonMapping,
@@ -143,12 +143,7 @@ export function TagsEditor({ formKind }: { formKind: SettingsFormKind }) {
           required
         />
         <div className="settings-dynamic-recipient-actions">
-          <button
-            type="submit"
-            className={`app-button-press ${primaryButtonClassName}`}
-          >
-            Add tag
-          </button>
+          <PrimaryButton type="submit">Add tag</PrimaryButton>
         </div>
       </form>
     </div>
@@ -159,17 +154,28 @@ function FubPersonSection({
   formKind,
   personMaps,
   onReloadMappings,
+  panelId,
+  labelledBy,
+  hidden,
 }: {
   formKind: SettingsFormKind;
   personMaps: FormFubPersonMapping[];
   onReloadMappings: () => Promise<void>;
+  panelId: string;
+  labelledBy: string;
+  hidden: boolean;
 }) {
   const personStages = usePersonStageOptions();
   const personFields = useFubPersonFieldKeys();
 
   return (
-    <section className="settings-section settings-fub-block">
-      <h3 className="settings-section-title text-balance">FUB Person</h3>
+    <div
+      className="settings-mapping-tabs-panel"
+      role="tabpanel"
+      id={panelId}
+      aria-labelledby={labelledBy}
+      hidden={hidden}
+    >
       <p className="settings-section-description text-pretty">
         Desired person stage, tags applied on submit, and field mappings into a
         Follow Up Boss person record.
@@ -220,12 +226,12 @@ function FubPersonSection({
                   },
                 ),
               );
-              await onReloadMappings();
             }}
+            onAfterSave={onReloadMappings}
           />
         </div>
       </div>
-    </section>
+    </div>
   );
 }
 
@@ -233,17 +239,28 @@ function FubDealSection({
   formKind,
   dealMaps,
   onReloadMappings,
+  panelId,
+  labelledBy,
+  hidden,
 }: {
   formKind: SettingsFormKind;
   dealMaps: FormFubDealMapping[];
   onReloadMappings: () => Promise<void>;
+  panelId: string;
+  labelledBy: string;
+  hidden: boolean;
 }) {
   const dealStages = useDealStageOptions();
   const dealFields = useFubDealFieldKeys();
 
   return (
-    <section className="settings-section settings-fub-block">
-      <h3 className="settings-section-title text-balance">FUB Deal</h3>
+    <div
+      className="settings-mapping-tabs-panel"
+      role="tabpanel"
+      id={panelId}
+      aria-labelledby={labelledBy}
+      hidden={hidden}
+    >
       <p className="settings-section-description text-pretty">
         Desired deal stage from your pipelines, and field mappings into a Follow
         Up Boss deal.
@@ -290,14 +307,25 @@ function FubDealSection({
                   },
                 ),
               );
-              await onReloadMappings();
             }}
+            onAfterSave={onReloadMappings}
           />
         </div>
       </div>
-    </section>
+    </div>
   );
 }
+
+type MappingDestinationTab = "sisu" | "fub-person" | "fub-deal";
+
+const MAPPING_DESTINATION_TABS: {
+  id: MappingDestinationTab;
+  label: string;
+}[] = [
+  { id: "sisu", label: "SISU" },
+  { id: "fub-person", label: "FUB Person" },
+  { id: "fub-deal", label: "FUB Deal" },
+];
 
 export function FormSettingsPanel({
   slug,
@@ -320,6 +348,8 @@ export function FormSettingsPanel({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [toggleBusy, setToggleBusy] = useState(false);
+  const [mappingTab, setMappingTab] =
+    useState<MappingDestinationTab>("sisu");
 
   const reloadMappings = useCallback(async () => {
     setLoading(true);
@@ -417,39 +447,98 @@ export function FormSettingsPanel({
           />
 
           <section className="settings-section">
-            <h3 className="settings-section-title text-balance">SISU mappings</h3>
+            <h3 className="settings-section-title text-balance">
+              Field mappings
+            </h3>
             <p className="settings-section-description text-pretty">
-              Map form fields to SISU field names. Stored for future submit
-              workflows.
+              Map form fields to SISU or Follow Up Boss. Choose a destination,
+              edit freely, then save.
             </p>
-            <SisuMappingsTable
-              formKind={formKind}
-              rows={sisu}
-              emptyHint="No SISU mapping templates for this form."
-              onSaveRow={async (row, draft) => {
-                await readJson(
-                  await fetch(`/api/forms/settings/sisu-mappings/${row.id}`, {
-                    method: "PATCH",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(draft),
-                  }),
+
+            <div
+              className="settings-tabs settings-tabs--3"
+              role="tablist"
+              aria-label={`${title} mapping destinations`}
+            >
+              {MAPPING_DESTINATION_TABS.map((tab) => {
+                const selected = tab.id === mappingTab;
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    role="tab"
+                    id={`${slug}-mapping-tab-${tab.id}`}
+                    aria-selected={selected}
+                    aria-controls={`${slug}-mapping-panel-${tab.id}`}
+                    className={`settings-tabs__tab app-button-press${
+                      selected ? " settings-tabs__tab--active" : ""
+                    }`}
+                    onClick={() => setMappingTab(tab.id)}
+                  >
+                    {tab.label}
+                  </button>
                 );
-                await reloadMappings();
-              }}
+              })}
+              <span
+                className="settings-tabs__indicator"
+                style={{
+                  transform: `translateX(${
+                    MAPPING_DESTINATION_TABS.findIndex(
+                      (tab) => tab.id === mappingTab,
+                    ) * 100
+                  }%)`,
+                  width: `${100 / MAPPING_DESTINATION_TABS.length}%`,
+                }}
+                aria-hidden="true"
+              />
+            </div>
+
+            <div
+              className="settings-mapping-tabs-panel"
+              role="tabpanel"
+              id={`${slug}-mapping-panel-sisu`}
+              aria-labelledby={`${slug}-mapping-tab-sisu`}
+              hidden={mappingTab !== "sisu"}
+            >
+              <p className="settings-section-description text-pretty">
+                Map form fields to SISU field names. Stored for future submit
+                workflows.
+              </p>
+              <SisuMappingsTable
+                formKind={formKind}
+                rows={sisu}
+                emptyHint="No SISU mapping templates for this form."
+                onSaveRow={async (row, draft) => {
+                  await readJson(
+                    await fetch(`/api/forms/settings/sisu-mappings/${row.id}`, {
+                      method: "PATCH",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify(draft),
+                    }),
+                  );
+                }}
+                onAfterSave={reloadMappings}
+              />
+            </div>
+
+            <FubPersonSection
+              formKind={formKind}
+              personMaps={personMaps}
+              onReloadMappings={reloadMappings}
+              panelId={`${slug}-mapping-panel-fub-person`}
+              labelledBy={`${slug}-mapping-tab-fub-person`}
+              hidden={mappingTab !== "fub-person"}
+            />
+
+            <FubDealSection
+              formKind={formKind}
+              dealMaps={dealMaps}
+              onReloadMappings={reloadMappings}
+              panelId={`${slug}-mapping-panel-fub-deal`}
+              labelledBy={`${slug}-mapping-tab-fub-deal`}
+              hidden={mappingTab !== "fub-deal"}
             />
           </section>
-
-          <FubPersonSection
-            formKind={formKind}
-            personMaps={personMaps}
-            onReloadMappings={reloadMappings}
-          />
-
-          <FubDealSection
-            formKind={formKind}
-            dealMaps={dealMaps}
-            onReloadMappings={reloadMappings}
-          />
         </>
       ) : null}
     </div>

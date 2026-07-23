@@ -5,7 +5,7 @@
 ```mermaid
 flowchart LR
   Router["/forms"] --> Context["/api/fub/context REAL"]
-  Router --> MockFub["/api/fub/* fixtures"]
+  Router --> MockFub["/api/fub/* live when keyed / else fixtures"]
   Router --> RouterForms["router_forms visibility"]
   Settings["/forms/settings"] --> SettingsApi["/api/forms/settings/*"]
   SettingsApi --> Postgres[(Postgres)]

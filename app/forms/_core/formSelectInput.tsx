@@ -6,6 +6,7 @@ import {
   type SelectInputProps,
 } from "@baraagency/components";
 import { useIsMounted } from "./useIsMounted";
+import { useSelectMenuMotion } from "./useSelectMenuMotion";
 
 const selectStyles = {
   control: (base: Record<string, unknown>, state: { isFocused: boolean }) => ({
@@ -13,14 +14,15 @@ const selectStyles = {
     marginTop: "0.5rem",
     minHeight: "42px",
     borderRadius: "var(--btn-radius)",
-    borderColor: state.isFocused ? "var(--btn-outline-border)" : "var(--divider-color)",
+    borderColor: state.isFocused ? "var(--brand-sky)" : "var(--divider-color)",
     backgroundColor: "var(--card-bg)",
     boxShadow: state.isFocused
       ? "var(--field-shadow), 0 0 0 4px var(--field-focus-ring)"
       : "var(--field-shadow)",
-    transition: "all 150ms ease",
+    transition:
+      "border-color var(--duration-quick, 150ms) var(--ease-smooth-out, ease), box-shadow var(--duration-quick, 150ms) var(--ease-smooth-out, ease), background-color var(--duration-quick, 150ms) var(--ease-smooth-out, ease)",
     "&:hover": {
-      borderColor: state.isFocused ? "var(--btn-outline-border)" : "var(--field-hover-border)",
+      borderColor: state.isFocused ? "var(--brand-sky)" : "var(--field-hover-border)",
     },
   }),
   valueContainer: (base: Record<string, unknown>) => ({
@@ -86,7 +88,7 @@ const selectStyles = {
 };
 
 /**
- * Select field with viewport-aware menu placement (opens above when near the bottom).
+ * Select field with viewport-aware menu placement and open/close motion.
  */
 export function FormSelectInput({
   label,
@@ -102,6 +104,8 @@ export function FormSelectInput({
   ...props
 }: SelectInputProps) {
   const isMounted = useIsMounted();
+  const { menuIsOpen, isClosing, onMenuOpen, onMenuClose } =
+    useSelectMenuMotion();
   const { options, placeholder } = getSelectOptions(children);
   const placeholderText = placeholder ?? `Select ${label.toLowerCase()}`;
   const selectedOption = value
@@ -117,38 +121,45 @@ export function FormSelectInput({
     <div className={wrapperClassName}>
       <Field label={label} htmlFor={id} required={required} hint={hint}>
         {isMounted ? (
-        <Select
-          inputId={id}
-          instanceId={id}
-          name={props.name}
-          value={selectedOption}
-          onChange={(nextValue) => {
-            onChange?.({
-              target: {
-                value: nextValue?.value ?? "",
-              },
-            } as SelectChangeEvent);
-          }}
-          onInputChange={(inputValue, actionMeta) => {
-            if (actionMeta.action === "input-change") {
-              onSearchInputChange?.(inputValue);
-            }
-            return inputValue;
-          }}
-          options={options}
-          placeholder={placeholderText}
-          isDisabled={isDisabled}
-          isClearable={!required}
-          isSearchable={true}
-          styles={selectStyles}
-          className={className}
-          classNamePrefix="bara-select"
-          menuPlacement="auto"
-          menuPosition="fixed"
-          menuPortalTarget={menuPortalTarget}
-          menuShouldScrollIntoView={false}
-          noOptionsMessage={() => "No matches found"}
-        />
+          <Select
+            inputId={id}
+            instanceId={id}
+            name={props.name}
+            value={selectedOption}
+            onChange={(nextValue) => {
+              onChange?.({
+                target: {
+                  value: nextValue?.value ?? "",
+                },
+              } as SelectChangeEvent);
+            }}
+            onInputChange={(inputValue, actionMeta) => {
+              if (actionMeta.action === "input-change") {
+                onSearchInputChange?.(inputValue);
+              }
+              return inputValue;
+            }}
+            options={options}
+            placeholder={placeholderText}
+            isDisabled={isDisabled}
+            isClearable={!required}
+            isSearchable={true}
+            styles={selectStyles}
+            className={className}
+            classNamePrefix="bara-select"
+            classNames={{
+              menu: () =>
+                isClosing ? "bara-select__menu--closing" : "",
+            }}
+            menuIsOpen={menuIsOpen}
+            onMenuOpen={onMenuOpen}
+            onMenuClose={onMenuClose}
+            menuPlacement="auto"
+            menuPosition="fixed"
+            menuPortalTarget={menuPortalTarget}
+            menuShouldScrollIntoView={false}
+            noOptionsMessage={() => "No matches found"}
+          />
         ) : (
           <div
             aria-hidden="true"
@@ -173,15 +184,9 @@ export function FormSelectInput({
           tabIndex={-1}
           aria-hidden="true"
           value={value}
-          required={required}
-          onChange={() => undefined}
-          style={{
-            opacity: 0,
-            width: 0,
-            height: 0,
-            position: "absolute",
-            pointerEvents: "none",
-          }}
+          readOnly
+          required={required && !isDisabled}
+          className="bara-sr-only"
         />
       </Field>
     </div>

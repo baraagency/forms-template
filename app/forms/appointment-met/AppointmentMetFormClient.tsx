@@ -6,16 +6,17 @@ import {
   Notice,
   Row,
   SectionCard,
-  SelectInput,
   Spinner,
   TextAreaInput,
   TextInput,
-  primaryButtonClassName,
   secondaryButtonClassName,
 } from "@baraagency/components";
+import { PrimaryButton } from "../_core/PrimaryButton";
+import { FormSelectInput } from "../_core/formSelectInput";
 import type { FUBPerson } from "@/app/types/fub";
 import type { JsonValue } from "@/app/types/storage";
 import { FormDatePickerField } from "../_core/formDatePickerField";
+import { FormExpand } from "../_core/FormExpand";
 import { FormTimePickerField } from "../_core/formTimePickerField";
 import { getMaxFormDateTodayForPicker } from "../_core/formDateValidation";
 import { formatPhoneInput } from "../_core/formatUtils";
@@ -53,10 +54,7 @@ import {
   shouldResolveSisuTransactionLookup,
 } from "../_core/sisuTransactionLookup";
 import { FormRouterBackLink } from "../_core/formRouterBackLink";
-import {
-  buildFormRouterReturnUrlFromSearchParams,
-  type AgentOption,
-} from "../_core/formRouterUtils";
+import { buildFormRouterReturnUrlFromSearchParams } from "../_core/formRouterUtils";
 
 type SelectOption = {
   value: string;
@@ -132,12 +130,9 @@ export function AppointmentMetFormClient({
     ),
   );
   const [errors, setErrors] = useState<AppointmentMetFieldErrors>({});
-  const [agentOptions, setAgentOptions] = useState<AgentOption[]>([]);
-  const [agentsUnavailable, setAgentsUnavailable] = useState(false);
   const [loadingLead, setLoadingLead] = useState(Boolean(formState.personId));
   const [loadingTransaction, setLoadingTransaction] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [optionsError, setOptionsError] = useState<string | null>(null);
   const [transactionError, setTransactionError] = useState<string | null>(null);
   const [submitStatus, setSubmitStatus] = useState<
     "idle" | "submitting" | "complete" | "error"
@@ -202,51 +197,6 @@ export function AppointmentMetFormClient({
     void loadLead();
     return () => controller.abort();
   }, [formState.personId]);
-
-  useEffect(() => {
-    const controller = new AbortController();
-
-    const loadAgents = async () => {
-      try {
-        setOptionsError(null);
-        setAgentsUnavailable(false);
-        const response = await fetch("/api/fub/users", {
-          signal: controller.signal,
-        });
-        if (!response.ok) {
-          setAgentsUnavailable(true);
-          setAgentOptions([]);
-          setOptionsError(
-            `Unable to load FUB users (HTTP ${response.status}). Using placeholders.`,
-          );
-          return;
-        }
-
-        const payload = (await response.json()) as { users: AgentOption[] };
-        const users = payload.users ?? [];
-        if (users.length > 0) {
-          setAgentOptions(users);
-        } else {
-          setAgentsUnavailable(true);
-          setAgentOptions([]);
-        }
-      } catch (requestError) {
-        if (requestError instanceof DOMException && requestError.name === "AbortError") {
-          return;
-        }
-        setAgentsUnavailable(true);
-        setAgentOptions([]);
-        setOptionsError(
-          requestError instanceof Error
-            ? `${requestError.message} Using placeholder options for agents.`
-            : "Unable to load agent options. Using placeholders.",
-        );
-      }
-    };
-
-    void loadAgents();
-    return () => controller.abort();
-  }, []);
 
   useEffect(() => {
     if (
@@ -412,7 +362,7 @@ export function AppointmentMetFormClient({
           />
         </div>
         <title>Appointment Met</title>
-        <div className="mb-6 border-b border-[var(--divider-color)] pb-6">
+        <div className="mb-6">
           <h1 className="page-title mb-0 text-balance">Appointment Met</h1>
           <p className="page-intro text-pretty">
             Capture appointment disposition and next steps for this lead.
@@ -421,12 +371,11 @@ export function AppointmentMetFormClient({
 
         {localDemoEnabled ? (
           <Notice tone="warning">
-            Local demo mode — fixture client/deal/SISU IDs were applied because no
+            Demo mode — fixture client/deal/SISU IDs were applied because no
             clientId was provided.
           </Notice>
         ) : null}
         {loadError ? <Notice tone="warning">{loadError}</Notice> : null}
-        {optionsError ? <Notice tone="warning">{optionsError}</Notice> : null}
         {transactionError ? (
           <div className="mb-4">
             <Notice tone="warning">{transactionError}</Notice>
@@ -448,7 +397,7 @@ export function AppointmentMetFormClient({
             void handleSubmit();
           }}
         >
-          <div className="divide-y divide-[var(--divider-color)]">
+          <div>
             <SectionCard title="Client Info">
               <Row>
                 <div>
@@ -510,53 +459,28 @@ export function AppointmentMetFormClient({
                   <FieldError message={errors.clientEmail} />
                 </div>
               </Row>
-              <Row>
-                <div>
-                  <SelectInput
-                    id="leadType"
-                    label="Client Type"
-                    value={formState.leadType}
-                    required
-                    onChange={(event) => updateField("leadType", event.target.value)}
-                  >
-                    <option value="">Select lead type...</option>
-                    {toSelectOptions(LEAD_TYPE_OPTIONS).map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </SelectInput>
-                  <FieldError message={errors.leadType} />
-                </div>
-                <div>
-                  <SelectInput
-                    id="agentSubmitting"
-                    label="Agent Submitting"
-                    value={formState.agentSubmitting}
-                    required
-                    onChange={(event) =>
-                      updateField("agentSubmitting", event.target.value)
-                    }
-                  >
-                    <option value="">
-                      {agentsUnavailable
-                        ? "Select agent (unavailable)..."
-                        : "Select agent..."}
+              <div>
+                <FormSelectInput
+                  id="leadType"
+                  label="Client Type"
+                  value={formState.leadType}
+                  required
+                  onChange={(event) => updateField("leadType", event.target.value)}
+                >
+                  <option value="">Select lead type...</option>
+                  {toSelectOptions(LEAD_TYPE_OPTIONS).map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
                     </option>
-                    {agentOptions.map((option) => (
-                      <option key={option.id} value={String(option.id)}>
-                        {option.name}
-                      </option>
-                    ))}
-                  </SelectInput>
-                  <FieldError message={errors.agentSubmitting} />
-                </div>
-              </Row>
+                  ))}
+                </FormSelectInput>
+                <FieldError message={errors.leadType} />
+              </div>
             </SectionCard>
 
             <SectionCard title="Disposition Details">
               <div>
-                <SelectInput
+                <FormSelectInput
                   id="apptDisposition"
                   label="Did the Appointment Happen?"
                   value={formState.apptDisposition}
@@ -571,12 +495,12 @@ export function AppointmentMetFormClient({
                       {option.label}
                     </option>
                   ))}
-                </SelectInput>
+                </FormSelectInput>
                 <FieldError message={errors.apptDisposition} />
               </div>
 
               {showMetFields ? (
-                <>
+                <FormExpand className="flex flex-col gap-4">
                   <Row>
                     <div>
                       <FormDatePickerField
@@ -590,7 +514,7 @@ export function AppointmentMetFormClient({
                       <FieldError message={errors.appointmentMetDate} />
                     </div>
                     <div>
-                      <SelectInput
+                      <FormSelectInput
                         id="apptOutcome"
                         label="Appointment Outcome"
                         value={formState.apptOutcome}
@@ -605,13 +529,13 @@ export function AppointmentMetFormClient({
                             {option.label}
                           </option>
                         ))}
-                      </SelectInput>
+                      </FormSelectInput>
                       <FieldError message={errors.apptOutcome} />
                     </div>
                   </Row>
                   <Row>
                     <div>
-                      <SelectInput
+                      <FormSelectInput
                         id="nextStep"
                         label="Next Step"
                         value={formState.nextStep}
@@ -626,7 +550,7 @@ export function AppointmentMetFormClient({
                             {option.label}
                           </option>
                         ))}
-                      </SelectInput>
+                      </FormSelectInput>
                       <FieldError message={errors.nextStep} />
                     </div>
                     <div>
@@ -639,13 +563,13 @@ export function AppointmentMetFormClient({
                       <FieldError message={errors.notes} />
                     </div>
                   </Row>
-                </>
+                </FormExpand>
               ) : null}
 
               {showCancelledFields ? (
-                <>
+                <FormExpand className="flex flex-col gap-4">
                   <div>
-                    <SelectInput
+                    <FormSelectInput
                       id="cancelledNextStep"
                       label="Next Step for Cancelled Appointments"
                       value={formState.cancelledNextStep}
@@ -662,11 +586,11 @@ export function AppointmentMetFormClient({
                           </option>
                         ),
                       )}
-                    </SelectInput>
+                    </FormSelectInput>
                     <FieldError message={errors.cancelledNextStep} />
                   </div>
                   {showFollowUpNotes ? (
-                    <div>
+                    <FormExpand>
                       <TextAreaInput
                         id="followUpNotes"
                         label="Follow Up Notes"
@@ -677,61 +601,60 @@ export function AppointmentMetFormClient({
                         }
                       />
                       <FieldError message={errors.followUpNotes} />
-                    </div>
+                    </FormExpand>
                   ) : null}
-                </>
+                </FormExpand>
               ) : null}
 
               {showRescheduledFields ? (
-                <Row>
-                  <div>
-                    <FormDatePickerField
-                      id="rescheduledDate"
-                      label="Rescheduled Date"
-                      value={formState.rescheduledDate}
-                      required
-                      onChange={(value) => updateField("rescheduledDate", value)}
-                    />
-                    <FieldError message={errors.rescheduledDate} />
-                  </div>
+                <FormExpand>
                   <Row>
                     <div>
-                      <FormTimePickerField
-                        id="rescheduledStartTime"
-                        label="Rescheduled Start Time"
-                        value={formState.rescheduledStartTime}
+                      <FormDatePickerField
+                        id="rescheduledDate"
+                        label="Rescheduled Date"
+                        value={formState.rescheduledDate}
                         required
-                        onChange={(value) =>
-                          updateField("rescheduledStartTime", value)
-                        }
+                        onChange={(value) => updateField("rescheduledDate", value)}
                       />
-                      <FieldError message={errors.rescheduledStartTime} />
+                      <FieldError message={errors.rescheduledDate} />
                     </div>
-                    <div>
-                      <FormTimePickerField
-                        id="rescheduledEndTime"
-                        label="Rescheduled End Time"
-                        value={formState.rescheduledEndTime}
-                        required
-                        onChange={(value) =>
-                          updateField("rescheduledEndTime", value)
-                        }
-                      />
-                      <FieldError message={errors.rescheduledEndTime} />
-                    </div>
+                    <Row>
+                      <div>
+                        <FormTimePickerField
+                          id="rescheduledStartTime"
+                          label="Rescheduled Start Time"
+                          value={formState.rescheduledStartTime}
+                          required
+                          onChange={(value) =>
+                            updateField("rescheduledStartTime", value)
+                          }
+                        />
+                        <FieldError message={errors.rescheduledStartTime} />
+                      </div>
+                      <div>
+                        <FormTimePickerField
+                          id="rescheduledEndTime"
+                          label="Rescheduled End Time"
+                          value={formState.rescheduledEndTime}
+                          required
+                          onChange={(value) =>
+                            updateField("rescheduledEndTime", value)
+                          }
+                        />
+                        <FieldError message={errors.rescheduledEndTime} />
+                      </div>
+                    </Row>
                   </Row>
-                </Row>
+                </FormExpand>
               ) : null}
             </SectionCard>
           </div>
 
           <div className="form-actions mt-6">
-            <button
-              type="submit"
-              className={`app-button-press ${primaryButtonClassName} w-full`}
-            >
+            <PrimaryButton type="submit" className="w-full">
               Submit
-            </button>
+            </PrimaryButton>
           </div>
         </form>
       </main>

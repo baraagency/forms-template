@@ -1,0 +1,371 @@
+/* Component transitions — motion tokens + shared t-* patterns.
+   Focus: buttons, selects, notices, conditional field expands.
+   Page slide lives in form-router-transitions.css. */
+
+:root {
+  /* Durations */
+  --duration-stagger: 40ms;
+  --duration-micro: 80ms;
+  --duration-quick: 150ms;
+  --duration-fast: 250ms;
+  --duration-medium: 350ms;
+  --duration-slow: 400ms;
+
+  /* Easings */
+  --ease-smooth-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: ease-in-out;
+  --ease-out: ease-out;
+
+  /* Distances / scales / blur */
+  --distance-micro: 4px;
+  --distance-small: 6px;
+  --distance-base: 8px;
+  --scale-large: 0.96;
+  --scale-medium: 0.97;
+  --scale-small: 0.98;
+  --scale-tiny: 0.99;
+  --blur-small: 2px;
+  --blur-medium: 3px;
+
+  /* Menu dropdown (select options) */
+  --dropdown-open-dur: var(--duration-fast);
+  --dropdown-close-dur: var(--duration-quick);
+  --dropdown-pre-scale: var(--scale-medium);
+  --dropdown-ease: var(--ease-smooth-out);
+
+  /* Accordion / conditional expand */
+  --acc-expand: var(--duration-fast);
+  --acc-collapse: var(--duration-fast);
+  --acc-ease: var(--ease-smooth-out);
+
+  /* Button highlight — primary CTAs use shared gradient hover in globals.css */
+  --btn-highlight-dur: var(--duration-quick);
+  --btn-highlight-ease: var(--ease-smooth-out);
+  /* Label + >> hover (a bit slower than press chrome) */
+  --btn-cta-hover-dur: var(--duration-fast);
+
+  /* Notice enter */
+  --notice-enter-dur: var(--duration-fast);
+  --notice-enter-ease: var(--ease-smooth-out);
+
+  /* Tabs (settings) */
+  --tabs-dur: var(--duration-fast);
+  --tabs-ease: var(--ease-smooth-out);
+}
+
+/* ── Press / Tap feedback + Hover highlight (buttons) ───────────── */
+
+.bara-button,
+.app-button-press {
+  position: relative;
+  isolation: isolate;
+  transition:
+    transform var(--btn-highlight-dur) var(--btn-highlight-ease),
+    background-color var(--btn-highlight-dur) var(--btn-highlight-ease),
+    background-image var(--btn-highlight-dur) var(--btn-highlight-ease),
+    border-color var(--btn-highlight-dur) var(--btn-highlight-ease),
+    box-shadow var(--btn-highlight-dur) var(--btn-highlight-ease),
+    color var(--btn-highlight-dur) var(--btn-highlight-ease),
+    filter var(--btn-highlight-dur) var(--btn-highlight-ease);
+}
+
+/* Primary CTA hover: >> slides in beside the label; label translates left (reverses on unhover) */
+.form-router-launch-button__title {
+  position: relative;
+  transition: transform var(--btn-cta-hover-dur) var(--btn-highlight-ease);
+}
+
+.form-router-launch-button__title::after {
+  content: ">>";
+  display: block;
+  font-size: 0.875em;
+  font-weight: 700;
+  letter-spacing: -0.08em;
+  line-height: 1;
+  margin-left: 0.35em;
+  opacity: 0;
+  pointer-events: none;
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  transform: translate(var(--btn-cta-arrow-shift, 0.75rem), -50%);
+  transition:
+    opacity var(--btn-cta-hover-dur) var(--btn-highlight-ease),
+    transform var(--btn-cta-hover-dur) var(--btn-highlight-ease);
+  white-space: nowrap;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .bara-button--secondary:hover:not(:disabled) {
+    border-color: var(--brand-sky);
+    background-color: var(--brand-sky-soft);
+  }
+
+  .form-router-launch-button:hover:not(:disabled)
+    .form-router-launch-button__title::after,
+  .form-router-launch-button:focus-visible:not(:disabled)
+    .form-router-launch-button__title::after,
+  .bara-button--primary:hover:not(:disabled)
+    .form-router-launch-button__title::after,
+  .bara-button--primary:focus-visible:not(:disabled)
+    .form-router-launch-button__title::after {
+    opacity: 1;
+    transform: translate(0, -50%);
+  }
+
+  .form-router-launch-button:hover:not(:disabled) .form-router-launch-button__title,
+  .form-router-launch-button:focus-visible:not(:disabled)
+    .form-router-launch-button__title,
+  .bara-button--primary:hover:not(:disabled) .form-router-launch-button__title,
+  .bara-button--primary:focus-visible:not(:disabled)
+    .form-router-launch-button__title {
+    transform: translateX(calc(-1 * var(--btn-cta-label-shift, 6px)));
+  }
+}
+
+.bara-button--primary:not(:disabled):active,
+.bara-button--secondary:not(:disabled):active,
+.app-button-press:not(:disabled):active {
+  transform: scale(var(--scale-large));
+}
+
+/* ── Select menu — origin-aware open (Menu dropdown) ────────────── */
+
+@keyframes t-select-menu-in {
+  from {
+    opacity: 0;
+    transform: scale(var(--dropdown-pre-scale));
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes t-select-menu-out {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(var(--dropdown-pre-scale));
+  }
+}
+
+.bara-select__menu {
+  transform-origin: top center;
+  animation: t-select-menu-in var(--dropdown-open-dur) var(--dropdown-ease) both;
+  will-change: transform, opacity;
+}
+
+/* Reverse of open, slightly faster (--dropdown-close-dur / --duration-quick) */
+.bara-select__menu.bara-select__menu--closing {
+  animation: t-select-menu-out var(--dropdown-close-dur) var(--dropdown-ease) both;
+  pointer-events: none;
+}
+
+.bara-select__menu-placement-top {
+  transform-origin: bottom center;
+}
+
+.bara-select__option {
+  transition:
+    background-color var(--duration-micro) var(--ease-out),
+    color var(--duration-micro) var(--ease-out);
+}
+
+/* Focused (not selected): sky wash — complements navy/black without competing CTAs */
+.bara-select__option--is-focused:not(.bara-select__option--is-selected) {
+  background-color: var(--menu-hover-bg) !important;
+  color: var(--palette-2) !important;
+}
+
+.bara-select__option--is-selected {
+  background-color: var(--palette-1) !important;
+  color: #ffffff !important;
+}
+
+.bara-select__control {
+  transition:
+    border-color var(--duration-quick) var(--ease-smooth-out),
+    box-shadow var(--duration-quick) var(--ease-smooth-out),
+    background-color var(--duration-quick) var(--ease-smooth-out);
+}
+
+.bara-select__dropdown-indicator {
+  transition: transform var(--dropdown-open-dur) var(--dropdown-ease);
+}
+
+.bara-select--menu-is-open .bara-select__dropdown-indicator {
+  transform: rotate(180deg);
+}
+
+.bara-input,
+.bara-textarea {
+  transition:
+    border-color var(--duration-quick) var(--ease-smooth-out),
+    box-shadow var(--duration-quick) var(--ease-smooth-out),
+    background-color var(--duration-quick) var(--ease-smooth-out);
+}
+
+/* ── Conditional field expand (enter when mounted) ──────────────── */
+
+@keyframes form-expand-in {
+  from {
+    opacity: 0;
+    filter: blur(var(--blur-small));
+    transform: translateY(calc(var(--distance-micro) * -1));
+  }
+  to {
+    opacity: 1;
+    filter: none;
+    transform: none;
+  }
+}
+
+.form-expand {
+  animation: form-expand-in var(--acc-expand) var(--acc-ease) both;
+  transform-origin: top center;
+}
+
+/* True accordion (keep mounted; toggle data-open) */
+.t-acc-panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows var(--acc-collapse) var(--acc-ease);
+}
+
+.t-acc[data-open="true"] .t-acc-panel {
+  grid-template-rows: 1fr;
+  transition: grid-template-rows var(--acc-expand) var(--acc-ease);
+}
+
+.t-acc-panel-inner {
+  overflow: hidden;
+  opacity: 0;
+  filter: blur(var(--blur-small));
+  transition:
+    opacity var(--acc-collapse) var(--acc-ease),
+    filter var(--acc-collapse) var(--acc-ease);
+}
+
+.t-acc[data-open="true"] .t-acc-panel-inner {
+  opacity: 1;
+  filter: none;
+  transition:
+    opacity var(--acc-expand) var(--acc-ease),
+    filter var(--acc-expand) var(--acc-ease);
+}
+
+.t-acc-chevron {
+  display: inline-flex;
+  transform: scaleY(1);
+  transform-origin: center;
+  transition: transform var(--acc-expand) var(--acc-ease);
+}
+
+.t-acc-chevron path {
+  vector-effect: non-scaling-stroke;
+}
+
+.t-acc[data-open="true"] .t-acc-chevron {
+  transform: scaleY(-1);
+}
+
+/* ── Notice enter ───────────────────────────────────────────────── */
+
+@keyframes notice-enter {
+  from {
+    opacity: 0;
+    filter: blur(var(--blur-small));
+    transform: translateY(calc(var(--distance-micro) * -1));
+  }
+  to {
+    opacity: 1;
+    filter: none;
+    transform: none;
+  }
+}
+
+.bara-notice {
+  animation: notice-enter var(--notice-enter-dur) var(--notice-enter-ease) both;
+}
+
+/* ── Choice / deal buttons ──────────────────────────────────────── */
+
+.form-choice-button {
+  transition:
+    transform var(--btn-highlight-dur) var(--btn-highlight-ease),
+    border-color var(--btn-highlight-dur) var(--btn-highlight-ease),
+    background-color var(--btn-highlight-dur) var(--btn-highlight-ease),
+    box-shadow var(--btn-highlight-dur) var(--btn-highlight-ease);
+}
+
+.form-choice-button:active:not(:disabled) {
+  transform: scale(var(--scale-large));
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .form-choice-button:hover:not(:disabled) {
+    border-color: var(--brand-sky);
+    background: var(--brand-sky-soft);
+  }
+}
+
+/* ── Reduced motion ─────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .bara-button,
+  .app-button-press,
+  .bara-select__menu,
+  .bara-select__option,
+  .bara-select__control,
+  .bara-select__dropdown-indicator,
+  .bara-input,
+  .bara-textarea,
+  .form-expand,
+  .t-acc-panel,
+  .t-acc-panel-inner,
+  .t-acc-chevron,
+  .bara-notice,
+  .form-choice-button,
+  .form-router-launch-button__title,
+  .form-router-launch-button__title::after {
+    animation: none !important;
+    transition: none !important;
+    filter: none !important;
+  }
+
+  .bara-select--menu-is-open .bara-select__dropdown-indicator {
+    transform: none;
+  }
+
+  .bara-button--primary:not(:disabled):active,
+  .bara-button--secondary:not(:disabled):active,
+  .app-button-press:not(:disabled):active,
+  .form-choice-button:active:not(:disabled) {
+    transform: none;
+  }
+
+  .form-router-launch-button:hover:not(:disabled) .form-router-launch-button__title,
+  .form-router-launch-button:focus-visible:not(:disabled)
+    .form-router-launch-button__title,
+  .bara-button--primary:hover:not(:disabled) .form-router-launch-button__title,
+  .bara-button--primary:focus-visible:not(:disabled)
+    .form-router-launch-button__title {
+    transform: none;
+  }
+
+  .form-router-launch-button:hover:not(:disabled)
+    .form-router-launch-button__title::after,
+  .form-router-launch-button:focus-visible:not(:disabled)
+    .form-router-launch-button__title::after,
+  .bara-button--primary:hover:not(:disabled)
+    .form-router-launch-button__title::after,
+  .bara-button--primary:focus-visible:not(:disabled)
+    .form-router-launch-button__title::after {
+    opacity: 1;
+    transform: translate(0, -50%);
+  }
+}

@@ -10,12 +10,12 @@ import {
   Notice,
   Spinner,
   TextInput,
-  primaryButtonClassName,
   secondaryButtonClassName,
 } from "@baraagency/components";
 import type { SettingsFormKind } from "../_core/formIdentity";
 import { FormSelectInput } from "../_core/formSelectInput";
-import { getFormFieldLabel } from "./formFieldCatalog";
+import { PrimaryButton } from "../_core/PrimaryButton";
+import { getFormFieldLabel, sortByFormFieldAppearanceOrder } from "./formFieldCatalog";
 
 const ROWS_PER_PAGE = 5;
 
@@ -60,6 +60,8 @@ type FubMappingsTableProps = {
     row: FubMappingRow,
     draft: { fub_field_name: string | null; enabled: boolean },
   ) => Promise<void>;
+  /** Called once after all dirty rows are saved successfully. */
+  onAfterSave?: () => Promise<void>;
 };
 
 export function FubMappingsTable({
@@ -73,11 +75,12 @@ export function FubMappingsTable({
   searchId,
   tableAriaLabel,
   onSaveRow,
+  onAfterSave,
 }: FubMappingsTableProps) {
   const [drafts, setDrafts] = useState<Record<number, FubDraft>>({});
   const [searchQuery, setSearchQuery] = useState("");
   const [page, setPage] = useState(0);
-  const [savingId, setSavingId] = useState<number | null>(null);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -98,22 +101,22 @@ export function FubMappingsTable({
   const normalizedSearch = searchQuery.trim().toLowerCase();
 
   const filteredRows = useMemo(() => {
-    if (!normalizedSearch) {
-      return rows;
-    }
+    const matched = !normalizedSearch
+      ? rows
+      : rows.filter((row) => {
+          const draft = drafts[row.id];
+          const formLabel = getFormFieldLabel(formKind, row.field_name);
+          const haystack = [
+            formLabel,
+            row.field_name,
+            draft?.fubFieldName ?? row.fub_field_name ?? "",
+          ]
+            .join(" ")
+            .toLowerCase();
+          return haystack.includes(normalizedSearch);
+        });
 
-    return rows.filter((row) => {
-      const draft = drafts[row.id];
-      const formLabel = getFormFieldLabel(formKind, row.field_name);
-      const haystack = [
-        formLabel,
-        row.field_name,
-        draft?.fubFieldName ?? row.fub_field_name ?? "",
-      ]
-        .join(" ")
-        .toLowerCase();
-      return haystack.includes(normalizedSearch);
-    });
+    return sortByFormFieldAppearanceOrder(formKind, matched);
   }, [drafts, formKind, normalizedSearch, rows]);
 
   useEffect(() => {
@@ -128,6 +131,47 @@ export function FubMappingsTable({
     return filteredRows.slice(start, start + ROWS_PER_PAGE);
   }, [filteredRows, page]);
 
+  const dirtyRows = useMemo(
+    () =>
+      rows.filter((row) => {
+        const draft = drafts[row.id];
+        return draft ? isDirty(row, draft) : false;
+      }),
+    [drafts, rows],
+  );
+  const dirtyCount = dirtyRows.length;
+
+  const saveDirtyMappings = useCallback(async () => {
+    if (dirtyRows.length === 0 || saving) {
+      return;
+    }
+
+    setSaving(true);
+    setError(null);
+    try {
+      for (const row of dirtyRows) {
+        const draft = drafts[row.id];
+        if (!draft) {
+          continue;
+        }
+        const fubFieldName = draft.fubFieldName.trim() || null;
+        await onSaveRow(row, {
+          fub_field_name: fubFieldName,
+          enabled: Boolean(fubFieldName),
+        });
+      }
+      await onAfterSave?.();
+    } catch (saveError) {
+      setError(
+        saveError instanceof Error
+          ? saveError.message
+          : "Failed to save mappings.",
+      );
+    } finally {
+      setSaving(false);
+    }
+  }, [dirtyRows, drafts, onAfterSave, onSaveRow, saving]);
+
   if (rows.length === 0) {
     return <p className="settings-hint">{emptyHint}</p>;
   }
@@ -140,13 +184,41 @@ export function FubMappingsTable({
       ) : null}
 
       <div className="settings-mapping-search-row">
-        <TextInput
-          id={searchId}
-          label="Search mappings"
-          value={searchQuery}
-          placeholder={`Filter by form field or ${targetLabel}…`}
-          onChange={(event) => setSearchQuery(event.target.value)}
-        />
+        <div className="settings-mapping-search-row__field">
+          <TextInput
+            id={searchId}
+            label="Search mappings"
+            value={searchQuery}
+            placeholder={`Filter by form field or ${targetLabel}…`}
+            onChange={(event) => setSearchQuery(event.target.value)}
+          />
+        </div>
+        <div className="settings-mapping-search-row__actions">
+          {dirtyCount > 0 ? (
+            <PrimaryButton
+              type="button"
+              disabled={saving}
+              onClick={() => {
+                void saveDirtyMappings();
+              }}
+            >
+              {saving ? "Saving…" : "Save mappings"}
+            </PrimaryButton>
+          ) : (
+            <button
+              type="button"
+              className={`app-button-press ${secondaryButtonClassName}`}
+              disabled
+            >
+              Save mappings
+            </button>
+          )}
+        </div>
+        <p className="settings-mapping-search-row__status">
+          {dirtyCount === 0
+            ? "No unsaved changes"
+            : `${dirtyCount} unsaved change${dirtyCount === 1 ? "" : "s"}`}
+        </p>
       </div>
 
       {fieldOptionsLoading ? (
@@ -162,15 +234,12 @@ export function FubMappingsTable({
             <TableRow>
               <TableCell scope="col">Form field</TableCell>
               <TableCell scope="col">{targetLabel}</TableCell>
-              <TableCell scope="col" align="right">
-                Actions
-              </TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {paginatedRows.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={3}>
+                <TableCell colSpan={2}>
                   <p className="settings-hint py-2">
                     No mappings match your search.
                   </p>
@@ -181,7 +250,6 @@ export function FubMappingsTable({
                 const draft = drafts[row.id] ?? {
                   fubFieldName: row.fub_field_name ?? "",
                 };
-                const dirty = isDirty(row, draft);
                 const formLabel = getFormFieldLabel(formKind, row.field_name);
                 const selectedStillPresent = fieldOptions.includes(
                   draft.fubFieldName,
@@ -190,14 +258,9 @@ export function FubMappingsTable({
                 return (
                   <TableRow key={row.id} hover>
                     <TableCell>
-                      <div className="settings-mapping-form-field">
-                        <span className="settings-mapping-form-field__label">
-                          {formLabel}
-                        </span>
-                        <code className="settings-mapping-table__field">
-                          {row.field_name}
-                        </code>
-                      </div>
+                      <span className="settings-mapping-form-field__label">
+                        {formLabel}
+                      </span>
                     </TableCell>
                     <TableCell>
                       <div className="settings-mapping-table-select">
@@ -205,7 +268,7 @@ export function FubMappingsTable({
                           id={`fub-field-${searchId}-${row.id}`}
                           label={targetLabel}
                           value={draft.fubFieldName}
-                          disabled={fieldOptionsLoading}
+                          disabled={fieldOptionsLoading || saving}
                           onChange={(event) => {
                             const nextName = event.target.value;
                             setDrafts((current) => ({
@@ -226,41 +289,6 @@ export function FubMappingsTable({
                             </option>
                           ))}
                         </FormSelectInput>
-                      </div>
-                    </TableCell>
-                    <TableCell align="right">
-                      <div className="settings-mapping-table-actions">
-                        <button
-                          type="button"
-                          className={`app-button-press ${
-                            dirty
-                              ? primaryButtonClassName
-                              : secondaryButtonClassName
-                          }`}
-                          disabled={!dirty || savingId === row.id}
-                          onClick={async () => {
-                            setSavingId(row.id);
-                            setError(null);
-                            try {
-                              const fubFieldName =
-                                draft.fubFieldName.trim() || null;
-                              await onSaveRow(row, {
-                                fub_field_name: fubFieldName,
-                                enabled: Boolean(fubFieldName),
-                              });
-                            } catch (saveError) {
-                              setError(
-                                saveError instanceof Error
-                                  ? saveError.message
-                                  : "Failed to save mapping.",
-                              );
-                            } finally {
-                              setSavingId(null);
-                            }
-                          }}
-                        >
-                          {savingId === row.id ? "Saving…" : "Save"}
-                        </button>
                       </div>
                     </TableCell>
                   </TableRow>

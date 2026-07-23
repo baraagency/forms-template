@@ -7,7 +7,9 @@ export type FormFieldOption = {
 
 /**
  * Mappable form fields with UI labels from the example forms.
+ * Array order = on-form appearance order (top → bottom, left → right in a row).
  * Excludes routing-only keys: personId, agentId, dealId, sisuTransactionId.
+ * Fields not shown in the template UI stay at the end for seed/mapping continuity.
  * Keep values in sync with db/migrations/012_seed_settings_bootstrap.sql
  */
 export const FORM_FIELD_OPTIONS: Record<
@@ -19,30 +21,22 @@ export const FORM_FIELD_OPTIONS: Record<
     { value: "clientLastName", label: "Client Last Name" },
     { value: "clientPhone", label: "Client Phone Number" },
     { value: "clientEmail", label: "Client Email" },
+    { value: "hasSecondaryClient", label: "Is there a secondary client?" },
+    { value: "secondaryContact", label: "Secondary Client Name" },
+    { value: "secondaryContactPhone", label: "Secondary Client Phone" },
+    { value: "secondaryContactEmail", label: "Secondary Client Email" },
     { value: "clientType", label: "Client Type" },
-    { value: "transactionStage", label: "Transaction Stage" },
     { value: "transactionAmount", label: "Transaction Amount" },
     { value: "addressLine1", label: "Street Address" },
     { value: "addressLine2", label: "Address Line 2" },
     { value: "city", label: "City" },
     { value: "state", label: "State/Province/Region" },
     { value: "postal", label: "Postal Code" },
-    { value: "agent2", label: "Agent 2" },
-    { value: "agent2Percent", label: "Agent 2 Percent" },
-    { value: "jcreOffice", label: "Office" },
-    { value: "jcreLeadTransaction", label: "Lead Transaction" },
-    { value: "plrAcknowledgement", label: "PLR Acknowledgement" },
-    { value: "closingDepartment", label: "Closing Department" },
-    { value: "hasSecondaryClient", label: "Is there a secondary client?" },
-    { value: "secondaryContact", label: "Secondary Client Name" },
-    { value: "secondaryContactPhone", label: "Secondary Client Phone" },
-    { value: "secondaryContactEmail", label: "Secondary Client Email" },
-    { value: "onTeam", label: "Are you on a team?" },
-    { value: "teamLeaderName", label: "Team Leader Name" },
-    { value: "teamPayNotes", label: "Team Pay Notes" },
-    { value: "isaSet", label: "ISA Set?" },
-    { value: "isaName", label: "ISA Name" },
-    { value: "pastClient", label: "Past Client" },
+    { value: "financingType", label: "Financing Type" },
+    { value: "mortgageCompany", label: "Mortgage Company" },
+    { value: "mortgageCompanyName", label: "Mortgage Company Name" },
+    { value: "loanOfficerName", label: "Loan Officer Name" },
+    { value: "loanOfficerEmail", label: "Loan Officer Email" },
     { value: "underContractDate", label: "Under Contract Date" },
     { value: "forecastedClosedDate", label: "Forecasted Closed Date" },
     { value: "outsideReferral", label: "Outside Referral/Rebate?" },
@@ -53,28 +47,37 @@ export const FORM_FIELD_OPTIONS: Record<
     { value: "otherAgentPhone", label: "Coop Agent Phone" },
     { value: "otherAgentEmail", label: "Coop Agent Email" },
     { value: "otherAgentCompany", label: "Coop Agent Company" },
+    { value: "dueDiligencePeriod", label: "Is there a due diligence period?" },
+    { value: "dueDiligenceDeadline", label: "Due Diligence Deadline" },
+    { value: "contingencies", label: "Are there contingencies?" },
+    {
+      value: "sellerCompensationPercent",
+      label: "Seller Compensation to Buyer Broker (%)",
+    },
+    { value: "contingencyDetails", label: "Contingencies" },
+    // Not shown on the template Pending UI — keep for seeded mappings.
+    { value: "transactionStage", label: "Transaction Stage" },
+    { value: "agent2", label: "Agent 2" },
+    { value: "agent2Percent", label: "Agent 2 Percent" },
+    { value: "jcreOffice", label: "Office" },
+    { value: "jcreLeadTransaction", label: "Lead Transaction" },
+    { value: "plrAcknowledgement", label: "PLR Acknowledgement" },
+    { value: "closingDepartment", label: "Closing Department" },
+    { value: "onTeam", label: "Are you on a team?" },
+    { value: "teamLeaderName", label: "Team Leader Name" },
+    { value: "teamPayNotes", label: "Team Pay Notes" },
+    { value: "isaSet", label: "ISA Set?" },
+    { value: "isaName", label: "ISA Name" },
+    { value: "pastClient", label: "Past Client" },
     { value: "closingAttorney", label: "Closing Attorney" },
     { value: "closingAttorneyOther", label: "Closing Attorney (Other)" },
     { value: "closingAttorneyPhone", label: "Closing Attorney Phone" },
     { value: "closingAttorneyEmail", label: "Closing Attorney Email" },
-    { value: "mortgageCompany", label: "Mortgage Company" },
-    { value: "mortgageCompanyName", label: "Mortgage Company Name" },
-    { value: "loanOfficerName", label: "Loan Officer Name" },
-    { value: "loanOfficerEmail", label: "Loan Officer Email" },
-    { value: "financingType", label: "Financing Type" },
-    { value: "dueDiligencePeriod", label: "Is there a due diligence period?" },
-    { value: "dueDiligenceDeadline", label: "Due Diligence Deadline" },
-    { value: "contingencies", label: "Are there contingencies?" },
-    { value: "contingencyDetails", label: "Contingencies" },
     { value: "multipleTransactions", label: "Multiple Transactions" },
     { value: "otherAddresses", label: "Other Addresses" },
     { value: "closingDepartmentNotes", label: "Closing Department Notes" },
     { value: "goodFundContribution", label: "Good Fund Contribution" },
     { value: "commissionDelivery", label: "Commission Delivery" },
-    {
-      value: "sellerCompensationPercent",
-      label: "Seller Compensation to Buyer Broker (%)",
-    },
     { value: "grossCommissionTotal", label: "Gross Commission Total" },
   ],
   appointmentSet: [
@@ -84,12 +87,9 @@ export const FORM_FIELD_OPTIONS: Record<
     { value: "clientEmail", label: "Client Email" },
     { value: "leadType", label: "Client Type" },
     { value: "apptSetBy", label: "Appointment Set By" },
+    { value: "appointmentType", label: "Appointment Type" },
     { value: "assignedIsa", label: "Assigned ISA" },
     { value: "assignedOsa", label: "Assigned OSA" },
-    {
-      value: "notes",
-      label: "Notes (Location, Timeframe, Motivation, Price, etc.)",
-    },
     { value: "appointmentDate", label: "Appointment Date" },
     { value: "appointmentStartTime", label: "Start Time" },
     { value: "appointmentEndTime", label: "End Time" },
@@ -99,7 +99,10 @@ export const FORM_FIELD_OPTIONS: Record<
     { value: "city", label: "City" },
     { value: "state", label: "State/Province/Region" },
     { value: "postalCode", label: "Postal Code" },
-    { value: "appointmentType", label: "Appointment Type" },
+    {
+      value: "notes",
+      label: "Notes (Location, Timeframe, Motivation, Price, etc.)",
+    },
   ],
   appointmentMet: [
     { value: "clientFirstName", label: "Client First Name" },
@@ -107,7 +110,6 @@ export const FORM_FIELD_OPTIONS: Record<
     { value: "clientPhone", label: "Client Phone Number" },
     { value: "clientEmail", label: "Client Email" },
     { value: "leadType", label: "Client Type" },
-    { value: "agentSubmitting", label: "Agent Submitting" },
     { value: "apptDisposition", label: "Did the Appointment Happen?" },
     { value: "appointmentMetDate", label: "Appointment Met Date" },
     { value: "apptOutcome", label: "Appointment Outcome" },
@@ -121,6 +123,8 @@ export const FORM_FIELD_OPTIONS: Record<
     { value: "rescheduledDate", label: "Rescheduled Date" },
     { value: "rescheduledStartTime", label: "Rescheduled Start Time" },
     { value: "rescheduledEndTime", label: "Rescheduled End Time" },
+    // Removed from template UI — keep for seeded mappings.
+    { value: "agentSubmitting", label: "Agent Submitting" },
   ],
   closed: [
     { value: "transactionType", label: "Is this a Rental/Lease/Referral?" },
@@ -129,9 +133,9 @@ export const FORM_FIELD_OPTIONS: Record<
     { value: "state", label: "State" },
     { value: "postal", label: "Zip" },
     { value: "transactionAmount", label: "Transaction Amount" },
+    { value: "totalCommissionGci", label: "Total Commission GCI" },
     { value: "securityDeposit", label: "Security Deposit" },
     { value: "monthlyRent", label: "Monthly Rent" },
-    { value: "totalCommissionGci", label: "Total Commission GCI" },
     { value: "settlementDate", label: "Closed Date" },
     { value: "tcMarketingNotes", label: "Notes" },
   ],
@@ -162,5 +166,34 @@ export function getFormFieldLabel(
   return (
     FORM_FIELD_OPTIONS[form].find((option) => option.value === fieldName)
       ?.label ?? fieldName
+  );
+}
+
+export function getFormFieldAppearanceIndex(
+  form: SettingsFormKind,
+  fieldName: string,
+): number {
+  const index = FORM_FIELD_CATALOG[form].indexOf(fieldName);
+  return index === -1 ? Number.MAX_SAFE_INTEGER : index;
+}
+
+export function compareFormFieldsByAppearanceOrder(
+  form: SettingsFormKind,
+  leftFieldName: string,
+  rightFieldName: string,
+): number {
+  const left = getFormFieldAppearanceIndex(form, leftFieldName);
+  const right = getFormFieldAppearanceIndex(form, rightFieldName);
+  if (left !== right) {
+    return left - right;
+  }
+  return leftFieldName.localeCompare(rightFieldName);
+}
+
+export function sortByFormFieldAppearanceOrder<
+  T extends { field_name: string },
+>(form: SettingsFormKind, rows: readonly T[]): T[] {
+  return [...rows].sort((left, right) =>
+    compareFormFieldsByAppearanceOrder(form, left.field_name, right.field_name),
   );
 }

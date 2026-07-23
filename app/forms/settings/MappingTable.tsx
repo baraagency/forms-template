@@ -2,9 +2,9 @@ import { useEffect, useState } from "react";
 import {
   Notice,
   TextInput,
-  primaryButtonClassName,
   secondaryButtonClassName,
 } from "@baraagency/components";
+import { PrimaryButton } from "../_core/PrimaryButton";
 import { PillToggle } from "./PillToggle";
 
 type MappingRow = {
@@ -172,28 +172,37 @@ export function MappingTable<TRow extends MappingRow>({
                 }
               }}
             />
-            <button
-              type="button"
-              className={`app-button-press ${dirty ? primaryButtonClassName : secondaryButtonClassName}`}
-              disabled={!dirty || savingId === row.id}
-              onClick={async () => {
-                setSavingId(row.id);
-                setError(null);
-                try {
-                  await onSaveRow(row, draft);
-                } catch (saveError) {
-                  setError(
-                    saveError instanceof Error
-                      ? saveError.message
-                      : "Failed to save row.",
-                  );
-                } finally {
-                  setSavingId(null);
-                }
-              }}
-            >
-              {savingId === row.id ? "Saving…" : "Save"}
-            </button>
+            {dirty ? (
+              <PrimaryButton
+                type="button"
+                disabled={savingId === row.id}
+                onClick={async () => {
+                  setSavingId(row.id);
+                  setError(null);
+                  try {
+                    await onSaveRow(row, draft);
+                  } catch (saveError) {
+                    setError(
+                      saveError instanceof Error
+                        ? saveError.message
+                        : "Failed to save row.",
+                    );
+                  } finally {
+                    setSavingId(null);
+                  }
+                }}
+              >
+                {savingId === row.id ? "Saving…" : "Save"}
+              </PrimaryButton>
+            ) : (
+              <button
+                type="button"
+                className={`app-button-press ${secondaryButtonClassName}`}
+                disabled
+              >
+                {savingId === row.id ? "Saving…" : "Save"}
+              </button>
+            )}
           </div>
         );
       })}

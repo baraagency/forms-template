@@ -24,7 +24,7 @@ bun run dev
 
 Open [http://localhost:5173/forms](http://localhost:5173/forms).
 
-With `ENVIRONMENT=LOCAL` (see `.env.example`), opening `/forms` or `/forms/pending` **without** a `clientId` uses fixture agent/client/deal IDs so you can click through the full mock flow.
+With `DEMO_MODE=true` (see `.env.example`), opening `/forms` or `/forms/pending` **without** a `clientId` uses fixture agent/client/deal IDs so you can click through the full mock flow.
 
 ## Template fixture IDs
 

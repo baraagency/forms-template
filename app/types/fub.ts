@@ -165,6 +165,13 @@ export interface FUBAppointmentOutcome {
   [key: string]: unknown;
 }
 
+export interface FUBAppointmentType {
+  id: number;
+  name: string;
+  orderWeight?: number;
+  [key: string]: unknown;
+}
+
 export interface FUBStage {
   id: string | number;
   name: string;
@@ -227,6 +234,11 @@ export interface FUBListPipelinesResponse {
 
 export interface FUBListAppointmentOutcomesResponse {
   appointmentoutcomes: FUBAppointmentOutcome[];
+  _metadata: FUBMetadata;
+}
+
+export interface FUBListAppointmentTypesResponse {
+  appointmenttypes: FUBAppointmentType[];
   _metadata: FUBMetadata;
 }
 

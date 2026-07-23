@@ -37,6 +37,7 @@ import {
 import { applyFubFieldMappings, applySisuFieldMappings } from "./applyFieldMappings";
 import { applyResolvedSisuAgentId } from "./applyResolvedSisuAgentId";
 import { buildFormSubmissionSummary } from "./buildFormSubmissionSummary";
+import { normalizeSisuClientTypeFields } from "./normalizeSisuClientTypeFields";
 import { resolveSisuAgentIdForFubAgentId } from "./resolveSisuAgentId";
 import type {
   RunSubmissionWorkflowInput,
@@ -141,6 +142,32 @@ function extractDealId(deal: FUBDeal | null, fallback: number | null): number | 
     }
   }
   return fallback;
+}
+
+/** FUB requires `name` on POST /deals; mappings often omit it. */
+function ensureFubDealName(
+  dealPayload: Partial<FUBDeal>,
+  formState: Record<string, unknown>,
+): void {
+  if (typeof dealPayload.name === "string" && dealPayload.name.trim()) {
+    return;
+  }
+
+  const readTrimmed = (key: string): string => {
+    const value = formState[key];
+    return typeof value === "string" ? value.trim() : "";
+  };
+
+  const clientName = [readTrimmed("clientFirstName"), readTrimmed("clientLastName")]
+    .filter(Boolean)
+    .join(" ");
+  const detail =
+    readTrimmed("appointmentType") ||
+    readTrimmed("streetAddress") ||
+    readTrimmed("addressLine1") ||
+    "";
+
+  dealPayload.name = [clientName || "Client", detail].filter(Boolean).join(" - ");
 }
 
 function extractTransactionPayload(
@@ -306,15 +333,15 @@ export async function runSubmissionWorkflow(
 
   if (dealStage) {
     ctx.dealPayload.stageId = dealStage.stage_id;
-    if (dealStage.stage_name?.trim()) {
-      ctx.dealPayload.stage = dealStage.stage_name.trim();
-    }
   }
 
-  ctx.dealPayload.personId = personId;
+  // FUB deal create accepts peopleIds, not personId.
+  delete ctx.dealPayload.personId;
+  delete ctx.dealPayload.stage;
   if (!ctx.dealPayload.peopleIds) {
     ctx.dealPayload.peopleIds = [personId];
   }
+  ensureFubDealName(ctx.dealPayload, formState);
 
   // Ensure SISU payload has FUB linkage when creating
   if (!ctx.sisuPayload.fub_id) {
@@ -522,6 +549,19 @@ export async function runSubmissionWorkflow(
             data: { id: ctx.dealId, action: "update" },
           });
         }
+      } else if (
+        ctx.dealPayload.stageId === undefined ||
+        ctx.dealPayload.stageId === null ||
+        ctx.dealPayload.stageId === ""
+      ) {
+        const message =
+          "No FUB deal stage configured for this form. Set a Deal stage in Form Settings.";
+        recordStep(ctx.steps, {
+          step: "fub_deal",
+          status: "failed",
+          message,
+        });
+        pushWarning(ctx, message);
       } else {
         const result = await createLiveFubDeal(ctx.dealPayload);
         if (result.error || !result.data) {
@@ -570,6 +610,12 @@ export async function runSubmissionWorkflow(
       step: "fub_person",
       status: "skipped",
       message: "FUB_API_KEY is not configured.",
+    });
+  } else if (Object.keys(ctx.personPayload).length === 0) {
+    recordStep(ctx.steps, {
+      step: "fub_person",
+      status: "skipped",
+      message: "No FUB person fields to update.",
     });
   } else {
     try {
@@ -634,6 +680,8 @@ export async function runSubmissionWorkflow(
       if (ctx.dealId && !ctx.sisuPayload.fub_deal_id) {
         ctx.sisuPayload.fub_deal_id = String(ctx.dealId);
       }
+
+      ctx.sisuPayload = normalizeSisuClientTypeFields(ctx.sisuPayload);
 
       if (ctx.agentId) {
         const sisuAgentId = await resolveSisuAgentIdForFubAgentId(ctx.agentId);

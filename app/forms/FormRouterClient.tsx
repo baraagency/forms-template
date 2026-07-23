@@ -13,15 +13,15 @@ import {
 import {
   Notice,
   SectionCard,
-  SelectInput,
   Spinner,
-  primaryButtonClassName,
   secondaryButtonClassName,
 } from "@baraagency/components";
+import { FormSelectInput } from "./_core/formSelectInput";
+import { PrimaryButton } from "./_core/PrimaryButton";
 import type { FUBDeal, FUBPerson } from "@/app/types/fub";
 import { FormBanner } from "./_core/FormBanner";
 import {
-  getLocalDemoFixtureIds,
+  getDemoFixtureIds,
 } from "./_core/localFormsDemo";
 import {
   buildFormRouteUrl,
@@ -175,7 +175,7 @@ export function FormRouterClient({
   );
   const isEmbeddedInFub = Boolean(query.context && query.signature);
   const hasEmbeddedFubContext = hasFubContext(query, contextData);
-  const localDemoFixtures = getLocalDemoFixtureIds();
+  const localDemoFixtures = getDemoFixtureIds();
   const isLocalDemoSession = Boolean(
     localDemoEnabled && !isEmbeddedInFub && !query.personId,
   );
@@ -627,9 +627,9 @@ export function FormRouterClient({
             aria-hidden={routerPage !== "1"}
             {...(routerPage !== "1" ? { inert: true } : {})}
           >
-            <SectionCard title="Forms">
-              <div className="flex flex-col gap-4">
-                <SelectInput
+            <SectionCard title="FORMS">
+              <div className="flex flex-col gap-3">
+                <FormSelectInput
                   id="assigned-agent"
                   label="Agent"
                   value={selectedAgent}
@@ -644,11 +644,11 @@ export function FormRouterClient({
                       {agent.name}
                     </option>
                   ))}
-                </SelectInput>
+                </FormSelectInput>
                 {agentsError ? (
                   <Alert severity="warning">{agentsError}</Alert>
                 ) : null}
-                <SelectInput
+                <FormSelectInput
                   id="client"
                   label="Client"
                   value={selectedClient}
@@ -671,10 +671,10 @@ export function FormRouterClient({
                       {getPersonLabel(client)}
                     </option>
                   ))}
-                </SelectInput>
+                </FormSelectInput>
                 {isLocalDemoSession ? (
                   <Notice tone="warning">
-                    Local demo mode — using fixture client{" "}
+                    Demo mode — using fixture client{" "}
                     {localDemoFixtures.personId} and agent{" "}
                     {localDemoFixtures.agentId}. All API responses are mocked.
                   </Notice>
@@ -708,20 +708,15 @@ export function FormRouterClient({
                 ) : null}
                 <div className="form-router-form-choices">
                   {availableForms.map((form) => (
-                    <button
+                    <PrimaryButton
                       key={form.key}
                       type="button"
                       disabled={!hasValidPersonId}
                       onClick={() => handleSelectForm(form.key)}
-                      className="form-router-launch-button app-button-press w-full"
+                      className="w-full"
                     >
-                      <span className="form-router-launch-button__title">
-                        {form.title}
-                      </span>
-                      <span className="form-router-launch-button__description">
-                        {form.description}
-                      </span>
-                    </button>
+                      {form.title}
+                    </PrimaryButton>
                   ))}
                 </div>
               </div>
@@ -820,13 +815,13 @@ export function FormRouterClient({
                       </Notice>
                     ) : null}
                     {selectedFormSupportsCreateNew ? (
-                      <button
+                      <PrimaryButton
                         type="button"
-                        className={`app-button-press ${primaryButtonClassName} w-full`}
+                        className="w-full"
                         onClick={handleCreateNewDeal}
                       >
                         Create New Deal
-                      </button>
+                      </PrimaryButton>
                     ) : null}
                   </div>
                 </div>

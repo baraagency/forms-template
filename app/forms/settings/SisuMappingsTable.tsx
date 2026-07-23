@@ -10,7 +10,6 @@ import {
   Notice,
   Spinner,
   TextInput,
-  primaryButtonClassName,
   secondaryButtonClassName,
 } from "@baraagency/components";
 import type { SISUTeamFieldsCatalogResponse } from "@/app/types/sisu";
@@ -18,7 +17,8 @@ import type { FormSisuMapping } from "@/app/types/storage";
 import type { SettingsFormKind } from "../_core/formIdentity";
 import type { TeamFieldCatalog } from "../_core/teamFieldOptions";
 import { FormSelectInput } from "../_core/formSelectInput";
-import { getFormFieldLabel } from "./formFieldCatalog";
+import { PrimaryButton } from "../_core/PrimaryButton";
+import { getFormFieldLabel, sortByFormFieldAppearanceOrder } from "./formFieldCatalog";
 
 const ROWS_PER_PAGE = 5;
 
@@ -121,6 +121,8 @@ type SisuMappingsTableProps = {
       enabled: boolean;
     },
   ) => Promise<void>;
+  /** Called once after all dirty rows are saved successfully. */
+  onAfterSave?: () => Promise<void>;
 };
 
 export function SisuMappingsTable({
@@ -128,11 +130,12 @@ export function SisuMappingsTable({
   rows,
   emptyHint,
   onSaveRow,
+  onAfterSave,
 }: SisuMappingsTableProps) {
   const [drafts, setDrafts] = useState<Record<number, SisuDraft>>({});
   const [searchQuery, setSearchQuery] = useState("");
   const [page, setPage] = useState(0);
-  const [savingId, setSavingId] = useState<number | null>(null);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [teamFields, setTeamFields] = useState<TeamFieldCatalog>({});
   const [teamFieldsLoading, setTeamFieldsLoading] = useState(true);
@@ -191,33 +194,34 @@ export function SisuMappingsTable({
   const normalizedSearch = searchQuery.trim().toLowerCase();
 
   const filteredRows = useMemo(() => {
-    if (!normalizedSearch) {
-      return rows;
-    }
+    const matched = !normalizedSearch
+      ? rows
+      : rows.filter((row) => {
+          const draft = drafts[row.id];
+          const formLabel = getFormFieldLabel(formKind, row.field_name);
+          const sisuLabel =
+            sisuFieldOptions.find(
+              (option) =>
+                option.value ===
+                (draft?.sisuFieldName ?? row.sisu_field_name ?? ""),
+            )?.label ??
+            draft?.sisuFieldName ??
+            row.sisu_field_name ??
+            "";
+          const haystack = [
+            formLabel,
+            row.field_name,
+            sisuLabel,
+            draft?.sisuFieldName ?? row.sisu_field_name ?? "",
+            draft?.sisuFieldType ?? row.sisu_field_type ?? "",
+            (draft?.custom ?? row.custom) ? "custom" : "system",
+          ]
+            .join(" ")
+            .toLowerCase();
+          return haystack.includes(normalizedSearch);
+        });
 
-    return rows.filter((row) => {
-      const draft = drafts[row.id];
-      const formLabel = getFormFieldLabel(formKind, row.field_name);
-      const sisuLabel =
-        sisuFieldOptions.find(
-          (option) =>
-            option.value === (draft?.sisuFieldName ?? row.sisu_field_name ?? ""),
-        )?.label ??
-        draft?.sisuFieldName ??
-        row.sisu_field_name ??
-        "";
-      const haystack = [
-        formLabel,
-        row.field_name,
-        sisuLabel,
-        draft?.sisuFieldName ?? row.sisu_field_name ?? "",
-        draft?.sisuFieldType ?? row.sisu_field_type ?? "",
-        (draft?.custom ?? row.custom) ? "custom" : "system",
-      ]
-        .join(" ")
-        .toLowerCase();
-      return haystack.includes(normalizedSearch);
-    });
+    return sortByFormFieldAppearanceOrder(formKind, matched);
   }, [drafts, formKind, normalizedSearch, rows, sisuFieldOptions]);
 
   useEffect(() => {
@@ -232,6 +236,51 @@ export function SisuMappingsTable({
     return filteredRows.slice(start, start + ROWS_PER_PAGE);
   }, [filteredRows, page]);
 
+  const dirtyRows = useMemo(
+    () =>
+      rows.filter((row) => {
+        const draft = drafts[row.id];
+        return draft ? isDirty(row, draft) : false;
+      }),
+    [drafts, rows],
+  );
+  const dirtyCount = dirtyRows.length;
+
+  const saveDirtyMappings = useCallback(async () => {
+    if (dirtyRows.length === 0 || saving) {
+      return;
+    }
+
+    setSaving(true);
+    setError(null);
+    try {
+      for (const row of dirtyRows) {
+        const draft = drafts[row.id];
+        if (!draft) {
+          continue;
+        }
+        const sisuFieldName = draft.sisuFieldName.trim() || null;
+        await onSaveRow(row, {
+          sisu_field_name: sisuFieldName,
+          sisu_field_type: sisuFieldName
+            ? draft.sisuFieldType.trim() || null
+            : null,
+          custom: sisuFieldName ? draft.custom : false,
+          enabled: Boolean(sisuFieldName),
+        });
+      }
+      await onAfterSave?.();
+    } catch (saveError) {
+      setError(
+        saveError instanceof Error
+          ? saveError.message
+          : "Failed to save mappings.",
+      );
+    } finally {
+      setSaving(false);
+    }
+  }, [dirtyRows, drafts, onAfterSave, onSaveRow, saving]);
+
   if (rows.length === 0) {
     return <p className="settings-hint">{emptyHint}</p>;
   }
@@ -242,13 +291,41 @@ export function SisuMappingsTable({
       {teamFieldsError ? <Notice tone="warning">{teamFieldsError}</Notice> : null}
 
       <div className="settings-mapping-search-row">
-        <TextInput
-          id="sisu-mappings-search"
-          label="Search mappings"
-          value={searchQuery}
-          placeholder="Filter by form field, SISU field, or type…"
-          onChange={(event) => setSearchQuery(event.target.value)}
-        />
+        <div className="settings-mapping-search-row__field">
+          <TextInput
+            id="sisu-mappings-search"
+            label="Search mappings"
+            value={searchQuery}
+            placeholder="Filter by form field, SISU field, or type…"
+            onChange={(event) => setSearchQuery(event.target.value)}
+          />
+        </div>
+        <div className="settings-mapping-search-row__actions">
+          {dirtyCount > 0 ? (
+            <PrimaryButton
+              type="button"
+              disabled={saving}
+              onClick={() => {
+                void saveDirtyMappings();
+              }}
+            >
+              {saving ? "Saving…" : "Save mappings"}
+            </PrimaryButton>
+          ) : (
+            <button
+              type="button"
+              className={`app-button-press ${secondaryButtonClassName}`}
+              disabled
+            >
+              Save mappings
+            </button>
+          )}
+        </div>
+        <p className="settings-mapping-search-row__status">
+          {dirtyCount === 0
+            ? "No unsaved changes"
+            : `${dirtyCount} unsaved change${dirtyCount === 1 ? "" : "s"}`}
+        </p>
       </div>
 
       {teamFieldsLoading ? (
@@ -266,15 +343,12 @@ export function SisuMappingsTable({
               <TableCell scope="col">SISU field</TableCell>
               <TableCell scope="col">Type</TableCell>
               <TableCell scope="col">Custom</TableCell>
-              <TableCell scope="col" align="right">
-                Actions
-              </TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {paginatedRows.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5}>
+                <TableCell colSpan={4}>
                   <p className="settings-hint py-2">
                     No mappings match your search.
                   </p>
@@ -287,7 +361,6 @@ export function SisuMappingsTable({
                   sisuFieldType: row.sisu_field_type ?? "",
                   custom: row.custom,
                 };
-                const dirty = isDirty(row, draft);
                 const formLabel = getFormFieldLabel(formKind, row.field_name);
                 const selectedStillPresent = sisuFieldOptions.some(
                   (option) => option.value === draft.sisuFieldName,
@@ -296,14 +369,9 @@ export function SisuMappingsTable({
                 return (
                   <TableRow key={row.id} hover>
                     <TableCell>
-                      <div className="settings-mapping-form-field">
-                        <span className="settings-mapping-form-field__label">
-                          {formLabel}
-                        </span>
-                        <code className="settings-mapping-table__field">
-                          {row.field_name}
-                        </code>
-                      </div>
+                      <span className="settings-mapping-form-field__label">
+                        {formLabel}
+                      </span>
                     </TableCell>
                     <TableCell>
                       <div className="settings-mapping-table-select">
@@ -311,7 +379,7 @@ export function SisuMappingsTable({
                           id={`sisu-field-${row.id}`}
                           label="SISU field"
                           value={draft.sisuFieldName}
-                          disabled={teamFieldsLoading}
+                          disabled={teamFieldsLoading || saving}
                           onChange={(event) => {
                             const nextName = event.target.value;
                             setDrafts((current) => ({
@@ -347,45 +415,6 @@ export function SisuMappingsTable({
                       <span className="settings-mapping-type">
                         {draft.custom ? "Custom" : "System"}
                       </span>
-                    </TableCell>
-                    <TableCell align="right">
-                      <div className="settings-mapping-table-actions">
-                        <button
-                          type="button"
-                          className={`app-button-press ${
-                            dirty
-                              ? primaryButtonClassName
-                              : secondaryButtonClassName
-                          }`}
-                          disabled={!dirty || savingId === row.id}
-                          onClick={async () => {
-                            setSavingId(row.id);
-                            setError(null);
-                            try {
-                              const sisuFieldName =
-                                draft.sisuFieldName.trim() || null;
-                              await onSaveRow(row, {
-                                sisu_field_name: sisuFieldName,
-                                sisu_field_type: sisuFieldName
-                                  ? draft.sisuFieldType.trim() || null
-                                  : null,
-                                custom: sisuFieldName ? draft.custom : false,
-                                enabled: Boolean(sisuFieldName),
-                              });
-                            } catch (saveError) {
-                              setError(
-                                saveError instanceof Error
-                                  ? saveError.message
-                                  : "Failed to save mapping.",
-                              );
-                            } finally {
-                              setSavingId(null);
-                            }
-                          }}
-                        >
-                          {savingId === row.id ? "Saving…" : "Save"}
-                        </button>
-                      </div>
                     </TableCell>
                   </TableRow>
                 );

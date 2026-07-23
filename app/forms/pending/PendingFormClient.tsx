@@ -13,6 +13,7 @@ import {
   secondaryButtonClassName,
 } from "@baraagency/components";
 import { PrimaryButton } from "../_core/PrimaryButton";
+import { CommunicationTextInput } from "../_core/CommunicationTextInput";
 import { FormSelectInput } from "../_core/formSelectInput";
 import type { FUBPerson } from "@/app/types/fub";
 import type { SISUDropdownOption, SISUTeamFieldsCatalogResponse } from "@/app/types/sisu";
@@ -59,6 +60,11 @@ import {
   shouldResolveSisuTransactionLookup,
 } from "../_core/sisuTransactionLookup";
 import { applyPreviousSubmissionFormData } from "../_core/previousSubmissionPrefill";
+import {
+  clearFormDraft,
+  readFormDraft,
+  writeFormDraft,
+} from "../_core/formDraftCache";
 import type { JsonValue } from "@/app/types/storage";
 import { FormRouterBackLink } from "../_core/formRouterBackLink";
 import { buildFormRouterReturnUrlFromSearchParams } from "../_core/formRouterUtils";
@@ -279,6 +285,30 @@ export function PendingFormClient({
   );
 
   useEffect(() => {
+    const personId = formState.personId.trim();
+    if (!personId) {
+      return;
+    }
+
+    setFormState((current) => {
+      let nextState = applyPreviousSubmissionFormData(
+        current,
+        previousSubmissionFormData ?? undefined,
+      );
+      const cachedDraft = readFormDraft<PendingFormState>("pending", personId);
+      if (cachedDraft) {
+        nextState = applyPreviousSubmissionFormData(nextState, cachedDraft);
+      }
+
+      const changed = (Object.keys(nextState) as Array<keyof PendingFormState>).some(
+        (field) => nextState[field] !== current[field],
+      );
+
+      return changed ? nextState : current;
+    });
+  }, [formState.personId, previousSubmissionFormData]);
+
+  useEffect(() => {
     if (!formState.personId) {
       return;
     }
@@ -440,6 +470,7 @@ export function PendingFormClient({
         if (field === "clientType") {
           nextState.transactionStage = value === "Buyer" ? "buyer-pending" : value === "Seller" ? "seller-pending" : "";
         }
+        writeFormDraft("pending", nextState.personId, nextState);
         return nextState;
       });
       setErrors((current) => {
@@ -477,6 +508,7 @@ export function PendingFormClient({
       }
 
       const debugKey = storeSubmittedDebugRecord("pending", payload);
+      clearFormDraft("pending", formState.personId);
       navigate(
         buildPostSubmissionHref({
           formType: "pending",
@@ -625,7 +657,7 @@ export function PendingFormClient({
                 </Row>
                 <Row>
                   <div>
-                    <TextInput
+                    <CommunicationTextInput
                       id="clientPhone"
                       label="Client Phone Number"
                       type="tel"
@@ -644,7 +676,7 @@ export function PendingFormClient({
                     <FieldError message={errors.clientPhone} />
                   </div>
                   <div>
-                    <TextInput
+                    <CommunicationTextInput
                       id="clientEmail"
                       label="Client Email"
                       type="email"
@@ -692,7 +724,7 @@ export function PendingFormClient({
                     </div>
                     <Row>
                       <div>
-                        <TextInput
+                        <CommunicationTextInput
                           id="secondaryContactPhone"
                           label="Secondary Client Phone"
                           type="tel"
@@ -716,7 +748,7 @@ export function PendingFormClient({
                         <FieldError message={errors.secondaryContactPhone} />
                       </div>
                       <div>
-                        <TextInput
+                        <CommunicationTextInput
                           id="secondaryContactEmail"
                           label="Secondary Client Email"
                           type="email"
@@ -917,7 +949,7 @@ export function PendingFormClient({
                       }
                     />
                     <div>
-                      <TextInput
+                      <CommunicationTextInput
                         id="loanOfficerEmail"
                         label="Loan Officer Email"
                         type="email"
@@ -1048,7 +1080,7 @@ export function PendingFormClient({
                     <FieldError message={errors.otherAgentName} />
                   </div>
                   <div>
-                    <TextInput
+                    <CommunicationTextInput
                       id="otherAgentPhone"
                       label="Coop Agent Phone"
                       type="tel"
@@ -1068,7 +1100,7 @@ export function PendingFormClient({
                 </Row>
                 <Row>
                   <div>
-                    <TextInput
+                    <CommunicationTextInput
                       id="otherAgentEmail"
                       label="Coop Agent Email"
                       type="email"

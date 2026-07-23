@@ -45,6 +45,12 @@ import {
 } from "../_core/submissionUtils";
 import { FormRouterBackLink } from "../_core/formRouterBackLink";
 import { buildFormRouterReturnUrlFromSearchParams } from "../_core/formRouterUtils";
+import { applyPreviousSubmissionFormData } from "../_core/previousSubmissionPrefill";
+import {
+  clearFormDraft,
+  readFormDraft,
+  writeFormDraft,
+} from "../_core/formDraftCache";
 import {
   clearDiscardedSisuTransactionId,
   removeSisuTransactionIdFromCurrentUrl,
@@ -181,6 +187,27 @@ export function ClosedFormClient({
   );
   const settlementDateMax = useMemo(() => getMaxFormDateTodayForPicker(), []);
 
+  useEffect(() => {
+    const personId = formState.personId.trim();
+    if (!personId) {
+      return;
+    }
+
+    setFormState((current) => {
+      const cachedDraft = readFormDraft<ClosedFormState>("closed", personId);
+      if (!cachedDraft) {
+        return current;
+      }
+
+      const nextState = applyPreviousSubmissionFormData(current, cachedDraft);
+      const changed = (Object.keys(nextState) as Array<keyof ClosedFormState>).some(
+        (field) => nextState[field] !== current[field],
+      );
+
+      return changed ? nextState : current;
+    });
+  }, [formState.personId]);
+
   const updateField = useCallback(
     <K extends keyof ClosedFormState>(field: K, value: ClosedFormState[K]) => {
       setFormState((current) => {
@@ -194,6 +221,7 @@ export function ClosedFormClient({
           next.monthlyRent = "";
         }
 
+        writeFormDraft("closed", next.personId, next);
         return next;
       });
       setErrors((current) => {
@@ -326,6 +354,7 @@ export function ClosedFormClient({
         transaction: payload.transaction,
       });
 
+      clearFormDraft("closed", formState.personId);
       navigate(
         buildPostSubmissionHref({
           formType: "closed",

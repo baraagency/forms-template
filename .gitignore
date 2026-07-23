@@ -56,3 +56,6 @@ Thumbs.db
 *.tgz
 .node_repl_history
 .nyc_output
+
+# Local brainstorm / visual companion sessions
+.superpowers/

@@ -12,6 +12,7 @@ import {
   secondaryButtonClassName,
 } from "@baraagency/components";
 import { PrimaryButton } from "../_core/PrimaryButton";
+import { CommunicationTextInput } from "../_core/CommunicationTextInput";
 import { FormSelectInput } from "../_core/formSelectInput";
 import type { FUBPerson } from "@/app/types/fub";
 import type { JsonValue } from "@/app/types/storage";
@@ -55,6 +56,12 @@ import {
 } from "../_core/sisuTransactionLookup";
 import { FormRouterBackLink } from "../_core/formRouterBackLink";
 import { buildFormRouterReturnUrlFromSearchParams } from "../_core/formRouterUtils";
+import { applyPreviousSubmissionFormData } from "../_core/previousSubmissionPrefill";
+import {
+  clearFormDraft,
+  readFormDraft,
+  writeFormDraft,
+} from "../_core/formDraftCache";
 
 type SelectOption = {
   value: string;
@@ -145,11 +152,44 @@ export function AppointmentMetFormClient({
   const showFollowUpNotes = formState.cancelledNextStep === "Other";
   const appointmentMetDateMax = useMemo(() => getMaxFormDateTodayForPicker(), []);
 
+  useEffect(() => {
+    const personId = formState.personId.trim();
+    if (!personId) {
+      return;
+    }
+
+    setFormState((current) => {
+      let nextState = applyAppointmentMetPreviousSubmissionPrefill(
+        current,
+        previousSubmissionFormData ?? undefined,
+      );
+      const cachedDraft = readFormDraft<AppointmentMetFormState>(
+        "appointment-met",
+        personId,
+      );
+      if (cachedDraft) {
+        nextState = applyPreviousSubmissionFormData(nextState, cachedDraft);
+      }
+
+      const changed = (
+        Object.keys(nextState) as Array<keyof AppointmentMetFormState>
+      ).some((field) => nextState[field] !== current[field]);
+
+      return changed ? nextState : current;
+    });
+  }, [formState.personId, previousSubmissionFormData]);
+
   const updateField = useCallback(
     (field: keyof AppointmentMetFormState, value: string) => {
-      setFormState((current) =>
-        applyAppointmentMetDispositionFieldClearing(current, field, value),
-      );
+      setFormState((current) => {
+        const nextState = applyAppointmentMetDispositionFieldClearing(
+          current,
+          field,
+          value,
+        );
+        writeFormDraft("appointment-met", nextState.personId, nextState);
+        return nextState;
+      });
       setErrors((current) => {
         if (!current[field]) {
           return current;
@@ -291,6 +331,7 @@ export function AppointmentMetFormClient({
         transaction: payload.transaction,
       });
 
+      clearFormDraft("appointment-met", formState.personId);
       navigate(
         buildPostSubmissionHref({
           formType: "appointment-met",
@@ -427,7 +468,7 @@ export function AppointmentMetFormClient({
               </Row>
               <Row>
                 <div>
-                  <TextInput
+                  <CommunicationTextInput
                     id="clientPhone"
                     label="Client Phone Number"
                     type="tel"
@@ -446,7 +487,7 @@ export function AppointmentMetFormClient({
                   <FieldError message={errors.clientPhone} />
                 </div>
                 <div>
-                  <TextInput
+                  <CommunicationTextInput
                     id="clientEmail"
                     label="Client Email"
                     type="email"

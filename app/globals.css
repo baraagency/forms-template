@@ -147,6 +147,29 @@ textarea::placeholder {
     opacity: 1;
 }
 
+/* Communication fields — muted left icon (Feather via icon-pack) */
+.communication-input__control-wrap {
+    position: relative;
+    margin-top: 0.5rem;
+}
+
+.communication-input__icon {
+    position: absolute;
+    left: 0.75rem;
+    top: 50%;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    color: color-mix(in srgb, var(--palette-2) 42%, #ffffff);
+    pointer-events: none;
+    transform: translateY(-50%);
+}
+
+.communication-input__control.bara-input {
+    margin-top: 0;
+    padding-left: 2.75rem;
+}
+
 .field-shadow {
     box-shadow: var(--field-shadow);
 }

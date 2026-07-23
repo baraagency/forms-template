@@ -11,6 +11,7 @@ import {
   type SettingsFormKind,
 } from "../_core/formIdentity";
 import { PrimaryButton } from "../_core/PrimaryButton";
+import { CommunicationTextInput } from "../_core/CommunicationTextInput";
 
 type GmailStatus = {
   environment: string;
@@ -222,7 +223,7 @@ export function FormRecipientsPanel({
           }
         }}
       >
-        <TextInput
+        <CommunicationTextInput
           id={`${formKind}-new-recipient-email`}
           label="Email"
           type="email"
@@ -252,7 +253,7 @@ export function FormRecipientsPanel({
               return (
                 <div key={recipient.id} className="settings-recipient-row">
                   <div className="settings-recipient-details">
-                    <TextInput
+                    <CommunicationTextInput
                       id={`${formKind}-recipient-email-${recipient.id}`}
                       label="Email"
                       type="email"

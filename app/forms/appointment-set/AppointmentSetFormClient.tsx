@@ -13,6 +13,7 @@ import {
   secondaryButtonClassName,
 } from "@baraagency/components";
 import { PrimaryButton } from "../_core/PrimaryButton";
+import { CommunicationTextInput } from "../_core/CommunicationTextInput";
 import { FormSelectInput } from "../_core/formSelectInput";
 import type { FUBPerson } from "@/app/types/fub";
 import type { JsonValue } from "@/app/types/storage";
@@ -59,6 +60,12 @@ import {
   buildFormRouterReturnUrlFromSearchParams,
   type AgentOption,
 } from "../_core/formRouterUtils";
+import { applyPreviousSubmissionFormData } from "../_core/previousSubmissionPrefill";
+import {
+  clearFormDraft,
+  readFormDraft,
+  writeFormDraft,
+} from "../_core/formDraftCache";
 
 const usStates = [
   "AL",
@@ -221,6 +228,33 @@ export function AppointmentSetFormClient({
   const showAssignedOsa = isOsaApptSetBy(formState.apptSetBy);
   const showOtherAddress = isOtherAddressLocation(formState.appointmentLocation);
 
+  useEffect(() => {
+    const personId = formState.personId.trim();
+    if (!personId) {
+      return;
+    }
+
+    setFormState((current) => {
+      let nextState = applyAppointmentSetPreviousSubmissionPrefill(
+        current,
+        previousSubmissionFormData ?? undefined,
+      );
+      const cachedDraft = readFormDraft<AppointmentSetFormState>(
+        "appointment-set",
+        personId,
+      );
+      if (cachedDraft) {
+        nextState = applyPreviousSubmissionFormData(nextState, cachedDraft);
+      }
+
+      const changed = (
+        Object.keys(nextState) as Array<keyof AppointmentSetFormState>
+      ).some((field) => nextState[field] !== current[field]);
+
+      return changed ? nextState : current;
+    });
+  }, [formState.personId, previousSubmissionFormData]);
+
   const updateField = useCallback(
     (field: keyof AppointmentSetFormState, value: string) => {
       setFormState((current) => {
@@ -243,6 +277,7 @@ export function AppointmentSetFormClient({
         if (field === "appointmentStartTime" && value) {
           nextState.appointmentEndTime = addHoursToFormTime(value, 1);
         }
+        writeFormDraft("appointment-set", nextState.personId, nextState);
         return nextState;
       });
       setErrors((current) => {
@@ -495,6 +530,7 @@ export function AppointmentSetFormClient({
         transaction: payload.transaction,
       });
 
+      clearFormDraft("appointment-set", formState.personId);
       navigate(
         buildPostSubmissionHref({
           formType: "appointment-set",
@@ -633,7 +669,7 @@ export function AppointmentSetFormClient({
               </Row>
               <Row>
                 <div>
-                  <TextInput
+                  <CommunicationTextInput
                     id="clientPhone"
                     label="Client Phone Number"
                     type="tel"
@@ -652,7 +688,7 @@ export function AppointmentSetFormClient({
                   <FieldError message={errors.clientPhone} />
                 </div>
                 <div>
-                  <TextInput
+                  <CommunicationTextInput
                     id="clientEmail"
                     label="Client Email"
                     type="email"

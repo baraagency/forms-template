@@ -7,7 +7,7 @@
 
 :root {
     /* Brand palette */
-    --palette-1: #000000; /* primary accent (CTAs) */
+    --palette-1: #1E1E1E; /* primary accent (CTAs) */
     --palette-2: #003a55; /* deep navy (text / structure) */
     --palette-3: #404040; /* charcoal (errors / danger) */
 
@@ -257,12 +257,10 @@ body {
     width: 100%;
 }
 
-/* Primary CTAs — fill gradient + darker solid border (Uiverse anatomy pattern) */
+/* Primary CTAs — solid primary fill + matching border */
 .form-router-launch-button,
 .bara-button--primary {
-    /* Top lighter → bottom darker; border = primary */
-    --btn-cta-top: color-mix(in srgb, var(--palette-1) 72%, #ffffff);
-    --btn-cta-bottom: color-mix(in srgb, var(--palette-1) 90%, #ffffff);
+    --btn-cta-bg: var(--palette-1);
     --btn-cta-border: var(--palette-1);
     --btn-cta-hover-bg: var(--palette-1);
     /* Same light family as fields; slightly stronger for dark fills */
@@ -273,8 +271,8 @@ body {
     --btn-cta-arrow-shift: 0.75rem;
     --btn-cta-label-shift: var(--distance-small, 6px);
     appearance: none;
-    background-color: var(--btn-cta-bottom);
-    background-image: linear-gradient(var(--btn-cta-top), var(--btn-cta-bottom));
+    background-color: var(--btn-cta-bg);
+    background-image: none;
     border: solid 2px var(--btn-cta-border);
     border-radius: var(--btn-radius);
     box-shadow: var(--btn-cta-shadow);

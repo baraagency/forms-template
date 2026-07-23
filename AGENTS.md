@@ -20,6 +20,7 @@ APIs, conventions, and file structure may differ from Next.js or older React Rou
 - Form router return URLs omit `agentId`.
 - Mock APIs: fixtures in `app/api/_fixtures/`; stable IDs in `app/api/_fixtures/constants.ts`.
 - Branding: replace `public/form-banner.svg`; shared header via `app/forms/_core/FormBanner.tsx`.
+- Visual design (canonical): [Forms Template — Visual Design System](https://app.notion.com/p/3a6a4516f72b814caff0cc286f33e2bd) — palette, type, elevation, CTAs, motion, and anti-patterns for agents adapting this template. When you change colors, typography, shadows, motion, or primary CTA chrome, update that Notion page (and keep `app/globals.css`, `app/AppTheme.tsx`, and `.interface-design/system.md` in sync).
 - Framework: React Router v8 Framework mode (Vite). UI routes live in `app/routes/*.tsx`; HTTP APIs are resource routes (`loader`/`action`, no default component) under `app/api/**/route.ts`, registered in `app/routes.ts`.
 
 ## Pending Example
@@ -71,13 +72,14 @@ APIs, conventions, and file structure may differ from Next.js or older React Rou
 - Prefer paginated settings mapping tables (5 rows/page), matching the usaj-app pattern.
 - Keep local Docker/Postgres test database setup out of the repo; use it only for local testing.
 - Form display order on `/forms` and `/forms/settings`: Appointment Set, Appointment Met, Pending, Closed.
-- Brand colors use navy/sky with a black primary accent (`--palette-1` `#000000`), not the old green or orange CTA palette.
-- Primary CTAs (form router buttons, Submit, Create New Deal) share the `/forms` button design (black fill gradient + border); button text centered.
+- Brand colors use navy/sky with a near-black primary accent (`--palette-1` `#1E1E1E`), not the old green or orange CTA palette.
+- Primary CTAs (form router buttons, Submit, Create New Deal) share the `/forms` button design (solid black fill + border); button text centered.
 - Page titles and container/section headers use DM Serif Display (on settings, reserve it for those only); page titles at font-weight 500; form sections get a divider under the section header before fields, not above the section.
 
 ## Learned Workspace Facts
 
 - This repo is the reusable forms template (GitHub slug `forms-template`) for future form projects.
+- Deep visual design reference lives in Notion: [Forms Template — Visual Design System](https://app.notion.com/p/3a6a4516f72b814caff0cc286f33e2bd) (no parent; update when design tokens or CTA chrome change).
 - Production form layouts are often referenced from sibling apps such as `jeff-cook-app` and `usaj-app`; implement against this template's patterns and styling.
 - Settings SISU team-fields and FUB person/deal field option catalogs use live APIs when the corresponding API keys are set; otherwise fixtures.
 - `/api/fub/users`, `/api/fub/people`, `/api/fub/deals`, and `/api/fub/appointment-types` use live FUB when `FUB_API_KEY` is set; otherwise fixtures. Deals stay on fixtures when `DEMO_MODE=true` even if a FUB key is present (form deal pickers should show live deals only when Demo Mode is off).

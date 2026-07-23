@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 
 /** Colors aligned with forms-template palette (black accent + navy + sky) */
 const BARA_NAVY = "#003a55";
-const BARA_ACCENT = "#000000";
+const BARA_ACCENT = "#1E1E1E";
 const BARA_SKY = "#0099cc";
 const BARA_CHARCOAL = "#404040";
 const BARA_BG = "#f0f7fa";

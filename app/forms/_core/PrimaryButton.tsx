@@ -55,7 +55,7 @@ function PrimaryButtonLabel({
 }
 
 /**
- * Shared primary CTA — gradient chrome, press feedback, and optional
+ * Shared primary CTA — solid primary chrome, press feedback, and optional
  * label hover arrow (`>>`). Use `href` to render as a link.
  */
 export function PrimaryButton(props: PrimaryButtonProps) {

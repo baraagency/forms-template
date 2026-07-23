@@ -8,7 +8,7 @@ Ops settings for real-estate form workflows (SISU + Follow Up Boss). Calm, dense
 
 | Token | Hex | Role |
 | --- | --- | --- |
-| `--palette-1` | `#000000` | Black accent / primary CTAs |
+| `--palette-1` | `#1E1E1E` | Near-black accent / primary CTAs |
 | `--palette-2` | `#003A55` | Deep navy text & structure |
 | `--palette-3` | `#404040` | Charcoal errors |
 | `--brand-sky` | `#0099CC` | Brand blue (focus, outlines, success tint) |
@@ -59,7 +59,7 @@ Do not mix in dramatic multi-layer card shadows or pure white cards on tinted gr
 - Shared tokens: `app/component-transitions.css` (`--duration-*`, `--ease-smooth-out`, `--distance-*`, `--scale-*`, `--blur-*`)
 - Easing: `--ease-smooth-out` (`cubic-bezier(0.22, 1, 0.36, 1)`) for surface motion
 - Focus / hover accents: `--brand-sky` / `--brand-sky-soft` (not the primary CTA fill) so CTAs stay the only black moments
-- Primary CTAs (form launch, Submit, Create New Deal, settings saves): shared black vertical gradient + 2px border via `.form-router-launch-button` / `.bara-button--primary`
+- Primary CTAs (form launch, Submit, Create New Deal, settings saves): shared solid black fill + 2px border via `.form-router-launch-button` / `.bara-button--primary`
 - Select menus: open `--duration-fast` fade+scale; close is the reverse at `--duration-quick` (slightly faster) via `useSelectMenuMotion` + `.bara-select__menu--closing`
 - Respect `prefers-reduced-motion`
 

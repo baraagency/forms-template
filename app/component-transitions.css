@@ -38,7 +38,7 @@
   --acc-collapse: var(--duration-fast);
   --acc-ease: var(--ease-smooth-out);
 
-  /* Button highlight — primary CTAs use shared gradient hover in globals.css */
+  /* Button highlight — primary CTAs use shared hover chrome in globals.css */
   --btn-highlight-dur: var(--duration-quick);
   --btn-highlight-ease: var(--ease-smooth-out);
   /* Label + >> hover (a bit slower than press chrome) */

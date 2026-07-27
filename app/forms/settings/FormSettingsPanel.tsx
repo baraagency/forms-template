@@ -27,6 +27,7 @@ import {
 import { SisuMappingsTable } from "./SisuMappingsTable";
 import { FormRecipientsPanel } from "./GmailAndRecipientsPanels";
 import { PillToggle } from "./PillToggle";
+import { useRovingTabIndex } from "../_core/useRovingTabIndex";
 
 async function readJson<T>(response: Response): Promise<T> {
   const payload = (await response.json()) as T & { message?: string };
@@ -350,6 +351,12 @@ export function FormSettingsPanel({
   const [toggleBusy, setToggleBusy] = useState(false);
   const [mappingTab, setMappingTab] =
     useState<MappingDestinationTab>("sisu");
+  const mappingTabIds = MAPPING_DESTINATION_TABS.map((tab) => tab.id);
+  const { getTabProps: getMappingTabProps } = useRovingTabIndex({
+    items: mappingTabIds,
+    selected: mappingTab,
+    onSelect: setMappingTab,
+  });
 
   const reloadMappings = useCallback(async () => {
     setLoading(true);
@@ -393,7 +400,12 @@ export function FormSettingsPanel({
   const visible = routerForm?.visible ?? true;
 
   return (
-    <div className="settings-panel" role="tabpanel" id={`settings-panel-${slug}`}>
+    <div
+      className="settings-panel"
+      role="tabpanel"
+      id={`settings-panel-${slug}`}
+      aria-labelledby={`settings-tab-${slug}`}
+    >
       <section className="settings-section">
         <div className="settings-section-header">
           <div>
@@ -473,7 +485,7 @@ export function FormSettingsPanel({
                     className={`settings-tabs__tab app-button-press${
                       selected ? " settings-tabs__tab--active" : ""
                     }`}
-                    onClick={() => setMappingTab(tab.id)}
+                    {...getMappingTabProps(tab.id)}
                   >
                     {tab.label}
                   </button>

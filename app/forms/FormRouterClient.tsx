@@ -599,6 +599,7 @@ export function FormRouterClient({
 
   return (
     <main
+      id="main-content"
       className={`page-form${isEmbeddedInFub ? " page-form--embedded" : ""}`}
     >
       <title>Form Router</title>

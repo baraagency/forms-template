@@ -13,6 +13,10 @@ import {
   secondaryButtonClassName,
 } from "@baraagency/components";
 import { PrimaryButton } from "../_core/PrimaryButton";
+import { FieldError } from "../_core/FieldError";
+import { FormValidationSummary } from "../_core/FormValidationSummary";
+import { fieldA11yProps } from "../_core/useFieldIds";
+
 import { CommunicationTextInput } from "../_core/CommunicationTextInput";
 import { FormSelectInput } from "../_core/formSelectInput";
 import type { FUBPerson } from "@/app/types/fub";
@@ -141,12 +145,6 @@ function getSingleSearchParam(
   return value ?? "";
 }
 
-function FieldError({ message }: { message?: string }) {
-  return message ? (
-    <p className="mt-1 text-xs font-medium text-[var(--error-color)]">{message}</p>
-  ) : null;
-}
-
 function FieldGroup({ children }: { children: ReactNode }) {
   return (
     <div className="form-field-group">
@@ -207,6 +205,7 @@ export function AppointmentSetFormClient({
     ),
   );
   const [errors, setErrors] = useState<AppointmentSetFieldErrors>({});
+  const [submitAttempted, setSubmitAttempted] = useState(false);
   const [isaOptions, setIsaOptions] = useState<SelectOption[]>([]);
   const [osaOptions, setOsaOptions] = useState<SelectOption[]>([]);
   const [appointmentTypeOptions, setAppointmentTypeOptions] = useState<
@@ -503,6 +502,7 @@ export function AppointmentSetFormClient({
     if (!formState.personId) {
       nextErrors.personId = "A FUB person id is required.";
     }
+    setSubmitAttempted(true);
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) {
       return;
@@ -560,7 +560,7 @@ export function AppointmentSetFormClient({
 
   if (submitStatus === "submitting" || submitStatus === "complete") {
     return (
-      <main className="page-form">
+      <main id="main-content" className="page-form">
         <SectionCard title="Submission Status">
           <div className="space-y-4">
             {submitStatus === "submitting" ? (
@@ -595,7 +595,7 @@ export function AppointmentSetFormClient({
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
-      <main className="page-form">
+      <main id="main-content" className="page-form">
         <div className="mb-4">
           <FormRouterBackLink
             href={buildRouterHref(formState, searchParams)}
@@ -633,7 +633,9 @@ export function AppointmentSetFormClient({
           </div>
         ) : null}
 
+        <FormValidationSummary errors={errors} show={submitAttempted} />
         <form
+          noValidate
           onSubmit={(event) => {
             event.preventDefault();
             void handleSubmit();
@@ -645,6 +647,7 @@ export function AppointmentSetFormClient({
                 <div>
                   <TextInput
                     id="clientFirstName"
+                      {...fieldA11yProps('clientFirstName', errors.clientFirstName)}
                     label="Client First Name"
                     value={formState.clientFirstName}
                     required
@@ -652,11 +655,12 @@ export function AppointmentSetFormClient({
                       updateField("clientFirstName", event.target.value)
                     }
                   />
-                  <FieldError message={errors.clientFirstName} />
+                  <FieldError id={`clientFirstName-error`} message={errors.clientFirstName} />
                 </div>
                 <div>
                   <TextInput
                     id="clientLastName"
+                      {...fieldA11yProps('clientLastName', errors.clientLastName)}
                     label="Client Last Name"
                     value={formState.clientLastName}
                     required
@@ -664,7 +668,7 @@ export function AppointmentSetFormClient({
                       updateField("clientLastName", event.target.value)
                     }
                   />
-                  <FieldError message={errors.clientLastName} />
+                  <FieldError id={`clientLastName-error`} message={errors.clientLastName} />
                 </div>
               </Row>
               <Row>
@@ -684,8 +688,8 @@ export function AppointmentSetFormClient({
                     onChange={(event) =>
                       updateField("clientPhone", event.target.value)
                     }
+                    error={errors.clientPhone}
                   />
-                  <FieldError message={errors.clientPhone} />
                 </div>
                 <div>
                   <CommunicationTextInput
@@ -697,8 +701,8 @@ export function AppointmentSetFormClient({
                     onChange={(event) =>
                       updateField("clientEmail", event.target.value)
                     }
+                    error={errors.clientEmail}
                   />
-                  <FieldError message={errors.clientEmail} />
                 </div>
               </Row>
               <Row>
@@ -709,6 +713,7 @@ export function AppointmentSetFormClient({
                     value={formState.leadType}
                     required
                     onChange={(event) => updateField("leadType", event.target.value)}
+                    error={errors.leadType}
                   >
                     <option value="">Select lead type...</option>
                     {toSelectOptions(LEAD_TYPE_OPTIONS).map((option) => (
@@ -717,7 +722,6 @@ export function AppointmentSetFormClient({
                       </option>
                     ))}
                   </FormSelectInput>
-                  <FieldError message={errors.leadType} />
                 </div>
               </Row>
             </SectionCard>
@@ -732,6 +736,7 @@ export function AppointmentSetFormClient({
                       value={formState.apptSetBy}
                       required
                       onChange={(event) => updateField("apptSetBy", event.target.value)}
+                    error={errors.apptSetBy}
                     >
                       <option value="">Select who set the appointment...</option>
                       {toSelectOptions(APPT_SET_BY_OPTIONS).map((option) => (
@@ -740,7 +745,6 @@ export function AppointmentSetFormClient({
                         </option>
                       ))}
                     </FormSelectInput>
-                    <FieldError message={errors.apptSetBy} />
                   </div>
                   <div>
                     <FormSelectInput
@@ -751,6 +755,7 @@ export function AppointmentSetFormClient({
                       onChange={(event) =>
                         updateField("appointmentType", event.target.value)
                       }
+                    error={errors.appointmentType}
                     >
                       <option value="">Select appointment type...</option>
                       {appointmentTypeOptions.map((option) => (
@@ -759,7 +764,6 @@ export function AppointmentSetFormClient({
                         </option>
                       ))}
                     </FormSelectInput>
-                    <FieldError message={errors.appointmentType} />
                   </div>
                 </Row>
 
@@ -778,6 +782,7 @@ export function AppointmentSetFormClient({
                               onChange={(event) =>
                                 updateField("assignedIsa", event.target.value)
                               }
+                    error={errors.assignedIsa}
                             >
                               <option value="">
                                 {isaOptionsUnavailable
@@ -792,7 +797,6 @@ export function AppointmentSetFormClient({
                                   ))
                                 : null}
                             </FormSelectInput>
-                            <FieldError message={errors.assignedIsa} />
                           </>
                         ) : (
                           <>
@@ -805,6 +809,7 @@ export function AppointmentSetFormClient({
                               onChange={(event) =>
                                 updateField("assignedOsa", event.target.value)
                               }
+                    error={errors.assignedOsa}
                             >
                               <option value="">
                                 {osaOptionsUnavailable
@@ -819,7 +824,6 @@ export function AppointmentSetFormClient({
                                   ))
                                 : null}
                             </FormSelectInput>
-                            <FieldError message={errors.assignedOsa} />
                           </>
                         )}
                       </div>
@@ -839,7 +843,6 @@ export function AppointmentSetFormClient({
                       error={errors.appointmentDate}
                       onChange={(value) => updateField("appointmentDate", value)}
                     />
-                    <FieldError message={errors.appointmentDate} />
                   </div>
                 </Row>
 
@@ -853,7 +856,6 @@ export function AppointmentSetFormClient({
                       error={errors.appointmentStartTime}
                       onChange={(value) => updateField("appointmentStartTime", value)}
                     />
-                    <FieldError message={errors.appointmentStartTime} />
                   </div>
                   <div>
                     <FormTimePickerField
@@ -864,7 +866,6 @@ export function AppointmentSetFormClient({
                       error={errors.appointmentEndTime}
                       onChange={(value) => updateField("appointmentEndTime", value)}
                     />
-                    <FieldError message={errors.appointmentEndTime} />
                   </div>
                 </Row>
 
@@ -878,6 +879,7 @@ export function AppointmentSetFormClient({
                       onChange={(event) =>
                         updateField("appointmentLocation", event.target.value)
                       }
+                    error={errors.appointmentLocation}
                     >
                       <option value="">Select location...</option>
                       {toSelectOptions(APPOINTMENT_LOCATION_OPTIONS).map((option) => (
@@ -886,7 +888,6 @@ export function AppointmentSetFormClient({
                         </option>
                       ))}
                     </FormSelectInput>
-                    <FieldError message={errors.appointmentLocation} />
                   </div>
                 </Row>
 
@@ -897,6 +898,7 @@ export function AppointmentSetFormClient({
                       <div>
                         <TextInput
                           id="streetAddress"
+                      {...fieldA11yProps('streetAddress', errors.streetAddress)}
                           label="Street Address"
                           value={formState.streetAddress}
                           required
@@ -904,11 +906,12 @@ export function AppointmentSetFormClient({
                             updateField("streetAddress", event.target.value)
                           }
                         />
-                        <FieldError message={errors.streetAddress} />
+                        <FieldError id={`streetAddress-error`} message={errors.streetAddress} />
                       </div>
                       <div>
                         <TextInput
                           id="addressLine2"
+                      {...fieldA11yProps('addressLine2', errors.addressLine2)}
                           label="Address Line 2"
                           value={formState.addressLine2}
                           onChange={(event) =>
@@ -921,12 +924,13 @@ export function AppointmentSetFormClient({
                       <div>
                         <TextInput
                           id="city"
+                      {...fieldA11yProps('city', errors.city)}
                           label="City"
                           value={formState.city}
                           required
                           onChange={(event) => updateField("city", event.target.value)}
                         />
-                        <FieldError message={errors.city} />
+                        <FieldError id={`city-error`} message={errors.city} />
                       </div>
                       <div>
                         <FormSelectInput
@@ -937,6 +941,7 @@ export function AppointmentSetFormClient({
                           onChange={(event) =>
                             updateField("state", event.target.value)
                           }
+                    error={errors.state}
                         >
                           <option value="">Select state...</option>
                           {usStates.map((state) => (
@@ -945,11 +950,11 @@ export function AppointmentSetFormClient({
                             </option>
                           ))}
                         </FormSelectInput>
-                        <FieldError message={errors.state} />
                       </div>
                       <div>
                         <TextInput
                           id="postalCode"
+                      {...fieldA11yProps('postalCode', errors.postalCode)}
                           label="Postal Code"
                           value={formState.postalCode}
                           required
@@ -957,7 +962,7 @@ export function AppointmentSetFormClient({
                             updateField("postalCode", event.target.value)
                           }
                         />
-                        <FieldError message={errors.postalCode} />
+                        <FieldError id={`postalCode-error`} message={errors.postalCode} />
                       </div>
                     </div>
                   </FormExpand>

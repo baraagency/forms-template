@@ -122,7 +122,7 @@ export default function SubmittedPage({ loaderData }: Route.ComponentProps) {
   ];
 
   return (
-    <main className="page-form">
+    <main id="main-content" className="page-form">
       <title>Form Submitted</title>
       <header className="page-header">
         <FormBanner />

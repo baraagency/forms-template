@@ -56,13 +56,28 @@
 }
 
 .settings-pill-toggle {
+  position: relative;
   user-select: none;
+  min-height: 44px;
+  min-width: 44px;
+  align-items: center;
 }
 
 .settings-pill-toggle__input {
   position: absolute;
-  opacity: 0;
-  pointer-events: none;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.settings-pill-toggle__input:focus-visible + .settings-pill-toggle__track {
+  outline: none;
+  box-shadow: 0 0 0 4px var(--field-focus-ring);
 }
 
 .settings-pill-toggle__track {

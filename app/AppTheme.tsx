@@ -32,6 +32,7 @@ const theme = createTheme({
         text: {
           primary: BARA_NAVY,
           secondary: "#4a6b7c",
+          disabled: "#5a7585",
         },
         warning: {
           main: BARA_CHARCOAL,
@@ -92,7 +93,7 @@ const theme = createTheme({
       },
       styleOverrides: {
         root: {
-          minHeight: 42,
+          minHeight: 44,
         },
       },
     },

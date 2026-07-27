@@ -1,0 +1,40 @@
+name: Accessibility (advisory)
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  a11y:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Contrast audit
+        run: bun run test:a11y:contrast
+
+      - name: ESLint accessibility
+        run: bun run lint:a11y
+
+      - name: Install Playwright browsers
+        run: bunx playwright install chromium
+
+      - name: Playwright a11y tests
+        run: bun run playwright test tests/e2e/a11y --project=chromium
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-a11y-report
+          path: playwright-report/
+          if-no-files-found: ignore

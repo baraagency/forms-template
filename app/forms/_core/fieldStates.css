@@ -1,0 +1,88 @@
+/* Field control states — error, loading, read-only, disabled */
+
+.bara-input--error,
+.bara-select__control--error {
+  border-color: var(--error-color) !important;
+}
+
+.bara-input--error:focus,
+.bara-select__control--error.bara-select__control--is-focused {
+  box-shadow:
+    var(--field-shadow),
+    0 0 0 4px color-mix(in srgb, var(--error-color) 22%, transparent) !important;
+}
+
+.bara-input[aria-readonly="true"],
+.bara-input:read-only:not(:disabled) {
+  background: var(--disabled-bg);
+  cursor: default;
+}
+
+.bara-input:disabled,
+.bara-select--is-disabled .bara-select__control {
+  opacity: 1;
+  background: var(--disabled-bg);
+  cursor: not-allowed;
+}
+
+.bara-input--loading,
+.bara-select--loading .bara-select__control {
+  position: relative;
+  color: transparent;
+  pointer-events: none;
+}
+
+.bara-input--loading::after,
+.bara-select--loading .bara-select__control::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid var(--divider-color);
+  border-top-color: var(--brand-sky);
+  border-radius: 50%;
+  animation: field-loading-spin var(--duration-slow, 400ms) linear infinite;
+}
+
+@keyframes field-loading-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.field-error--shake {
+  animation: field-error-shake var(--duration-very-slow, 500ms)
+    var(--ease-smooth-out, cubic-bezier(0.22, 1, 0.36, 1));
+}
+
+@keyframes field-error-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(calc(var(--distance-small, 6px) * -1));
+  }
+  40% {
+    transform: translateX(var(--distance-small, 6px));
+  }
+  60% {
+    transform: translateX(calc(var(--distance-small, 6px) * -0.5));
+  }
+  80% {
+    transform: translateX(calc(var(--distance-small, 6px) * 0.5));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .field-error--shake {
+    animation: none;
+  }
+
+  .bara-input--loading::after,
+  .bara-select--loading .bara-select__control::after {
+    animation-duration: var(--duration-slow, 400ms);
+  }
+}

@@ -7,7 +7,6 @@ import TablePagination from "@mui/material/TablePagination";
 import TableRow from "@mui/material/TableRow";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  Notice,
   Spinner,
   TextInput,
   secondaryButtonClassName,
@@ -18,6 +17,8 @@ import type { SettingsFormKind } from "../_core/formIdentity";
 import type { TeamFieldCatalog } from "../_core/teamFieldOptions";
 import { FormSelectInput } from "../_core/formSelectInput";
 import { PrimaryButton } from "../_core/PrimaryButton";
+import { FormEmptyState } from "../_core/FormEmptyState";
+import { FormNotice } from "../_core/FormNotice";
 import { getFormFieldLabel, sortByFormFieldAppearanceOrder } from "./formFieldCatalog";
 
 const ROWS_PER_PAGE = 5;
@@ -282,13 +283,15 @@ export function SisuMappingsTable({
   }, [dirtyRows, drafts, onAfterSave, onSaveRow, saving]);
 
   if (rows.length === 0) {
-    return <p className="settings-hint">{emptyHint}</p>;
+    return <FormEmptyState>{emptyHint}</FormEmptyState>;
   }
 
   return (
     <div className="settings-sisu-mappings">
-      {error ? <Notice tone="warning">{error}</Notice> : null}
-      {teamFieldsError ? <Notice tone="warning">{teamFieldsError}</Notice> : null}
+      {error ? <FormNotice tone="error">{error}</FormNotice> : null}
+      {teamFieldsError ? (
+        <FormNotice tone="warning">{teamFieldsError}</FormNotice>
+      ) : null}
 
       <div className="settings-mapping-search-row">
         <div className="settings-mapping-search-row__field">

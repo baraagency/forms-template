@@ -15,6 +15,8 @@ import { SvgIcon, type SvgIconProps } from "@mui/material";
 import { Field, Spinner } from "@baraagency/components";
 import { FORM_TIMEZONE } from "./constants";
 import { datePickerTextFieldSx } from "./formDatePickerField";
+import { FieldError } from "./FieldError";
+import { fieldA11yProps } from "./useFieldIds";
 
 dayjs.extend(customParseFormat);
 dayjs.extend(utc);
@@ -158,6 +160,8 @@ type FormTimePickerFieldProps = {
   minutesStep?: number;
   minTime?: Dayjs;
   maxTime?: Dayjs;
+  disabled?: boolean;
+  readOnly?: boolean;
 };
 
 function formatDisplayTime(value: string): string {
@@ -185,7 +189,7 @@ function TimePickerFallback({
           required={required}
           value={displayValue}
           placeholder={FORM_TIME_PICKER_PLACEHOLDER}
-          className="h-[42px] w-full rounded-[var(--btn-radius)] border border-[var(--divider-color)] bg-[var(--card-bg)] px-3 pr-10 text-sm text-[var(--foreground)] shadow-[var(--field-shadow)]"
+          className="h-[44px] w-full rounded-[var(--btn-radius)] border border-[var(--divider-color)] bg-[var(--card-bg)] px-3 pr-10 text-sm text-[var(--foreground)] shadow-[var(--field-shadow)]"
         />
         <span className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-[var(--icon-muted)]">
           <Spinner className="h-4 w-4" />
@@ -205,9 +209,12 @@ function FormTimePickerFieldInner({
   minutesStep = 15,
   minTime,
   maxTime,
+  disabled = false,
+  readOnly = false,
 }: FormTimePickerFieldProps) {
   const [pickerActivated, setPickerActivated] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const a11y = fieldA11yProps(id, error);
   const pickerConfig = useMemo(
     () => buildFormTimePickerConfig(minutesStep),
     [minutesStep],
@@ -234,8 +241,16 @@ function FormTimePickerFieldInner({
         required,
         fullWidth: true,
         error: Boolean(error),
+        disabled,
         size: "small",
         sx: datePickerTextFieldSx,
+        slotProps: {
+          htmlInput: {
+            readOnly,
+            "aria-readonly": readOnly || undefined,
+            ...a11y,
+          },
+        },
       },
       openPickerButton: {
         "aria-label": `Choose ${label}`,
@@ -262,7 +277,7 @@ function FormTimePickerFieldInner({
         ],
       },
     }),
-    [error, id, label, required],
+    [a11y, disabled, error, id, label, readOnly, required],
   );
 
   if (!pickerActivated) {
@@ -272,23 +287,26 @@ function FormTimePickerFieldInner({
           <input
             id={id}
             readOnly
+            disabled={disabled}
             required={required}
             value={displayValue}
             placeholder={FORM_TIME_PICKER_PLACEHOLDER}
-            aria-invalid={Boolean(error)}
-            onFocus={activatePicker}
-            onClick={activatePicker}
-            className="h-[42px] w-full rounded-[var(--btn-radius)] border border-[var(--divider-color)] bg-[var(--card-bg)] px-3 pr-10 text-sm text-[var(--foreground)] shadow-[var(--field-shadow)] focus:border-[var(--btn-outline-border)] focus:outline-none focus:ring-4 focus:ring-[color-mix(in_srgb,var(--btn-outline-color)_15%,transparent)]"
+            onFocus={disabled || readOnly ? undefined : activatePicker}
+            onClick={disabled || readOnly ? undefined : activatePicker}
+            className="h-[44px] w-full rounded-[var(--btn-radius)] border border-[var(--divider-color)] bg-[var(--card-bg)] px-3 pr-11 text-sm text-[var(--foreground)] shadow-[var(--field-shadow)] focus:border-[var(--btn-outline-border)] focus:outline-none focus:ring-4 focus:ring-[color-mix(in_srgb,var(--btn-outline-color)_15%,transparent)] disabled:cursor-not-allowed disabled:bg-[var(--disabled-bg)]"
+            {...a11y}
           />
           <button
             type="button"
             aria-label={`Choose ${label}`}
+            disabled={disabled || readOnly}
             onClick={activatePicker}
-            className="absolute inset-y-0 right-1 flex w-8 items-center justify-center rounded-[var(--btn-radius)] text-[var(--icon-muted)] hover:bg-[color-mix(in_srgb,var(--btn-outline-color)_8%,transparent)] hover:text-[var(--btn-outline-color)]"
+            className="absolute inset-y-0 right-1 flex min-h-11 min-w-11 items-center justify-center rounded-[var(--btn-radius)] text-[var(--icon-muted)] hover:bg-[color-mix(in_srgb,var(--btn-outline-color)_8%,transparent)] hover:text-[var(--btn-outline-color)] disabled:cursor-not-allowed disabled:opacity-50"
           >
             <ClockIcon fontSize="small" />
           </button>
         </div>
+        <FieldError id={`${id}-error`} message={error} />
       </Field>
     );
   }
@@ -322,6 +340,7 @@ function FormTimePickerFieldInner({
           slots={{ openPickerIcon: ClockIcon }}
           slotProps={slotProps}
         />
+        <FieldError id={`${id}-error`} message={error} />
       </Field>
     </Suspense>
   );

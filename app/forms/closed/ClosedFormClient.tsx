@@ -12,6 +12,10 @@ import {
   secondaryButtonClassName,
 } from "@baraagency/components";
 import { PrimaryButton } from "../_core/PrimaryButton";
+import { FieldError } from "../_core/FieldError";
+import { FormValidationSummary } from "../_core/FormValidationSummary";
+import { fieldA11yProps } from "../_core/useFieldIds";
+
 import { FormSelectInput } from "../_core/formSelectInput";
 import type { SISUTeamFieldsCatalogResponse } from "@/app/types/sisu";
 import type { TeamFieldCatalog } from "../_core/teamFieldOptions";
@@ -122,12 +126,6 @@ function getSingleSearchParam(
   return value ?? "";
 }
 
-function FieldError({ message }: { message?: string }) {
-  return message ? (
-    <p className="mt-1 text-xs font-medium text-[var(--error-color)]">{message}</p>
-  ) : null;
-}
-
 function FieldGroup({ children }: { children: ReactNode }) {
   return (
     <div className="form-field-group">
@@ -164,6 +162,7 @@ export function ClosedFormClient({
     }),
   );
   const [errors, setErrors] = useState<ClosedFieldErrors>({});
+  const [submitAttempted, setSubmitAttempted] = useState(false);
   const [teamFields, setTeamFields] = useState<TeamFieldCatalog>({});
   const [loadingTransaction, setLoadingTransaction] = useState(
     shouldResolveClosedSisuTransactionPrefill(
@@ -327,6 +326,7 @@ export function ClosedFormClient({
     if (!formState.personId) {
       nextErrors.personId = "A FUB person id is required.";
     }
+    setSubmitAttempted(true);
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) {
       return;
@@ -385,7 +385,7 @@ export function ClosedFormClient({
 
   if (submitStatus === "submitting") {
     return (
-      <main className="page-form">
+      <main id="main-content" className="page-form">
         <SectionCard title="Submission Status">
           <div className="space-y-4">
             <Notice tone="warning">
@@ -406,7 +406,7 @@ export function ClosedFormClient({
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
-      <main className="page-form">
+      <main id="main-content" className="page-form">
         <div className="mb-4">
           <FormRouterBackLink
             href={buildRouterHref(formState, searchParams)}
@@ -443,6 +443,7 @@ export function ClosedFormClient({
           </div>
         ) : null}
 
+        <FormValidationSummary errors={errors} show={submitAttempted} />
         <form
           noValidate
           onSubmit={(event) => {
@@ -462,6 +463,7 @@ export function ClosedFormClient({
                     onChange={(event) =>
                       updateField("transactionType", event.target.value)
                     }
+                    error={errors.transactionType}
                   >
                     <option value="">Select transaction type...</option>
                     {transactionTypeOptions.map((option) => (
@@ -470,7 +472,6 @@ export function ClosedFormClient({
                       </option>
                     ))}
                   </FormSelectInput>
-                  <FieldError message={errors.transactionType} />
                 </div>
               </FieldGroup>
 
@@ -478,6 +479,7 @@ export function ClosedFormClient({
                 <div>
                   <TextInput
                     id="addressLine1"
+                      {...fieldA11yProps('addressLine1', errors.addressLine1)}
                     label="Address"
                     value={formState.addressLine1}
                     required
@@ -485,18 +487,19 @@ export function ClosedFormClient({
                       updateField("addressLine1", event.target.value)
                     }
                   />
-                  <FieldError message={errors.addressLine1} />
+                  <FieldError id={`addressLine1-error`} message={errors.addressLine1} />
                 </div>
                 <div className="form-grid-three">
                   <div>
                     <TextInput
                       id="city"
+                      {...fieldA11yProps('city', errors.city)}
                       label="City"
                       value={formState.city}
                       required
                       onChange={(event) => updateField("city", event.target.value)}
                     />
-                    <FieldError message={errors.city} />
+                    <FieldError id={`city-error`} message={errors.city} />
                   </div>
                   <div>
                     <FormSelectInput
@@ -505,6 +508,7 @@ export function ClosedFormClient({
                       value={formState.state}
                       required
                       onChange={(event) => updateField("state", event.target.value)}
+                    error={errors.state}
                     >
                       <option value="">Select state...</option>
                       {usStates.map((state) => (
@@ -513,17 +517,17 @@ export function ClosedFormClient({
                         </option>
                       ))}
                     </FormSelectInput>
-                    <FieldError message={errors.state} />
                   </div>
                   <div>
                     <TextInput
                       id="postal"
+                      {...fieldA11yProps('postal', errors.postal)}
                       label="Zip"
                       value={formState.postal}
                       required
                       onChange={(event) => updateField("postal", event.target.value)}
                     />
-                    <FieldError message={errors.postal} />
+                    <FieldError id={`postal-error`} message={errors.postal} />
                   </div>
                 </div>
               </FieldGroup>
@@ -533,6 +537,7 @@ export function ClosedFormClient({
                   <div>
                     <TextInput
                       id="transactionAmount"
+                      {...fieldA11yProps('transactionAmount', errors.transactionAmount)}
                       label="Transaction Amount"
                       inputMode="decimal"
                       value={formState.transactionAmount}
@@ -547,11 +552,12 @@ export function ClosedFormClient({
                         updateField("transactionAmount", event.target.value)
                       }
                     />
-                    <FieldError message={errors.transactionAmount} />
+                    <FieldError id={`transactionAmount-error`} message={errors.transactionAmount} />
                   </div>
                   <div>
                     <TextInput
                       id="totalCommissionGci"
+                      {...fieldA11yProps('totalCommissionGci', errors.totalCommissionGci)}
                       label="Total Commission GCI"
                       inputMode="decimal"
                       value={formState.totalCommissionGci}
@@ -566,7 +572,7 @@ export function ClosedFormClient({
                         updateField("totalCommissionGci", event.target.value)
                       }
                     />
-                    <FieldError message={errors.totalCommissionGci} />
+                    <FieldError id={`totalCommissionGci-error`} message={errors.totalCommissionGci} />
                   </div>
                 </Row>
                 {showLeaseRentalFields ? (
@@ -575,6 +581,7 @@ export function ClosedFormClient({
                       <div>
                         <TextInput
                           id="securityDeposit"
+                      {...fieldA11yProps('securityDeposit', errors.securityDeposit)}
                           label="Security Deposit"
                           inputMode="decimal"
                           value={formState.securityDeposit}
@@ -589,11 +596,12 @@ export function ClosedFormClient({
                             updateField("securityDeposit", event.target.value)
                           }
                         />
-                        <FieldError message={errors.securityDeposit} />
+                        <FieldError id={`securityDeposit-error`} message={errors.securityDeposit} />
                       </div>
                       <div>
                         <TextInput
                           id="monthlyRent"
+                      {...fieldA11yProps('monthlyRent', errors.monthlyRent)}
                           label="Monthly Rent"
                           inputMode="decimal"
                           value={formState.monthlyRent}
@@ -608,7 +616,7 @@ export function ClosedFormClient({
                             updateField("monthlyRent", event.target.value)
                           }
                         />
-                        <FieldError message={errors.monthlyRent} />
+                        <FieldError id={`monthlyRent-error`} message={errors.monthlyRent} />
                       </div>
                     </Row>
                   </FormExpand>
@@ -624,9 +632,9 @@ export function ClosedFormClient({
                   value={formState.settlementDate}
                   required
                   maxDate={settlementDateMax}
+                  error={errors.settlementDate}
                   onChange={(value) => updateField("settlementDate", value)}
                 />
-                <FieldError message={errors.settlementDate} />
               </div>
               <div>
                 <TextAreaInput

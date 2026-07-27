@@ -12,9 +12,11 @@ import { useState } from "react";
 import { AppTheme } from "./AppTheme";
 import { createEmotionCache } from "./emotionCache";
 import type { Route } from "./+types/root";
+import { SkipToMain } from "./forms/_core/SkipToMain";
 import "@baraagency/components/styles.css";
 import "./globals.css";
 import "./component-transitions.css";
+import "./forms/_core/fieldStates.css";
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -44,6 +46,7 @@ function Document({ children }: { children: ReactNode }) {
         <Links />
       </head>
       <body style={{ margin: 0, padding: 0, fontFamily: "var(--font-family)" }}>
+        <SkipToMain />
         {children}
         <script src="https://eia.followupboss.com/embeddedApps-v1.0.1.js" />
         <ScrollRestoration />

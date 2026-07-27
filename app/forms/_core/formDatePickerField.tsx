@@ -6,6 +6,8 @@ import type { PickerChangeHandlerContext } from "@mui/x-date-pickers/models";
 import { Field } from "@baraagency/components";
 import { formatDatePickerValue } from "./formatUtils";
 import { FORM_DATE_TIMEZONE } from "./formDateValidation";
+import { FieldError } from "./FieldError";
+import { fieldA11yProps } from "./useFieldIds";
 import { useIsMounted } from "./useIsMounted";
 
 const TOUCH_TARGET_PX = 44;
@@ -68,6 +70,12 @@ export const datePickerTextFieldSx = {
     fontSize: "1rem",
     lineHeight: "1.25rem",
     letterSpacing: 0,
+  },
+  "& .MuiPickersSectionList-section[aria-valuetext='Empty']": {
+    color: "var(--placeholder-color)",
+  },
+  "& .MuiPickersSectionList-section[aria-valuetext='Empty'] .MuiPickersSectionList-sectionContent": {
+    color: "var(--placeholder-color)",
   },
   "& .MuiInputAdornment-root": {
     height: "100%",
@@ -383,6 +391,8 @@ export function FormDatePickerField({
   error,
   maxDate,
   onChange,
+  disabled = false,
+  readOnly = false,
 }: {
   id: string;
   label: string;
@@ -391,6 +401,8 @@ export function FormDatePickerField({
   error?: string;
   maxDate?: dayjs.Dayjs;
   onChange: (value: string) => void;
+  disabled?: boolean;
+  readOnly?: boolean;
 }) {
   const isMounted = useIsMounted();
   const [open, setOpen] = useState(false);
@@ -398,6 +410,7 @@ export function FormDatePickerField({
   const displayValue = pickerValue?.isValid()
     ? pickerValue.format("MM/DD/YYYY")
     : "";
+  const a11y = fieldA11yProps(id, error);
 
   return (
     <Field label={label} htmlFor={id} required={required}>
@@ -405,7 +418,13 @@ export function FormDatePickerField({
         <DatePicker
           value={pickerValue}
           open={open}
-          onOpen={() => setOpen(true)}
+          disabled={disabled}
+          readOnly={readOnly}
+          onOpen={() => {
+            if (!disabled && !readOnly) {
+              setOpen(true);
+            }
+          }}
           onClose={() => setOpen(false)}
           onChange={(nextValue, context) => {
             onChange(formatDatePickerValue(nextValue));
@@ -430,10 +449,16 @@ export function FormDatePickerField({
               required,
               fullWidth: true,
               error: Boolean(error),
+              disabled,
               size: "small",
               sx: datePickerTextFieldSx,
-              inputProps: {
-                inputMode: "numeric",
+              slotProps: {
+                htmlInput: {
+                  inputMode: "numeric",
+                  readOnly,
+                  "aria-readonly": readOnly || undefined,
+                  ...a11y,
+                },
               },
             },
             openPickerButton: {
@@ -453,6 +478,8 @@ export function FormDatePickerField({
         <input
           id={id}
           readOnly
+          disabled
+          tabIndex={-1}
           required={required}
           value={displayValue}
           aria-hidden="true"
@@ -471,6 +498,7 @@ export function FormDatePickerField({
           }}
         />
       )}
+      <FieldError id={`${id}-error`} message={error} />
     </Field>
   );
 }

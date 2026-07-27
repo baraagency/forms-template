@@ -1,0 +1,56 @@
+[
+  {
+    "name": "foreground on card",
+    "foreground": "#003a55",
+    "background": "#ffffff",
+    "minimum": 4.5
+  },
+  {
+    "name": "body on card",
+    "foreground": "#4a6b7c",
+    "background": "#ffffff",
+    "minimum": 4.5
+  },
+  {
+    "name": "body on background",
+    "foreground": "#4a6b7c",
+    "background": "#f0f7fa",
+    "minimum": 4.5
+  },
+  {
+    "name": "placeholder on card",
+    "foreground": "#5a7585",
+    "background": "#ffffff",
+    "minimum": 4.5
+  },
+  {
+    "name": "error on card",
+    "foreground": "#404040",
+    "background": "#ffffff",
+    "minimum": 4.5
+  },
+  {
+    "name": "primary CTA text",
+    "foreground": "#ffffff",
+    "background": "#1E1E1E",
+    "minimum": 4.5
+  },
+  {
+    "name": "icon muted on card",
+    "foreground": "#5a7585",
+    "background": "#ffffff",
+    "minimum": 4.5
+  },
+  {
+    "name": "MUI secondary text on card",
+    "foreground": "#4a6b7c",
+    "background": "#ffffff",
+    "minimum": 4.5
+  },
+  {
+    "name": "section title on card (large text)",
+    "foreground": "#003a55",
+    "background": "#ffffff",
+    "minimum": 3
+  }
+]

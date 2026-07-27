@@ -11,6 +11,7 @@ import {
 } from "../_core/formIdentity";
 import { GmailAccountPanel } from "./GmailAndRecipientsPanels";
 import { FormSettingsPanel } from "./FormSettingsPanel";
+import { useRovingTabIndex } from "../_core/useRovingTabIndex";
 import "./settings-tabs.css";
 
 type GmailStatus = {
@@ -38,10 +39,14 @@ export function FormsSettingsClient({
     return new Map(routerForms.map((form) => [form.slug, form]));
   }, [routerForms]);
 
-  const activeKind = slugToFormKind(activeSlug)!;
+  const { getTabProps } = useRovingTabIndex({
+    items: SETTINGS_TAB_SLUGS,
+    selected: activeSlug,
+    onSelect: setActiveSlug,
+  });
 
   return (
-    <main className="page-form">
+    <main id="main-content" className="page-form">
       <title>Form Settings</title>
       <FormRouterBackLink
         href="/forms"
@@ -90,7 +95,7 @@ export function FormsSettingsClient({
                   className={`settings-tabs__tab app-button-press${
                     selected ? " settings-tabs__tab--active" : ""
                   }`}
-                  onClick={() => setActiveSlug(slug)}
+                  {...getTabProps(slug)}
                 >
                   {formKindLabel(kind)}
                 </button>
@@ -106,21 +111,28 @@ export function FormsSettingsClient({
             />
           </div>
 
-          <FormSettingsPanel
-            key={activeSlug}
-            slug={activeSlug}
-            formKind={activeKind}
-            title={formKindLabel(activeKind)}
-            routerForm={routerFormBySlug.get(activeSlug) ?? null}
-            gmailConnected={Boolean(initialGmailStatus?.connected)}
-            onRouterFormChange={(form) => {
-              setRouterForms((current) => {
-                const next = current.filter((row) => row.slug !== form.slug);
-                next.push(form);
-                return next;
-              });
-            }}
-          />
+          {SETTINGS_TAB_SLUGS.map((slug) => {
+            const kind = slugToFormKind(slug)!;
+            const selected = slug === activeSlug;
+            return (
+              <div key={slug} hidden={!selected}>
+                <FormSettingsPanel
+                  slug={slug}
+                  formKind={kind}
+                  title={formKindLabel(kind)}
+                  routerForm={routerFormBySlug.get(slug) ?? null}
+                  gmailConnected={Boolean(initialGmailStatus?.connected)}
+                  onRouterFormChange={(form) => {
+                    setRouterForms((current) => {
+                      const next = current.filter((row) => row.slug !== form.slug);
+                      next.push(form);
+                      return next;
+                    });
+                  }}
+                />
+              </div>
+            );
+          })}
         </SectionCard>
       </div>
     </main>

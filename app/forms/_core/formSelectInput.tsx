@@ -5,24 +5,43 @@ import {
   type SelectChangeEvent,
   type SelectInputProps,
 } from "@baraagency/components";
+import { fieldSelectA11yProps } from "./useFieldIds";
+import { FieldError } from "./FieldError";
 import { useIsMounted } from "./useIsMounted";
 import { useSelectMenuMotion } from "./useSelectMenuMotion";
 
+const SELECT_MIN_HEIGHT = "44px";
+
 const selectStyles = {
-  control: (base: Record<string, unknown>, state: { isFocused: boolean }) => ({
+  control: (
+    base: Record<string, unknown>,
+    state: { isFocused: boolean; isDisabled: boolean },
+    hasError: boolean,
+  ) => ({
     ...base,
     marginTop: "0.5rem",
-    minHeight: "42px",
+    minHeight: SELECT_MIN_HEIGHT,
     borderRadius: "var(--btn-radius)",
-    borderColor: state.isFocused ? "var(--brand-sky)" : "var(--divider-color)",
-    backgroundColor: "var(--card-bg)",
-    boxShadow: state.isFocused
-      ? "var(--field-shadow), 0 0 0 4px var(--field-focus-ring)"
-      : "var(--field-shadow)",
+    borderColor: hasError
+      ? "var(--error-color)"
+      : state.isFocused
+        ? "var(--brand-sky)"
+        : "var(--divider-color)",
+    backgroundColor: state.isDisabled ? "var(--disabled-bg)" : "var(--card-bg)",
+    boxShadow: hasError
+      ? "var(--field-shadow), 0 0 0 4px color-mix(in srgb, var(--error-color) 22%, transparent)"
+      : state.isFocused
+        ? "var(--field-shadow), 0 0 0 4px var(--field-focus-ring)"
+        : "var(--field-shadow)",
     transition:
       "border-color var(--duration-quick, 150ms) var(--ease-smooth-out, ease), box-shadow var(--duration-quick, 150ms) var(--ease-smooth-out, ease), background-color var(--duration-quick, 150ms) var(--ease-smooth-out, ease)",
+    cursor: state.isDisabled ? "not-allowed" : "default",
     "&:hover": {
-      borderColor: state.isFocused ? "var(--brand-sky)" : "var(--field-hover-border)",
+      borderColor: hasError
+        ? "var(--error-color)"
+        : state.isFocused
+          ? "var(--brand-sky)"
+          : "var(--field-hover-border)",
     },
   }),
   valueContainer: (base: Record<string, unknown>) => ({
@@ -87,6 +106,15 @@ const selectStyles = {
   }),
 };
 
+export type FormSelectInputProps = SelectInputProps & {
+  error?: string;
+  isLoading?: boolean;
+};
+
+function joinClassNames(...parts: Array<string | undefined | false>): string {
+  return parts.filter(Boolean).join(" ");
+}
+
 /**
  * Select field with viewport-aware menu placement and open/close motion.
  */
@@ -101,8 +129,10 @@ export function FormSelectInput({
   onChange,
   onSearchInputChange,
   children,
+  error,
+  isLoading = false,
   ...props
-}: SelectInputProps) {
+}: FormSelectInputProps) {
   const isMounted = useIsMounted();
   const { menuIsOpen, isClosing, onMenuOpen, onMenuClose } =
     useSelectMenuMotion();
@@ -114,8 +144,9 @@ export function FormSelectInput({
         label: value,
       })
     : null;
-  const isDisabled = Boolean(props.disabled);
+  const isDisabled = Boolean(props.disabled) || isLoading;
   const menuPortalTarget = isMounted ? document.body : undefined;
+  const a11y = fieldSelectA11yProps(id, error);
 
   return (
     <div className={wrapperClassName}>
@@ -124,7 +155,7 @@ export function FormSelectInput({
           <Select
             inputId={id}
             instanceId={id}
-            name={props.name}
+            name={props.name ?? id}
             value={selectedOption}
             onChange={(nextValue) => {
               onChange?.({
@@ -142,15 +173,40 @@ export function FormSelectInput({
             options={options}
             placeholder={placeholderText}
             isDisabled={isDisabled}
+            isLoading={isLoading}
             isClearable={!required}
             isSearchable={true}
-            styles={selectStyles}
-            className={className}
+            styles={{
+              control: (base, state) =>
+                selectStyles.control(base, state, Boolean(error)),
+              valueContainer: selectStyles.valueContainer,
+              placeholder: selectStyles.placeholder,
+              singleValue: selectStyles.singleValue,
+              input: selectStyles.input,
+              menu: selectStyles.menu,
+              menuPortal: selectStyles.menuPortal,
+              option: selectStyles.option,
+              indicatorSeparator: selectStyles.indicatorSeparator,
+              dropdownIndicator: selectStyles.dropdownIndicator,
+            }}
+            className={joinClassNames(
+              className,
+              error && "bara-select--error",
+              isLoading && "bara-select--loading",
+            )}
             classNamePrefix="bara-select"
             classNames={{
+              control: () =>
+                joinClassNames(
+                  error && "bara-select__control--error",
+                  isLoading && "bara-select--loading",
+                ),
               menu: () =>
                 isClosing ? "bara-select__menu--closing" : "",
             }}
+            aria-invalid={a11y["aria-invalid"]}
+            aria-errormessage={a11y["aria-errormessage"]}
+            aria-busy={isLoading || undefined}
             menuIsOpen={menuIsOpen}
             onMenuOpen={onMenuOpen}
             onMenuClose={onMenuClose}
@@ -165,7 +221,7 @@ export function FormSelectInput({
             aria-hidden="true"
             style={{
               marginTop: "0.5rem",
-              minHeight: "42px",
+              minHeight: SELECT_MIN_HEIGHT,
               borderRadius: "var(--btn-radius)",
               border: "1px solid var(--divider-color)",
               backgroundColor: "var(--card-bg)",
@@ -183,11 +239,13 @@ export function FormSelectInput({
         <input
           tabIndex={-1}
           aria-hidden="true"
+          name={props.name ?? id}
           value={value}
           readOnly
           required={required && !isDisabled}
           className="bara-sr-only"
         />
+        <FieldError id={`${id}-error`} message={error} />
       </Field>
     </div>
   );

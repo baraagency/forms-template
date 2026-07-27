@@ -1,6 +1,8 @@
 import { Field, baseInputClassName } from "@baraagency/components";
 import type { InputHTMLAttributes } from "react";
 import { EmailIcon, PhoneIcon } from "./communicationIcons";
+import { FieldError } from "./FieldError";
+import { fieldA11yProps } from "./useFieldIds";
 
 type CommunicationKind = "email" | "phone";
 
@@ -9,6 +11,7 @@ export type CommunicationTextInputProps = InputHTMLAttributes<HTMLInputElement> 
   id: string;
   hint?: string;
   wrapperClassName?: string;
+  error?: string;
   /** Defaults from `type`: tel → phone, email → email. */
   communicationKind?: CommunicationKind;
 };
@@ -43,11 +46,15 @@ export function CommunicationTextInput({
   type,
   communicationKind,
   placeholder,
+  error,
+  disabled,
+  readOnly,
   ...props
 }: CommunicationTextInputProps) {
   const kind = resolveCommunicationKind(type, communicationKind);
   const Icon = kind === "phone" ? PhoneIcon : EmailIcon;
   const placeholderText = placeholder ?? label;
+  const a11y = fieldA11yProps(id, error);
 
   return (
     <div className={wrapperClassName}>
@@ -61,14 +68,20 @@ export function CommunicationTextInput({
             type={type}
             required={required}
             placeholder={placeholderText}
+            disabled={disabled}
+            readOnly={readOnly}
+            aria-readonly={readOnly || undefined}
             className={joinClassNames(
               baseInputClassName,
               "communication-input__control",
+              error && "bara-input--error",
               className,
             )}
             {...props}
+            {...a11y}
           />
         </div>
+        <FieldError id={`${id}-error`} message={error} />
       </Field>
     </div>
   );

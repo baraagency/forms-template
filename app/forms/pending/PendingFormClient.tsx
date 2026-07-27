@@ -13,6 +13,10 @@ import {
   secondaryButtonClassName,
 } from "@baraagency/components";
 import { PrimaryButton } from "../_core/PrimaryButton";
+import { FieldError } from "../_core/FieldError";
+import { FormValidationSummary } from "../_core/FormValidationSummary";
+import { fieldA11yProps } from "../_core/useFieldIds";
+
 import { CommunicationTextInput } from "../_core/CommunicationTextInput";
 import { FormSelectInput } from "../_core/formSelectInput";
 import type { FUBPerson } from "@/app/types/fub";
@@ -162,12 +166,6 @@ function getSingleSearchParam(
   return value ?? "";
 }
 
-function FieldError({ message }: { message?: string }) {
-  return message ? (
-    <p className="mt-1 text-xs font-medium text-[var(--error-color)]">{message}</p>
-  ) : null;
-}
-
 function FieldGroup({
   title,
   children,
@@ -205,17 +203,14 @@ function MuiDateField({
   onChange: (value: string) => void;
 }) {
   return (
-    <div>
-      <FormDatePickerField
-        id={id}
-        label={label}
-        value={value}
-        required={required}
-        error={error}
-        onChange={onChange}
-      />
-      <FieldError message={error} />
-    </div>
+    <FormDatePickerField
+      id={id}
+      label={label}
+      value={value}
+      required={required}
+      error={error}
+      onChange={onChange}
+    />
   );
 }
 
@@ -258,6 +253,7 @@ export function PendingFormClient({
     );
   });
   const [errors, setErrors] = useState<PendingFieldErrors>({});
+  const [submitAttempted, setSubmitAttempted] = useState(false);
   const [teamFields, setTeamFields] = useState<TeamFieldCatalog>({});
   const [mortgageVendors, setMortgageVendors] = useState<SelectOption[]>([]);
   const [loadingLead, setLoadingLead] = useState(Boolean(formState.personId));
@@ -485,6 +481,7 @@ export function PendingFormClient({
 
   const handleSubmit = useCallback(async () => {
     const nextErrors = validatePendingForm(formState);
+    setSubmitAttempted(true);
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) return;
 
@@ -547,7 +544,7 @@ export function PendingFormClient({
     submitStatus === "complete"
   ) {
     return (
-      <main className="page-form">
+      <main id="main-content" className="page-form">
         <SectionCard title="Submission Status">
           <div className="space-y-4">
             {submitStatus === "submitting" ? (
@@ -582,7 +579,7 @@ export function PendingFormClient({
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
-      <main className="page-form">
+      <main id="main-content" className="page-form">
         <div className="mb-4">
           <FormRouterBackLink
             href={buildRouterHref(formState, searchParams)}
@@ -620,7 +617,9 @@ export function PendingFormClient({
           </div>
         ) : null}
 
+        <FormValidationSummary errors={errors} show={submitAttempted} />
         <form
+          noValidate
           onSubmit={(event) => {
             event.preventDefault();
             void handleSubmit();
@@ -633,6 +632,7 @@ export function PendingFormClient({
                   <div>
                     <TextInput
                       id="clientFirstName"
+                      {...fieldA11yProps('clientFirstName', errors.clientFirstName)}
                       label="Client First Name"
                       value={formState.clientFirstName}
                       required
@@ -640,11 +640,12 @@ export function PendingFormClient({
                         updateField("clientFirstName", event.target.value)
                       }
                     />
-                    <FieldError message={errors.clientFirstName} />
+                    <FieldError id={`clientFirstName-error`} message={errors.clientFirstName} />
                   </div>
                   <div>
                     <TextInput
                       id="clientLastName"
+                      {...fieldA11yProps('clientLastName', errors.clientLastName)}
                       label="Client Last Name"
                       value={formState.clientLastName}
                       required
@@ -652,7 +653,7 @@ export function PendingFormClient({
                         updateField("clientLastName", event.target.value)
                       }
                     />
-                    <FieldError message={errors.clientLastName} />
+                    <FieldError id={`clientLastName-error`} message={errors.clientLastName} />
                   </div>
                 </Row>
                 <Row>
@@ -672,8 +673,8 @@ export function PendingFormClient({
                       onChange={(event) =>
                         updateField("clientPhone", event.target.value)
                       }
+                    error={errors.clientPhone}
                     />
-                    <FieldError message={errors.clientPhone} />
                   </div>
                   <div>
                     <CommunicationTextInput
@@ -685,8 +686,8 @@ export function PendingFormClient({
                       onChange={(event) =>
                         updateField("clientEmail", event.target.value)
                       }
+                    error={errors.clientEmail}
                     />
-                    <FieldError message={errors.clientEmail} />
                   </div>
                 </Row>
                 <div>
@@ -698,6 +699,7 @@ export function PendingFormClient({
                     onChange={(event) =>
                       updateField("hasSecondaryClient", event.target.value)
                     }
+                    error={errors.hasSecondaryClient}
                   >
                     <option value="">Select...</option>
                     {hasSecondaryClientOptions.map((option) => (
@@ -706,13 +708,13 @@ export function PendingFormClient({
                       </option>
                     ))}
                   </FormSelectInput>
-                  <FieldError message={errors.hasSecondaryClient} />
                 </div>
                 {isYesSelection(formState.hasSecondaryClient) ? (
                   <FormExpand className="space-y-4 border-l-[var(--indent-border-width)] border-l-[var(--indent-border-color)] pl-[var(--indent-padding-left)]">
                     <div>
                       <TextInput
                         id="secondaryContact"
+                      {...fieldA11yProps('secondaryContact', errors.secondaryContact)}
                         label="Secondary Client Name"
                         value={formState.secondaryContact}
                         required
@@ -720,7 +722,7 @@ export function PendingFormClient({
                           updateField("secondaryContact", event.target.value)
                         }
                       />
-                      <FieldError message={errors.secondaryContact} />
+                      <FieldError id={`secondaryContact-error`} message={errors.secondaryContact} />
                     </div>
                     <Row>
                       <div>
@@ -744,8 +746,8 @@ export function PendingFormClient({
                               event.target.value,
                             )
                           }
+                    error={errors.secondaryContactPhone}
                         />
-                        <FieldError message={errors.secondaryContactPhone} />
                       </div>
                       <div>
                         <CommunicationTextInput
@@ -760,8 +762,8 @@ export function PendingFormClient({
                               event.target.value,
                             )
                           }
+                    error={errors.secondaryContactEmail}
                         />
-                        <FieldError message={errors.secondaryContactEmail} />
                       </div>
                     </Row>
                   </FormExpand>
@@ -784,6 +786,7 @@ export function PendingFormClient({
                       onChange={(event) =>
                         updateField("clientType", event.target.value)
                       }
+                    error={errors.clientType}
                     >
                       <option value="">Select type...</option>
                       {clientTypeOptions.map((option) => (
@@ -792,11 +795,11 @@ export function PendingFormClient({
                         </option>
                       ))}
                     </FormSelectInput>
-                    <FieldError message={errors.clientType} />
                   </div>
                   <div>
                     <TextInput
                       id="transactionAmount"
+                      {...fieldA11yProps('transactionAmount', errors.transactionAmount)}
                       label="Transaction Amount"
                       inputMode="decimal"
                       value={formState.transactionAmount}
@@ -811,7 +814,7 @@ export function PendingFormClient({
                         updateField("transactionAmount", event.target.value)
                       }
                     />
-                    <FieldError message={errors.transactionAmount} />
+                    <FieldError id={`transactionAmount-error`} message={errors.transactionAmount} />
                   </div>
                 </Row>
               </FieldGroup>
@@ -820,6 +823,7 @@ export function PendingFormClient({
                   <div>
                     <TextInput
                       id="addressLine1"
+                      {...fieldA11yProps('addressLine1', errors.addressLine1)}
                       label="Street Address"
                       value={formState.addressLine1}
                       required
@@ -827,10 +831,11 @@ export function PendingFormClient({
                         updateField("addressLine1", event.target.value)
                       }
                     />
-                    <FieldError message={errors.addressLine1} />
+                    <FieldError id={`addressLine1-error`} message={errors.addressLine1} />
                   </div>
                   <TextInput
                     id="addressLine2"
+                      {...fieldA11yProps('addressLine2', errors.addressLine2)}
                     label="Address Line 2"
                     value={formState.addressLine2}
                     onChange={(event) =>
@@ -842,12 +847,13 @@ export function PendingFormClient({
                   <div>
                     <TextInput
                       id="city"
+                      {...fieldA11yProps('city', errors.city)}
                       label="City"
                       value={formState.city}
                       required
                       onChange={(event) => updateField("city", event.target.value)}
                     />
-                    <FieldError message={errors.city} />
+                    <FieldError id={`city-error`} message={errors.city} />
                   </div>
                   <div>
                     <FormSelectInput
@@ -858,6 +864,7 @@ export function PendingFormClient({
                       onChange={(event) =>
                         updateField("state", event.target.value)
                       }
+                    error={errors.state}
                     >
                       <option value="">Select state...</option>
                       {usStates.map((state) => (
@@ -866,11 +873,11 @@ export function PendingFormClient({
                         </option>
                       ))}
                     </FormSelectInput>
-                    <FieldError message={errors.state} />
                   </div>
                   <div>
                     <TextInput
                       id="postal"
+                      {...fieldA11yProps('postal', errors.postal)}
                       label="Postal Code"
                       value={formState.postal}
                       required
@@ -878,7 +885,7 @@ export function PendingFormClient({
                         updateField("postal", event.target.value)
                       }
                     />
-                    <FieldError message={errors.postal} />
+                    <FieldError id={`postal-error`} message={errors.postal} />
                   </div>
                 </div>
               </FieldGroup>
@@ -895,6 +902,7 @@ export function PendingFormClient({
                     onChange={(event) =>
                       updateField("financingType", event.target.value)
                     }
+                    error={errors.financingType}
                   >
                     <option value="">Select financing...</option>
                     {financingOptions.map((option) => (
@@ -903,7 +911,6 @@ export function PendingFormClient({
                       </option>
                     ))}
                   </FormSelectInput>
-                  <FieldError message={errors.financingType} />
                 </div>
                 <div>
                   <FormSelectInput
@@ -914,6 +921,7 @@ export function PendingFormClient({
                     onChange={(event) =>
                       updateField("mortgageCompany", event.target.value)
                     }
+                    error={errors.mortgageCompany}
                   >
                     <option value="">Select mortgage company...</option>
                     {mortgageCompanyOptions.map((option) => (
@@ -922,7 +930,6 @@ export function PendingFormClient({
                       </option>
                     ))}
                   </FormSelectInput>
-                  <FieldError message={errors.mortgageCompany} />
                 </div>
               </Row>
               {showMortgageCompanyOther ? (
@@ -930,6 +937,7 @@ export function PendingFormClient({
                   <div>
                     <TextInput
                       id="mortgageCompanyName"
+                      {...fieldA11yProps('mortgageCompanyName', errors.mortgageCompanyName)}
                       label="Mortgage Company Name"
                       value={formState.mortgageCompanyName}
                       required
@@ -937,11 +945,12 @@ export function PendingFormClient({
                         updateField("mortgageCompanyName", event.target.value)
                       }
                     />
-                    <FieldError message={errors.mortgageCompanyName} />
+                    <FieldError id={`mortgageCompanyName-error`} message={errors.mortgageCompanyName} />
                   </div>
                   <Row>
                     <TextInput
                       id="loanOfficerName"
+                      {...fieldA11yProps('loanOfficerName', errors.loanOfficerName)}
                       label="Loan Officer Name"
                       value={formState.loanOfficerName}
                       onChange={(event) =>
@@ -957,8 +966,8 @@ export function PendingFormClient({
                         onChange={(event) =>
                           updateField("loanOfficerEmail", event.target.value)
                         }
+                    error={errors.loanOfficerEmail}
                       />
-                      <FieldError message={errors.loanOfficerEmail} />
                     </div>
                   </Row>
                 </FormExpand>
@@ -995,6 +1004,7 @@ export function PendingFormClient({
                       onChange={(event) =>
                         updateField("outsideReferral", event.target.value)
                       }
+                    error={errors.outsideReferral}
                     >
                       <option value="">Select...</option>
                       {outsideReferralOptions.map((option) => (
@@ -1003,7 +1013,6 @@ export function PendingFormClient({
                         </option>
                       ))}
                     </FormSelectInput>
-                    <FieldError message={errors.outsideReferral} />
                   </div>
                   <div aria-hidden className="form-hidden-placeholder" />
                 </Row>
@@ -1013,6 +1022,7 @@ export function PendingFormClient({
                       <div>
                         <TextInput
                           id="referralPercent"
+                      {...fieldA11yProps('referralPercent', errors.referralPercent)}
                           label="Referral Percent"
                           inputMode="decimal"
                           value={formState.referralPercent}
@@ -1029,11 +1039,12 @@ export function PendingFormClient({
                             )
                           }
                         />
-                        <FieldError message={errors.referralPercent} />
+                        <FieldError id={`referralPercent-error`} message={errors.referralPercent} />
                       </div>
                       <div>
                         <TextInput
                           id="referralAmount"
+                      {...fieldA11yProps('referralAmount', errors.referralAmount)}
                           label="Referral Amount"
                           inputMode="decimal"
                           value={formState.referralAmount}
@@ -1047,19 +1058,20 @@ export function PendingFormClient({
                             updateField("referralAmount", event.target.value)
                           }
                         />
-                        <FieldError message={errors.referralAmount} />
+                        <FieldError id={`referralAmount-error`} message={errors.referralAmount} />
                       </div>
                     </Row>
                     <div>
                       <TextInput
                         id="referralMailingAddress"
+                      {...fieldA11yProps('referralMailingAddress', errors.referralMailingAddress)}
                         label="Referral Mailing Address"
                         value={formState.referralMailingAddress}
                         onChange={(event) =>
                           updateField("referralMailingAddress", event.target.value)
                         }
                       />
-                      <FieldError message={errors.referralMailingAddress} />
+                      <FieldError id={`referralMailingAddress-error`} message={errors.referralMailingAddress} />
                     </div>
                   </FormExpand>
                 ) : null}
@@ -1070,6 +1082,7 @@ export function PendingFormClient({
                   <div>
                     <TextInput
                       id="otherAgentName"
+                      {...fieldA11yProps('otherAgentName', errors.otherAgentName)}
                       label="Coop Agent Name"
                       value={formState.otherAgentName}
                       required
@@ -1077,7 +1090,7 @@ export function PendingFormClient({
                         updateField("otherAgentName", event.target.value)
                       }
                     />
-                    <FieldError message={errors.otherAgentName} />
+                    <FieldError id={`otherAgentName-error`} message={errors.otherAgentName} />
                   </div>
                   <div>
                     <CommunicationTextInput
@@ -1094,8 +1107,8 @@ export function PendingFormClient({
                       onChange={(event) =>
                         updateField("otherAgentPhone", event.target.value)
                       }
+                    error={errors.otherAgentPhone}
                     />
-                    <FieldError message={errors.otherAgentPhone} />
                   </div>
                 </Row>
                 <Row>
@@ -1109,11 +1122,12 @@ export function PendingFormClient({
                       onChange={(event) =>
                         updateField("otherAgentEmail", event.target.value)
                       }
+                    error={errors.otherAgentEmail}
                     />
-                    <FieldError message={errors.otherAgentEmail} />
                   </div>
                   <TextInput
                     id="otherAgentCompany"
+                      {...fieldA11yProps('otherAgentCompany', errors.otherAgentCompany)}
                     label="Coop Agent Company"
                     value={formState.otherAgentCompany}
                     onChange={(event) =>
@@ -1134,6 +1148,7 @@ export function PendingFormClient({
                         onChange={(event) =>
                           updateField("dueDiligencePeriod", event.target.value)
                         }
+                    error={errors.dueDiligencePeriod}
                       >
                         <option value="">Select...</option>
                         {dueDiligencePeriodOptions.map((option) => (
@@ -1166,6 +1181,7 @@ export function PendingFormClient({
                       onChange={(event) =>
                         updateField("contingencies", event.target.value)
                       }
+                    error={errors.contingencies}
                     >
                       <option value="">Select...</option>
                       {contingenciesOptions.map((option) => (
@@ -1177,6 +1193,7 @@ export function PendingFormClient({
                     <div>
                       <TextInput
                         id="sellerCompensationPercent"
+                      {...fieldA11yProps('sellerCompensationPercent', errors.sellerCompensationPercent)}
                         label="Seller Compensation to Buyer Broker (%)"
                         inputMode="decimal"
                         value={formState.sellerCompensationPercent}
@@ -1193,7 +1210,7 @@ export function PendingFormClient({
                           )
                         }
                       />
-                      <FieldError message={errors.sellerCompensationPercent} />
+                      <FieldError id={`sellerCompensationPercent-error`} message={errors.sellerCompensationPercent} />
                     </div>
                   </Row>
                   {isYesSelection(formState.contingencies) ? (
@@ -1203,11 +1220,12 @@ export function PendingFormClient({
                         label="Contingencies"
                         value={formState.contingencyDetails}
                         required
+                        {...fieldA11yProps("contingencyDetails", errors.contingencyDetails)}
                         onChange={(event) =>
                           updateField("contingencyDetails", event.target.value)
                         }
                       />
-                      <FieldError message={errors.contingencyDetails} />
+                      <FieldError id={`contingencyDetails-error`} message={errors.contingencyDetails} />
                     </div>
                   ) : null}
                 </FieldGroup>

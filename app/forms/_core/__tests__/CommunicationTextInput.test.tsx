@@ -51,4 +51,22 @@ describe("CommunicationTextInput", () => {
 
     expect(html).toContain("M22 16.92");
   });
+
+  test("exposes error state for screen readers", () => {
+    const html = renderToStaticMarkup(
+      <CommunicationTextInput
+        id="clientEmail"
+        label="Client Email"
+        type="email"
+        value=""
+        error="Invalid email"
+      />,
+    );
+
+    expect(html).toContain('aria-invalid="true"');
+    expect(html).toContain('aria-describedby="clientEmail-error"');
+    expect(html).toContain('id="clientEmail-error"');
+    expect(html).toContain("Invalid email");
+    expect(html).toContain("bara-input--error");
+  });
 });

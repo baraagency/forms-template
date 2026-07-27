@@ -65,7 +65,35 @@ Do not mix in dramatic multi-layer card shadows or pure white cards on tinted gr
 
 ## Hit areas
 
-Interactive controls (pagination, toggles, icon buttons) ≥ **40×40px**.
+Interactive controls (pagination, toggles, icon buttons) ≥ **44×44px** on coarse pointers (`pointer: coarse`); **40×40px** minimum on fine pointers.
+
+## Breakpoints
+
+Central tokens in `app/globals.css`:
+
+| Token | Value | Usage |
+| --- | --- | --- |
+| `--bp-sm` | `640px` | Phone landscape, stacked settings actions |
+| `--bp-md` | `768px` | Page padding tighten |
+| `--bp-lg` | `900px` | Mapping tables → card layout |
+| `--bp-form-cols` | `700px` | 2-col form rows (container query) |
+
+## Contrast (WCAG 2.1 AA)
+
+Verified pairs — run `bun run test:a11y:contrast` after token changes.
+
+| Foreground token | Background | Minimum | Notes |
+| --- | --- | --- | --- |
+| `--foreground` / `--label-color` | `--card-bg` | 4.5:1 | Primary labels |
+| `--body-color` | `--card-bg` / `--background` | 4.5:1 | Body copy (`#4a6b7c`) |
+| `--placeholder-color` | `--card-bg` | 4.5:1 | Input placeholders (`#5a7585`) |
+| `--error-color` | `--card-bg` | 4.5:1 | Field errors |
+| `--btn-primary-color` | `--btn-primary-bg` | 4.5:1 | Primary CTAs |
+| `--icon-muted` | `--card-bg` | 4.5:1 | Decorative-adjacent icons |
+| Section titles (18pt+) | `--card-bg` | 3:1 | Large text |
+| `--field-focus-ring` | `--card-bg` | 3:1 | Focus indicator vs adjacent |
+
+Prefer darkening `color-mix` tokens over changing brand hues when a pair fails.
 
 ---
 

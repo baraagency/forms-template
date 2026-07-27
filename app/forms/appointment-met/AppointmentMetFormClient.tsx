@@ -12,6 +12,10 @@ import {
   secondaryButtonClassName,
 } from "@baraagency/components";
 import { PrimaryButton } from "../_core/PrimaryButton";
+import { FieldError } from "../_core/FieldError";
+import { FormValidationSummary } from "../_core/FormValidationSummary";
+import { fieldA11yProps } from "../_core/useFieldIds";
+
 import { CommunicationTextInput } from "../_core/CommunicationTextInput";
 import { FormSelectInput } from "../_core/formSelectInput";
 import type { FUBPerson } from "@/app/types/fub";
@@ -79,12 +83,6 @@ function getSingleSearchParam(
   return value ?? "";
 }
 
-function FieldError({ message }: { message?: string }) {
-  return message ? (
-    <p className="mt-1 text-xs font-medium text-[var(--error-color)]">{message}</p>
-  ) : null;
-}
-
 function toSelectOptions(values: readonly string[]): SelectOption[] {
   return values.map((value) => ({ value, label: value }));
 }
@@ -137,6 +135,7 @@ export function AppointmentMetFormClient({
     ),
   );
   const [errors, setErrors] = useState<AppointmentMetFieldErrors>({});
+  const [submitAttempted, setSubmitAttempted] = useState(false);
   const [loadingLead, setLoadingLead] = useState(Boolean(formState.personId));
   const [loadingTransaction, setLoadingTransaction] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -304,6 +303,7 @@ export function AppointmentMetFormClient({
     if (!formState.personId) {
       nextErrors.personId = "A FUB person id is required.";
     }
+    setSubmitAttempted(true);
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) {
       return;
@@ -360,7 +360,7 @@ export function AppointmentMetFormClient({
 
   if (submitStatus === "submitting" || submitStatus === "complete") {
     return (
-      <main className="page-form">
+      <main id="main-content" className="page-form">
         <SectionCard title="Submission Status">
           <div className="space-y-4">
             {submitStatus === "submitting" ? (
@@ -395,7 +395,7 @@ export function AppointmentMetFormClient({
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
-      <main className="page-form">
+      <main id="main-content" className="page-form">
         <div className="mb-4">
           <FormRouterBackLink
             href={buildRouterHref(formState, searchParams)}
@@ -432,7 +432,9 @@ export function AppointmentMetFormClient({
           </div>
         ) : null}
 
+        <FormValidationSummary errors={errors} show={submitAttempted} />
         <form
+          noValidate
           onSubmit={(event) => {
             event.preventDefault();
             void handleSubmit();
@@ -444,6 +446,7 @@ export function AppointmentMetFormClient({
                 <div>
                   <TextInput
                     id="clientFirstName"
+                      {...fieldA11yProps('clientFirstName', errors.clientFirstName)}
                     label="Client First Name"
                     value={formState.clientFirstName}
                     required
@@ -451,11 +454,12 @@ export function AppointmentMetFormClient({
                       updateField("clientFirstName", event.target.value)
                     }
                   />
-                  <FieldError message={errors.clientFirstName} />
+                  <FieldError id={`clientFirstName-error`} message={errors.clientFirstName} />
                 </div>
                 <div>
                   <TextInput
                     id="clientLastName"
+                      {...fieldA11yProps('clientLastName', errors.clientLastName)}
                     label="Client Last Name"
                     value={formState.clientLastName}
                     required
@@ -463,7 +467,7 @@ export function AppointmentMetFormClient({
                       updateField("clientLastName", event.target.value)
                     }
                   />
-                  <FieldError message={errors.clientLastName} />
+                  <FieldError id={`clientLastName-error`} message={errors.clientLastName} />
                 </div>
               </Row>
               <Row>
@@ -483,8 +487,8 @@ export function AppointmentMetFormClient({
                     onChange={(event) =>
                       updateField("clientPhone", event.target.value)
                     }
+                    error={errors.clientPhone}
                   />
-                  <FieldError message={errors.clientPhone} />
                 </div>
                 <div>
                   <CommunicationTextInput
@@ -496,8 +500,8 @@ export function AppointmentMetFormClient({
                     onChange={(event) =>
                       updateField("clientEmail", event.target.value)
                     }
+                    error={errors.clientEmail}
                   />
-                  <FieldError message={errors.clientEmail} />
                 </div>
               </Row>
               <div>
@@ -507,6 +511,7 @@ export function AppointmentMetFormClient({
                   value={formState.leadType}
                   required
                   onChange={(event) => updateField("leadType", event.target.value)}
+                    error={errors.leadType}
                 >
                   <option value="">Select lead type...</option>
                   {toSelectOptions(LEAD_TYPE_OPTIONS).map((option) => (
@@ -515,7 +520,6 @@ export function AppointmentMetFormClient({
                     </option>
                   ))}
                 </FormSelectInput>
-                <FieldError message={errors.leadType} />
               </div>
             </SectionCard>
 
@@ -529,6 +533,7 @@ export function AppointmentMetFormClient({
                   onChange={(event) =>
                     updateField("apptDisposition", event.target.value)
                   }
+                    error={errors.apptDisposition}
                 >
                   <option value="">Select disposition...</option>
                   {toSelectOptions(APPT_DISPOSITION_OPTIONS).map((option) => (
@@ -537,7 +542,6 @@ export function AppointmentMetFormClient({
                     </option>
                   ))}
                 </FormSelectInput>
-                <FieldError message={errors.apptDisposition} />
               </div>
 
               {showMetFields ? (
@@ -550,9 +554,9 @@ export function AppointmentMetFormClient({
                         value={formState.appointmentMetDate}
                         required
                         maxDate={appointmentMetDateMax}
+                        error={errors.appointmentMetDate}
                         onChange={(value) => updateField("appointmentMetDate", value)}
                       />
-                      <FieldError message={errors.appointmentMetDate} />
                     </div>
                     <div>
                       <FormSelectInput
@@ -563,6 +567,7 @@ export function AppointmentMetFormClient({
                         onChange={(event) =>
                           updateField("apptOutcome", event.target.value)
                         }
+                    error={errors.apptOutcome}
                       >
                         <option value="">Select outcome...</option>
                         {toSelectOptions(APPT_OUTCOME_OPTIONS).map((option) => (
@@ -571,7 +576,6 @@ export function AppointmentMetFormClient({
                           </option>
                         ))}
                       </FormSelectInput>
-                      <FieldError message={errors.apptOutcome} />
                     </div>
                   </Row>
                   <Row>
@@ -584,6 +588,7 @@ export function AppointmentMetFormClient({
                         onChange={(event) =>
                           updateField("nextStep", event.target.value)
                         }
+                    error={errors.nextStep}
                       >
                         <option value="">Select next step...</option>
                         {toSelectOptions(MET_NEXT_STEP_OPTIONS).map((option) => (
@@ -592,7 +597,6 @@ export function AppointmentMetFormClient({
                           </option>
                         ))}
                       </FormSelectInput>
-                      <FieldError message={errors.nextStep} />
                     </div>
                     <div>
                       <TextAreaInput
@@ -601,7 +605,6 @@ export function AppointmentMetFormClient({
                         value={formState.notes}
                         onChange={(event) => updateField("notes", event.target.value)}
                       />
-                      <FieldError message={errors.notes} />
                     </div>
                   </Row>
                 </FormExpand>
@@ -618,6 +621,7 @@ export function AppointmentMetFormClient({
                       onChange={(event) =>
                         updateField("cancelledNextStep", event.target.value)
                       }
+                    error={errors.cancelledNextStep}
                     >
                       <option value="">Select next step...</option>
                       {toSelectOptions(CANCELLED_NEXT_STEP_OPTIONS).map(
@@ -628,7 +632,6 @@ export function AppointmentMetFormClient({
                         ),
                       )}
                     </FormSelectInput>
-                    <FieldError message={errors.cancelledNextStep} />
                   </div>
                   {showFollowUpNotes ? (
                     <FormExpand>
@@ -637,11 +640,12 @@ export function AppointmentMetFormClient({
                         label="Follow Up Notes"
                         value={formState.followUpNotes}
                         required
+                        {...fieldA11yProps("followUpNotes", errors.followUpNotes)}
                         onChange={(event) =>
                           updateField("followUpNotes", event.target.value)
                         }
                       />
-                      <FieldError message={errors.followUpNotes} />
+                      <FieldError id={`followUpNotes-error`} message={errors.followUpNotes} />
                     </FormExpand>
                   ) : null}
                 </FormExpand>
@@ -656,9 +660,9 @@ export function AppointmentMetFormClient({
                         label="Rescheduled Date"
                         value={formState.rescheduledDate}
                         required
+                        error={errors.rescheduledDate}
                         onChange={(value) => updateField("rescheduledDate", value)}
                       />
-                      <FieldError message={errors.rescheduledDate} />
                     </div>
                     <Row>
                       <div>
@@ -667,11 +671,11 @@ export function AppointmentMetFormClient({
                           label="Rescheduled Start Time"
                           value={formState.rescheduledStartTime}
                           required
+                          error={errors.rescheduledStartTime}
                           onChange={(value) =>
                             updateField("rescheduledStartTime", value)
                           }
                         />
-                        <FieldError message={errors.rescheduledStartTime} />
                       </div>
                       <div>
                         <FormTimePickerField
@@ -679,11 +683,11 @@ export function AppointmentMetFormClient({
                           label="Rescheduled End Time"
                           value={formState.rescheduledEndTime}
                           required
+                          error={errors.rescheduledEndTime}
                           onChange={(value) =>
                             updateField("rescheduledEndTime", value)
                           }
                         />
-                        <FieldError message={errors.rescheduledEndTime} />
                       </div>
                     </Row>
                   </Row>

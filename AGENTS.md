@@ -89,4 +89,4 @@ APIs, conventions, and file structure may differ from Next.js or older React Rou
 - SISU writes require enabled mappings with non-empty `sisu_field_name`; normalize Buyer/Seller to `client_type` `0`/`1` and `type_id` `b`/`s`; set `agent_id` by resolving submitting FUB user email via `POST /v1/agent/find-agent` (omit on failure; appointment-met uses `agentSubmitting || agentId`).
 - FUB form settings split into Person (stage, tags, mappings) and Deal (stage, mappings; no tags); person stages from `/api/fub/stages`, deal stages from `/api/fub/pipelines`.
 - Email recipients are per-form via `form_type` and need not be unique across forms.
-- Deploy target is Heroku (Node 22.22+, `Procfile` → `npm run start` / `@react-router/serve`).
+- Deploy target is Heroku (Node 22.22+, `Procfile` → `release: npm run db:migrations` then `web: npm run start` / `@react-router/serve`).

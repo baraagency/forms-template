@@ -18,7 +18,7 @@
     "lint:a11y": "eslint app",
     "test:e2e": "playwright test",
     "dev:fub-context": "bun run scripts/dev/generate-fub-context.ts",
-    "db:migrations": "bun run scripts/db/migrate.ts"
+    "db:migrations": "node --experimental-strip-types scripts/db/migrate.ts"
   },
   "dependencies": {
     "@baraagency/components": "^0.1.0",

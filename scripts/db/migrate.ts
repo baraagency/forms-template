@@ -1,7 +1,7 @@
 import { Pool } from "pg";
 import path from "node:path";
-import { getDatabasePoolConfig } from "../../db/connection";
-import { runMigrations } from "./migrateCore";
+import { getDatabasePoolConfig } from "../../db/connection.ts";
+import { runMigrations } from "./migrateCore.ts";
 
 const migrationsDir = path.join(process.cwd(), "db", "migrations");
 

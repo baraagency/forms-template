@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Notice,
   Spinner,
-} from "@baraagency/components";
+} from "../_core/ui";
 import { FormSelectInput } from "../_core/formSelectInput";
 import type {
   FUBListPipelinesResponse,

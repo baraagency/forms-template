@@ -1,122 +1,69 @@
-import Select from "react-select";
+import { Combobox } from "@base-ui/react/combobox";
+import type { ComponentProps } from "react";
+import { fieldSelectA11yProps } from "./useFieldIds";
+import { FieldError } from "./FieldError";
 import {
   Field,
   getSelectOptions,
+  joinClassNames,
   type SelectChangeEvent,
   type SelectInputProps,
-} from "@baraagency/components";
-import { fieldSelectA11yProps } from "./useFieldIds";
-import { FieldError } from "./FieldError";
-import { useIsMounted } from "./useIsMounted";
-import { useSelectMenuMotion } from "./useSelectMenuMotion";
-
-const SELECT_MIN_HEIGHT = "44px";
-
-const selectStyles = {
-  control: (
-    base: Record<string, unknown>,
-    state: { isFocused: boolean; isDisabled: boolean },
-    hasError: boolean,
-  ) => ({
-    ...base,
-    marginTop: "0.5rem",
-    minHeight: SELECT_MIN_HEIGHT,
-    borderRadius: "var(--btn-radius)",
-    borderColor: hasError
-      ? "var(--error-color)"
-      : state.isFocused
-        ? "var(--brand-sky)"
-        : "var(--divider-color)",
-    backgroundColor: state.isDisabled ? "var(--disabled-bg)" : "var(--card-bg)",
-    boxShadow: hasError
-      ? "var(--field-shadow), 0 0 0 4px color-mix(in srgb, var(--error-color) 22%, transparent)"
-      : state.isFocused
-        ? "var(--field-shadow), 0 0 0 4px var(--field-focus-ring)"
-        : "var(--field-shadow)",
-    transition:
-      "border-color var(--duration-quick, 150ms) var(--ease-smooth-out, ease), box-shadow var(--duration-quick, 150ms) var(--ease-smooth-out, ease), background-color var(--duration-quick, 150ms) var(--ease-smooth-out, ease)",
-    cursor: state.isDisabled ? "not-allowed" : "default",
-    "&:hover": {
-      borderColor: hasError
-        ? "var(--error-color)"
-        : state.isFocused
-          ? "var(--brand-sky)"
-          : "var(--field-hover-border)",
-    },
-  }),
-  valueContainer: (base: Record<string, unknown>) => ({
-    ...base,
-    padding: "0 0.75rem",
-  }),
-  placeholder: (base: Record<string, unknown>) => ({
-    ...base,
-    color: "var(--placeholder-color)",
-    fontSize: "0.875rem",
-    opacity: 1,
-  }),
-  singleValue: (base: Record<string, unknown>) => ({
-    ...base,
-    color: "var(--foreground)",
-    fontSize: "0.875rem",
-  }),
-  input: (base: Record<string, unknown>) => ({
-    ...base,
-    color: "var(--foreground)",
-    fontSize: "0.875rem",
-  }),
-  menu: (base: Record<string, unknown>) => ({
-    ...base,
-    borderRadius: "0.75rem",
-    overflow: "hidden",
-    border: "1px solid var(--divider-color)",
-    boxShadow: "0 18px 36px rgba(63, 69, 72, 0.14)",
-    zIndex: 40,
-  }),
-  menuPortal: (base: Record<string, unknown>) => ({
-    ...base,
-    zIndex: 1300,
-  }),
-  option: (
-    base: Record<string, unknown>,
-    state: { isSelected: boolean; isFocused: boolean; isDisabled: boolean },
-  ) => ({
-    ...base,
-    backgroundColor: state.isSelected
-      ? "var(--btn-primary-bg)"
-      : state.isFocused
-        ? "var(--menu-hover-bg)"
-        : "var(--card-bg)",
-    color: state.isSelected ? "var(--btn-primary-color)" : "var(--foreground)",
-    fontSize: "0.875rem",
-    cursor: state.isDisabled ? "not-allowed" : "pointer",
-  }),
-  indicatorSeparator: (base: Record<string, unknown>) => ({
-    ...base,
-    backgroundColor: "var(--divider-color)",
-  }),
-  dropdownIndicator: (
-    base: Record<string, unknown>,
-    state: { isFocused: boolean },
-  ) => ({
-    ...base,
-    color: state.isFocused ? "var(--btn-outline-color)" : "var(--icon-muted)",
-    "&:hover": {
-      color: "var(--btn-outline-color)",
-    },
-  }),
-};
+  type SelectOption,
+} from "./ui";
 
 export type FormSelectInputProps = SelectInputProps & {
   error?: string;
   isLoading?: boolean;
 };
 
-function joinClassNames(...parts: Array<string | undefined | false>): string {
-  return parts.filter(Boolean).join(" ");
+function optionClassName({
+  highlighted,
+  selected,
+}: {
+  highlighted: boolean;
+  selected: boolean;
+}) {
+  return joinClassNames(
+    "bara-select__option",
+    highlighted && "bara-select__option--is-focused",
+    selected && "bara-select__option--is-selected",
+  );
+}
+
+function CaretDownIcon(props: ComponentProps<"svg">) {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="currentColor"
+      aria-hidden="true"
+      {...props}
+    >
+      <path d="M12 6H4l4 4.5z" />
+    </svg>
+  );
+}
+
+function ClearIcon(props: ComponentProps<"svg">) {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      aria-hidden="true"
+      {...props}
+    >
+      <path d="m4.5 4.5 7 7m-7 0 7-7" />
+    </svg>
+  );
 }
 
 /**
- * Select field with viewport-aware menu placement and open/close motion.
+ * Searchable select field with a portaled menu and existing bara-select styles.
  */
 export function FormSelectInput({
   label,
@@ -133,9 +80,6 @@ export function FormSelectInput({
   isLoading = false,
   ...props
 }: FormSelectInputProps) {
-  const isMounted = useIsMounted();
-  const { menuIsOpen, isClosing, onMenuOpen, onMenuClose } =
-    useSelectMenuMotion();
   const { options, placeholder } = getSelectOptions(children);
   const placeholderText = placeholder ?? `Select ${label.toLowerCase()}`;
   const selectedOption = value
@@ -145,97 +89,134 @@ export function FormSelectInput({
       })
     : null;
   const isDisabled = Boolean(props.disabled) || isLoading;
-  const menuPortalTarget = isMounted ? document.body : undefined;
   const a11y = fieldSelectA11yProps(id, error);
+  const comboboxItems = selectedOption
+    ? options.some((option) => option.value === selectedOption.value)
+      ? options
+      : [...options, selectedOption]
+    : options;
 
   return (
     <div className={wrapperClassName}>
-      <Field label={label} htmlFor={id} required={required} hint={hint}>
-        {isMounted ? (
-          <Select
-            inputId={id}
-            instanceId={id}
-            name={props.name ?? id}
-            value={selectedOption}
-            onChange={(nextValue) => {
-              onChange?.({
-                target: {
-                  value: nextValue?.value ?? "",
-                },
-              } as SelectChangeEvent);
-            }}
-            onInputChange={(inputValue, actionMeta) => {
-              if (actionMeta.action === "input-change") {
-                onSearchInputChange?.(inputValue);
-              }
-              return inputValue;
-            }}
-            options={options}
-            placeholder={placeholderText}
-            isDisabled={isDisabled}
-            isLoading={isLoading}
-            isClearable={!required}
-            isSearchable={true}
-            styles={{
-              control: (base, state) =>
-                selectStyles.control(base, state, Boolean(error)),
-              valueContainer: selectStyles.valueContainer,
-              placeholder: selectStyles.placeholder,
-              singleValue: selectStyles.singleValue,
-              input: selectStyles.input,
-              menu: selectStyles.menu,
-              menuPortal: selectStyles.menuPortal,
-              option: selectStyles.option,
-              indicatorSeparator: selectStyles.indicatorSeparator,
-              dropdownIndicator: selectStyles.dropdownIndicator,
-            }}
+      <Field
+        label={label}
+        htmlFor={id}
+        required={required}
+        hint={hint}
+        invalid={Boolean(error)}
+      >
+        <Combobox.Root
+          items={comboboxItems}
+          value={selectedOption}
+          onValueChange={(nextValue) => {
+            onChange?.({
+              target: {
+                value: nextValue?.value ?? "",
+              },
+            } as SelectChangeEvent);
+          }}
+          onInputValueChange={(inputValue) => {
+            onSearchInputChange?.(inputValue);
+          }}
+          isItemEqualToValue={(left, right) => left.value === right.value}
+          disabled={isDisabled}
+          autoHighlight
+        >
+          <div
             className={joinClassNames(
+              "bara-select",
               className,
               error && "bara-select--error",
               isLoading && "bara-select--loading",
+              isDisabled && "bara-select--is-disabled",
             )}
-            classNamePrefix="bara-select"
-            classNames={{
-              control: () =>
+          >
+            <Combobox.InputGroup
+              className={(state) =>
                 joinClassNames(
+                  "bara-select__control",
                   error && "bara-select__control--error",
                   isLoading && "bara-select--loading",
-                ),
-              menu: () =>
-                isClosing ? "bara-select__menu--closing" : "",
-            }}
-            aria-invalid={a11y["aria-invalid"]}
-            aria-errormessage={a11y["aria-errormessage"]}
-            aria-busy={isLoading || undefined}
-            menuIsOpen={menuIsOpen}
-            onMenuOpen={onMenuOpen}
-            onMenuClose={onMenuClose}
-            menuPlacement="auto"
-            menuPosition="fixed"
-            menuPortalTarget={menuPortalTarget}
-            menuShouldScrollIntoView={false}
-            noOptionsMessage={() => "No matches found"}
-          />
-        ) : (
-          <div
-            aria-hidden="true"
-            style={{
-              marginTop: "0.5rem",
-              minHeight: SELECT_MIN_HEIGHT,
-              borderRadius: "var(--btn-radius)",
-              border: "1px solid var(--divider-color)",
-              backgroundColor: "var(--card-bg)",
-              boxShadow: "var(--field-shadow)",
-              color: "var(--foreground)",
-              display: "flex",
-              alignItems: "center",
-              padding: "0 0.75rem",
-              fontSize: "0.875rem",
-            }}
-          >
-            {selectedOption?.label ?? placeholderText}
+                  (state.open || state.focused) &&
+                    "bara-select__control--is-focused",
+                  state.open && "bara-select--menu-is-open",
+                )
+              }
+            >
+              <Combobox.Input
+                id={id}
+                placeholder={placeholderText}
+                disabled={isDisabled}
+                aria-invalid={a11y["aria-invalid"]}
+                aria-errormessage={a11y["aria-errormessage"]}
+                aria-busy={isLoading || undefined}
+                className="bara-select__input"
+              />
+              <div className="bara-select__actions">
+                {!required ? (
+                  <Combobox.Clear
+                    type="button"
+                    className="bara-select__clear"
+                    aria-label="Clear selection"
+                    disabled={isDisabled}
+                  >
+                    <ClearIcon />
+                  </Combobox.Clear>
+                ) : null}
+                <span className="bara-select__indicator-separator" aria-hidden="true" />
+                <Combobox.Trigger
+                  type="button"
+                  className="bara-select__dropdown-indicator"
+                  aria-label="Open options"
+                  disabled={isDisabled}
+                >
+                  <CaretDownIcon />
+                </Combobox.Trigger>
+              </div>
+            </Combobox.InputGroup>
           </div>
-        )}
+
+          <Combobox.Portal>
+            <Combobox.Positioner
+              className="bara-select__positioner bara-select__menu-portal"
+              side="bottom"
+              sideOffset={4}
+              collisionAvoidance={{ side: "flip" }}
+            >
+              <Combobox.Popup
+                className={(state) =>
+                  joinClassNames(
+                    "bara-select__menu",
+                    state.side === "top" && "bara-select__menu-placement-top",
+                    state.transitionStatus === "ending" &&
+                      "bara-select__menu--closing",
+                  )
+                }
+              >
+                <Combobox.Empty className="bara-select__empty">
+                  No matches found
+                </Combobox.Empty>
+                {isLoading ? (
+                  <Combobox.Status className="bara-select__empty">
+                    Loading
+                  </Combobox.Status>
+                ) : null}
+                <Combobox.List>
+                  {(item: SelectOption) => (
+                    <Combobox.Item
+                      key={item.value}
+                      value={item}
+                      disabled={item.isDisabled}
+                      className={optionClassName}
+                    >
+                      {item.label}
+                    </Combobox.Item>
+                  )}
+                </Combobox.List>
+              </Combobox.Popup>
+            </Combobox.Positioner>
+          </Combobox.Portal>
+        </Combobox.Root>
         <input
           tabIndex={-1}
           aria-hidden="true"

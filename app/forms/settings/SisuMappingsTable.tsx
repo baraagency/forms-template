@@ -10,7 +10,7 @@ import {
   Spinner,
   TextInput,
   secondaryButtonClassName,
-} from "@baraagency/components";
+} from "../_core/ui";
 import type { SISUTeamFieldsCatalogResponse } from "@/app/types/sisu";
 import type { FormSisuMapping } from "@/app/types/storage";
 import type { SettingsFormKind } from "../_core/formIdentity";

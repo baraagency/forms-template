@@ -1,4 +1,4 @@
-import { secondaryButtonClassName } from "@baraagency/components";
+import { secondaryButtonClassName } from "./ui";
 import type { ReactNode } from "react";
 
 type FormRouterBackLinkProps = {

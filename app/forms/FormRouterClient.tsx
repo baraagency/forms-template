@@ -15,7 +15,7 @@ import {
   SectionCard,
   Spinner,
   secondaryButtonClassName,
-} from "@baraagency/components";
+} from "./_core/ui";
 import { FormSelectInput } from "./_core/formSelectInput";
 import { PrimaryButton } from "./_core/PrimaryButton";
 import type { FUBDeal, FUBPerson } from "@/app/types/fub";

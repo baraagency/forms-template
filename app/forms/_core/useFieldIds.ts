@@ -48,7 +48,7 @@ export function fieldA11yProps(
   };
 }
 
-/** react-select uses `aria-errormessage`, not `aria-describedby`. */
+/** Combobox/select uses `aria-errormessage`, not `aria-describedby`. */
 export function fieldSelectA11yProps(
   fieldId: string,
   error?: string,

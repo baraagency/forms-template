@@ -10,7 +10,7 @@ import {
   Spinner,
   TextInput,
   secondaryButtonClassName,
-} from "@baraagency/components";
+} from "../_core/ui";
 import type { SettingsFormKind } from "../_core/formIdentity";
 import { FormSelectInput } from "../_core/formSelectInput";
 import { PrimaryButton } from "../_core/PrimaryButton";

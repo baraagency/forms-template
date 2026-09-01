@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Notice, SectionCard, secondaryButtonClassName } from "@baraagency/components";
+import { Notice, SectionCard, secondaryButtonClassName } from "../_core/ui";
 import type { RouterForm } from "@/app/types/storage";
 import { FormBanner } from "../_core/FormBanner";
 import { FormRouterBackLink } from "../_core/formRouterBackLink";

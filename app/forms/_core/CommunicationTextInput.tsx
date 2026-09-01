@@ -1,4 +1,5 @@
-import { Field, baseInputClassName } from "@baraagency/components";
+import { Input } from "@base-ui/react/input";
+import { Field, baseInputClassName } from "./ui";
 import type { InputHTMLAttributes } from "react";
 import { EmailIcon, PhoneIcon } from "./communicationIcons";
 import { FieldError } from "./FieldError";
@@ -63,8 +64,7 @@ export function CommunicationTextInput({
           <span className="communication-input__icon">
             <Icon />
           </span>
-          <input
-            id={id}
+          <Input
             type={type}
             required={required}
             placeholder={placeholderText}
@@ -77,6 +77,7 @@ export function CommunicationTextInput({
               error && "bara-input--error",
               className,
             )}
+            render={(inputProps) => <input {...inputProps} id={id} />}
             {...props}
             {...a11y}
           />

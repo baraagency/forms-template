@@ -60,7 +60,7 @@ Do not mix in dramatic multi-layer card shadows or pure white cards on tinted gr
 - Easing: `--ease-smooth-out` (`cubic-bezier(0.22, 1, 0.36, 1)`) for surface motion
 - Focus / hover accents: `--brand-sky` / `--brand-sky-soft` (not the primary CTA fill) so CTAs stay the only black moments
 - Primary CTAs (form launch, Submit, Create New Deal, settings saves): shared solid black fill + 2px border via `.form-router-launch-button` / `.bara-button--primary`
-- Select menus: open `--duration-fast` fade+scale; close is the reverse at `--duration-quick` (slightly faster) via `useSelectMenuMotion` + `.bara-select__menu--closing`
+- Select menus: open `--duration-fast` fade+scale; close is the reverse at `--duration-quick` (slightly faster) via `.bara-select__menu--closing`
 - Respect `prefers-reduced-motion`
 
 ## Hit areas

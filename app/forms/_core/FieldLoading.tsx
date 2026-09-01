@@ -1,4 +1,4 @@
-import { Spinner } from "@baraagency/components";
+import { Spinner } from "./ui";
 
 type FieldLoadingProps = {
   label?: string;

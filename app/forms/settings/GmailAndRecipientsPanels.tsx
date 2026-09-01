@@ -4,7 +4,7 @@ import {
   Spinner,
   TextInput,
   secondaryButtonClassName,
-} from "@baraagency/components";
+} from "../_core/ui";
 import type { FormEmailRecipient } from "@/app/types/storage";
 import {
   formKindLabel,

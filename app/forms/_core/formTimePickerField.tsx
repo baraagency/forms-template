@@ -12,7 +12,7 @@ import customParseFormat from "dayjs/plugin/customParseFormat";
 import timezone from "dayjs/plugin/timezone";
 import utc from "dayjs/plugin/utc";
 import { SvgIcon, type SvgIconProps } from "@mui/material";
-import { Field, Spinner } from "@baraagency/components";
+import { Field, Spinner } from "./ui";
 import { FORM_TIMEZONE } from "./constants";
 import { datePickerTextFieldSx } from "./formDatePickerField";
 import { FieldError } from "./FieldError";

@@ -4,7 +4,7 @@ import {
   Spinner,
   TextInput,
   secondaryButtonClassName,
-} from "@baraagency/components";
+} from "../_core/ui";
 import { PrimaryButton } from "../_core/PrimaryButton";
 import type {
   FormFubDealMapping,

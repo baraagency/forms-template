@@ -13,7 +13,7 @@ import { AppTheme } from "./AppTheme";
 import { createEmotionCache } from "./emotionCache";
 import type { Route } from "./+types/root";
 import { SkipToMain } from "./forms/_core/SkipToMain";
-import "@baraagency/components/styles.css";
+import "./forms/_core/ui/bara-primitives.css";
 import "./globals.css";
 import "./component-transitions.css";
 import "./forms/_core/fieldStates.css";

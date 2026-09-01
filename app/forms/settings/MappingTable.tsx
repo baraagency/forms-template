@@ -3,7 +3,7 @@ import {
   Notice,
   TextInput,
   secondaryButtonClassName,
-} from "@baraagency/components";
+} from "../_core/ui";
 import { PrimaryButton } from "../_core/PrimaryButton";
 import { PillToggle } from "./PillToggle";
 

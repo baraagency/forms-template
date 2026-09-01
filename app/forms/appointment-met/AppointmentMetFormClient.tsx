@@ -10,7 +10,7 @@ import {
   TextAreaInput,
   TextInput,
   secondaryButtonClassName,
-} from "@baraagency/components";
+} from "../_core/ui";
 import { PrimaryButton } from "../_core/PrimaryButton";
 import { FieldError } from "../_core/FieldError";
 import { FormValidationSummary } from "../_core/FormValidationSummary";

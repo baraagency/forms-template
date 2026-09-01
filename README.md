@@ -1,6 +1,6 @@
 # FUB Forms Starter
 
-React Router v8 (Framework mode) template for Follow Up Boss embedded forms with MUI and `@baraagency/components`. Use GitHub's **Use this template** button to start a new project from this repo.
+React Router v8 (Framework mode) template for Follow Up Boss embedded forms with MUI and Base UI. Use GitHub's **Use this template** button to start a new project from this repo.
 
 ## What's included
 

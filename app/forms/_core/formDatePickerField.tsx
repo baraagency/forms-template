@@ -3,7 +3,7 @@ import dayjs from "dayjs";
 import { Button, DialogActions, SvgIcon, type SvgIconProps } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import type { PickerChangeHandlerContext } from "@mui/x-date-pickers/models";
-import { Field } from "@baraagency/components";
+import { Field } from "./ui";
 import { formatDatePickerValue } from "./formatUtils";
 import { FORM_DATE_TIMEZONE } from "./formDateValidation";
 import { FieldError } from "./FieldError";

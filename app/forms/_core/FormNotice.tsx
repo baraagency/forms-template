@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Notice } from "@baraagency/components";
+import { Notice } from "./ui";
 
 type FormNoticeTone = "success" | "warning" | "error";
 

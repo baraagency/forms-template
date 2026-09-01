@@ -1,7 +1,8 @@
+import { Button } from "@base-ui/react/button";
 import {
   primaryButtonClassName,
   Spinner,
-} from "@baraagency/components";
+} from "./ui";
 import type {
   AnchorHTMLAttributes,
   ButtonHTMLAttributes,
@@ -71,15 +72,21 @@ export function PrimaryButton(props: PrimaryButtonProps) {
     } = props;
 
     return (
-      <a
-        {...anchorRest}
-        href={href}
-        className={joinClassNames(
-          PRIMARY_BUTTON_BASE_CLASS,
-          className,
-          disabled && "opacity-50 pointer-events-none",
-        )}
-        aria-disabled={disabled || undefined}
+      <Button
+        nativeButton={false}
+        render={
+          <a
+            {...anchorRest}
+            href={href}
+            className={joinClassNames(
+              PRIMARY_BUTTON_BASE_CLASS,
+              className,
+              disabled && "opacity-50 pointer-events-none",
+            )}
+            aria-disabled={disabled || undefined}
+          />
+        }
+        disabled={disabled}
       >
         {loading ? (
           <Spinner />
@@ -88,7 +95,7 @@ export function PrimaryButton(props: PrimaryButtonProps) {
             {children}
           </PrimaryButtonLabel>
         )}
-      </a>
+      </Button>
     );
   }
 
@@ -103,7 +110,7 @@ export function PrimaryButton(props: PrimaryButtonProps) {
   } = props;
 
   return (
-    <button
+    <Button
       {...buttonRest}
       type={type}
       className={joinClassNames(PRIMARY_BUTTON_BASE_CLASS, className)}
@@ -116,6 +123,6 @@ export function PrimaryButton(props: PrimaryButtonProps) {
           {children}
         </PrimaryButtonLabel>
       )}
-    </button>
+    </Button>
   );
 }

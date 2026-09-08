@@ -607,7 +607,7 @@ export function FormRouterClient({
       <header
         className={`page-header${isEmbeddedInFub ? " page-header--embedded" : ""}`}
       >
-        <FormBanner />
+        <FormBanner className="page-brand-logo--router" />
       </header>
 
       <div className="form-router space-y-6">

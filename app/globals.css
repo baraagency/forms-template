@@ -391,6 +391,10 @@ body {
         max-width: min(100%, 280px);
     }
 
+    .page-brand-logo--router {
+        max-width: min(100%, 140px);
+    }
+
     .form-actions {
         flex-direction: column;
         align-items: stretch;
@@ -625,6 +629,10 @@ body {
     height: auto;
     max-width: min(100%, 360px);
     width: 100%;
+}
+
+.page-brand-logo--router {
+    max-width: min(100%, 180px);
 }
 
 .page-intro {

@@ -5,6 +5,11 @@ import type {
   FUBRelationshipPerson,
 } from "@/app/types/fub";
 
+import dayjs from "dayjs";
+import customParseFormat from "dayjs/plugin/customParseFormat";
+
+dayjs.extend(customParseFormat);
+
 type DatePickerValue = {
   format: (format: string) => string;
 };
@@ -162,6 +167,26 @@ export function limitPercentageInputPrecision(value: string): string {
 
 export function formatDatePickerValue(value: DatePickerValue | null): string {
   return value ? value.format("YYYY-MM-DD") : "";
+}
+
+export function formatFormDateDisplayValue(value: string): string {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return "";
+  }
+
+  const isoDate = dayjs(trimmed, "YYYY-MM-DD", true);
+  if (isoDate.isValid()) {
+    return isoDate.format("MM/DD/YYYY");
+  }
+
+  const usDate = dayjs(trimmed, "MM/DD/YYYY", true);
+  if (usDate.isValid()) {
+    return usDate.format("MM/DD/YYYY");
+  }
+
+  const looseDate = dayjs(trimmed);
+  return looseDate.isValid() ? looseDate.format("MM/DD/YYYY") : trimmed;
 }
 
 export function isValidEmail(value: string): boolean {

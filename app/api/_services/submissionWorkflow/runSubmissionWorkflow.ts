@@ -223,7 +223,7 @@ export async function runSubmissionWorkflow(
       : String(input.agentId).trim() || null;
 
   const formState = { ...input.formState };
-  const summary = buildFormSubmissionSummary({
+  const summary = await buildFormSubmissionSummary({
     form: input.form,
     formLabel: input.formLabel,
     formState,
@@ -241,6 +241,7 @@ export async function runSubmissionWorkflow(
     appointmentId: null,
     summarySubject: summary.subject,
     summaryBody: summary.body,
+    summaryHtmlBody: summary.htmlBody,
     dealPayload: {},
     personPayload: {},
     sisuPayload: {},
@@ -383,8 +384,8 @@ export async function runSubmissionWorkflow(
       const result = await createLiveFubNote({
         personId,
         subject: ctx.summarySubject,
-        body: ctx.summaryBody,
-        isHtml: false,
+        body: ctx.summaryHtmlBody,
+        isHtml: true,
       });
       if (result.error || !result.data) {
         return {

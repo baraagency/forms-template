@@ -3,6 +3,8 @@ import {
   type FormFieldOption,
 } from "@/app/forms/settings/formFieldCatalog";
 import type { SettingsFormKind } from "@/app/forms/_core/formIdentity";
+import { formatFormSubmissionFieldValue } from "@/app/forms/_core/formSubmissionDisplayValues";
+import { loadFormSubmissionDisplayContext } from "./loadFormSubmissionDisplayContext";
 
 const EXCLUDED_SUMMARY_KEYS = new Set([
   "personId",
@@ -13,33 +15,6 @@ const EXCLUDED_SUMMARY_KEYS = new Set([
   "fubDealId",
 ]);
 
-function formatSummaryValue(value: unknown): string {
-  if (value === null || value === undefined) {
-    return "";
-  }
-
-  if (typeof value === "boolean") {
-    return value ? "Yes" : "No";
-  }
-
-  if (typeof value === "number" && Number.isFinite(value)) {
-    return String(value);
-  }
-
-  if (Array.isArray(value)) {
-    return value
-      .map((item) => formatSummaryValue(item))
-      .filter(Boolean)
-      .join(", ");
-  }
-
-  if (typeof value === "object") {
-    return "";
-  }
-
-  return String(value).trim();
-}
-
 function fieldLabel(
   options: readonly FormFieldOption[],
   fieldName: string,
@@ -47,23 +22,71 @@ function fieldLabel(
   return options.find((option) => option.value === fieldName)?.label ?? fieldName;
 }
 
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function formatSummaryHtmlValue(value: string): string {
+  return escapeHtml(value).replace(/\r\n|\r|\n/g, "<br>");
+}
+
+function buildSummaryTableHtml(
+  subject: string,
+  rows: Array<{ label: string; value: string }>,
+): string {
+  if (rows.length === 0) {
+    return `<p><strong>${escapeHtml(subject)}</strong></p><p>(No field values submitted.)</p>`;
+  }
+
+  const tableRows = rows
+    .map(
+      (row) =>
+        `<tr><td>${escapeHtml(row.label)}</td><td>${formatSummaryHtmlValue(row.value)}</td></tr>`,
+    )
+    .join("");
+
+  return [
+    `<p><strong>${escapeHtml(subject)}</strong></p>`,
+    '<table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;width:100%;max-width:640px;">',
+    "<thead><tr><th align=\"left\">Field</th><th align=\"left\">Value</th></tr></thead>",
+    `<tbody>${tableRows}</tbody>`,
+    "</table>",
+  ].join("");
+}
+
 /**
  * Build a human-readable label/value summary for FUB notes and summary email.
- * Uses the form field catalog for labels; skips empty values and routing ids.
+ * Uses the form field catalog for labels and form display formatting for values.
  */
-export function buildFormSubmissionSummary(input: {
+export async function buildFormSubmissionSummary(input: {
   form: SettingsFormKind;
   formLabel: string;
   formState: Record<string, unknown>;
-}): { subject: string; body: string; rows: Array<{ label: string; value: string }> } {
+}): Promise<{
+  subject: string;
+  body: string;
+  htmlBody: string;
+  rows: Array<{ label: string; value: string }>;
+}> {
   const options = getFormFieldOptions(input.form);
+  const displayContext = await loadFormSubmissionDisplayContext(input.form);
   const rows: Array<{ label: string; value: string }> = [];
 
   for (const option of options) {
     if (EXCLUDED_SUMMARY_KEYS.has(option.value)) {
       continue;
     }
-    const value = formatSummaryValue(input.formState[option.value]);
+    const value = formatFormSubmissionFieldValue(
+      input.form,
+      option.value,
+      input.formState[option.value],
+      displayContext,
+    );
     if (!value) {
       continue;
     }
@@ -78,7 +101,12 @@ export function buildFormSubmissionSummary(input: {
     if (options.some((option) => option.value === key)) {
       continue;
     }
-    const value = formatSummaryValue(raw);
+    const value = formatFormSubmissionFieldValue(
+      input.form,
+      key,
+      raw,
+      displayContext,
+    );
     if (!value) {
       continue;
     }
@@ -90,6 +118,7 @@ export function buildFormSubmissionSummary(input: {
     rows.length === 0
       ? `${subject}\n\n(No field values submitted.)`
       : `${subject}\n\n${rows.map((row) => `${row.label}: ${row.value}`).join("\n")}`;
+  const htmlBody = buildSummaryTableHtml(subject, rows);
 
-  return { subject, body, rows };
+  return { subject, body, htmlBody, rows };
 }

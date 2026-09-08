@@ -34,6 +34,7 @@ export type SubmissionWorkflowContext = {
   appointmentId: string | null;
   summarySubject: string;
   summaryBody: string;
+  summaryHtmlBody: string;
   dealPayload: Partial<FUBDeal>;
   personPayload: Partial<FUBPerson>;
   sisuPayload: SISUCreateTransactionRequest;

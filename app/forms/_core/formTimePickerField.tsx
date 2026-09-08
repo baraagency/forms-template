@@ -135,6 +135,11 @@ export function formatFormTimeValue(
   return value.tz(timezoneName).format("HH:mm");
 }
 
+export function formatFormTimeDisplayValue(value: string): string {
+  const parsed = parseFormTimeValue(value);
+  return parsed ? parsed.tz(FORM_TIMEZONE).format("hh:mm A") : value.trim();
+}
+
 function ClockIcon(props: SvgIconProps) {
   return (
     <SvgIcon {...props} viewBox="0 0 24 24">
@@ -163,11 +168,6 @@ type FormTimePickerFieldProps = {
   disabled?: boolean;
   readOnly?: boolean;
 };
-
-function formatDisplayTime(value: string): string {
-  const parsed = parseFormTimeValue(value);
-  return parsed ? parsed.tz(FORM_TIMEZONE).format("hh:mm A") : "";
-}
 
 function TimePickerFallback({
   id,
@@ -220,7 +220,7 @@ function FormTimePickerFieldInner({
     [minutesStep],
   );
   const pickerValue = useMemo(() => parseFormTimeValue(value), [value]);
-  const displayValue = useMemo(() => formatDisplayTime(value), [value]);
+  const displayValue = useMemo(() => formatFormTimeDisplayValue(value), [value]);
 
   const handleChange = useCallback(
     (nextValue: Dayjs | null) => {

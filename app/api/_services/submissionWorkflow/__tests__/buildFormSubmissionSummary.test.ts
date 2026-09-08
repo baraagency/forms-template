@@ -24,6 +24,8 @@ describe("buildFormSubmissionSummary", () => {
     expect(summary.body).toContain("Client Last Name: Hanks");
     expect(summary.htmlBody).toContain("<table");
     expect(summary.htmlBody).toContain("<th");
+    expect(summary.htmlBody).toContain("background-color:#d4ecf7");
+    expect(summary.htmlBody).toContain("border:1px solid #b8d4e3");
     expect(summary.htmlBody).toContain("Client First Name");
     expect(summary.htmlBody).toContain("Tom");
     expect(summary.htmlBody).toContain("Line one<br>Line two");

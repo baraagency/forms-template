@@ -25,6 +25,7 @@ import {
 } from "./_core/localFormsDemo";
 import {
   buildFormRouteUrl,
+  buildFormRouterReturnUrl,
   filterDealsForForm,
   getDealLabel,
   getDealSisuTransactionId,
@@ -62,12 +63,11 @@ function notifyEmbeddedHeight(): void {
   }
 }
 
-function buildCurrentUrl(clientId: number | null): string {
-  const url = new URL(window.location.href);
-  if (clientId) {
-    url.searchParams.set("clientId", String(clientId));
-  }
-  return url.toString();
+function buildNewTabRouterUrl(clientId: number | null): string {
+  return new URL(
+    buildFormRouterReturnUrl(clientId),
+    window.location.origin,
+  ).toString();
 }
 
 function subscribeToLocationChanges(onStoreChange: () => void): () => void {
@@ -840,7 +840,7 @@ export function FormRouterClient({
               className={`app-button-press ${secondaryButtonClassName} w-full`}
               onClick={() => {
                 window.open(
-                  buildCurrentUrl(effectivePersonId),
+                  buildNewTabRouterUrl(effectivePersonId),
                   "_blank",
                   "noopener,noreferrer",
                 );

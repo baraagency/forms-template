@@ -35,6 +35,13 @@ function formatSummaryHtmlValue(value: string): string {
   return escapeHtml(value).replace(/\r\n|\r|\n/g, "<br>");
 }
 
+const SUMMARY_TABLE_STYLE =
+  "border-collapse:collapse;width:100%;max-width:640px;border:1px solid #b8d4e3;";
+const SUMMARY_TABLE_HEADER_STYLE =
+  "background-color:#d4ecf7;color:#003a55;font-weight:600;text-align:left;padding:8px 10px;border:1px solid #b8d4e3;";
+const SUMMARY_TABLE_CELL_STYLE =
+  "padding:8px 10px;border:1px solid #b8d4e3;vertical-align:top;";
+
 function buildSummaryTableHtml(
   subject: string,
   rows: Array<{ label: string; value: string }>,
@@ -46,14 +53,14 @@ function buildSummaryTableHtml(
   const tableRows = rows
     .map(
       (row) =>
-        `<tr><td>${escapeHtml(row.label)}</td><td>${formatSummaryHtmlValue(row.value)}</td></tr>`,
+        `<tr><td style="${SUMMARY_TABLE_CELL_STYLE}">${escapeHtml(row.label)}</td><td style="${SUMMARY_TABLE_CELL_STYLE}">${formatSummaryHtmlValue(row.value)}</td></tr>`,
     )
     .join("");
 
   return [
     `<p><strong>${escapeHtml(subject)}</strong></p>`,
-    '<table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;width:100%;max-width:640px;">',
-    "<thead><tr><th align=\"left\">Field</th><th align=\"left\">Value</th></tr></thead>",
+    `<table style="${SUMMARY_TABLE_STYLE}">`,
+    `<thead><tr><th style="${SUMMARY_TABLE_HEADER_STYLE}">Field</th><th style="${SUMMARY_TABLE_HEADER_STYLE}">Value</th></tr></thead>`,
     `<tbody>${tableRows}</tbody>`,
     "</table>",
   ].join("");

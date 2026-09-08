@@ -20,6 +20,32 @@ import "./component-transitions.css";
 import "./forms/_core/fieldStates.css";
 
 export const links: Route.LinksFunction = () => [
+  { rel: "icon", href: "/favicon.ico", sizes: "48x48" },
+  {
+    rel: "icon",
+    href: "/favicon-16x16.png",
+    type: "image/png",
+    sizes: "16x16",
+  },
+  {
+    rel: "icon",
+    href: "/favicon-32x32.png",
+    type: "image/png",
+    sizes: "32x32",
+  },
+  {
+    rel: "icon",
+    href: "/icon-192.png",
+    type: "image/png",
+    sizes: "192x192",
+  },
+  {
+    rel: "icon",
+    href: "/icon-512.png",
+    type: "image/png",
+    sizes: "512x512",
+  },
+  { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
   {
     rel: "preconnect",

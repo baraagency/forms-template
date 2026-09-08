@@ -47,6 +47,24 @@ export function extractFubFieldKeys(sample: Record<string, unknown> | null): str
   return Object.keys(sample).sort((left, right) => left.localeCompare(right));
 }
 
+/**
+ * Union of top-level keys across every sample record, sorted. Different
+ * deals can carry different custom fields (e.g. per pipeline/stage), so
+ * field options should reflect any deal returned rather than only the
+ * first one.
+ */
+export function extractFubFieldKeysFromAny(
+  samples: readonly Record<string, unknown>[],
+): string[] {
+  const keys = new Set<string>();
+  for (const sample of samples) {
+    for (const key of Object.keys(sample)) {
+      keys.add(key);
+    }
+  }
+  return Array.from(keys).sort((left, right) => left.localeCompare(right));
+}
+
 type FubMappingsTableProps = {
   formKind: SettingsFormKind;
   rows: FubMappingRow[];
@@ -369,7 +387,7 @@ export function useFubDealFieldKeys() {
     setError(null);
     try {
       const response = await fetch(
-        "/api/fub/deals?fields=allFields&limit=1",
+        "/api/fub/deals?fields=allFields&limit=25",
       );
       if (!response.ok) {
         throw new Error(`Unable to load FUB deal fields (HTTP ${response.status}).`);
@@ -377,8 +395,7 @@ export function useFubDealFieldKeys() {
       const payload = (await response.json()) as {
         deals?: Record<string, unknown>[];
       };
-      const deal = payload.deals?.[0] ?? null;
-      setKeys(extractFubFieldKeys(deal));
+      setKeys(extractFubFieldKeysFromAny(payload.deals ?? []));
     } catch (loadError) {
       setKeys([]);
       setError(

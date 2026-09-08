@@ -31,7 +31,7 @@ export async function loader({ request }: { request: Request }) {
     if (shouldUseLiveDeals()) {
       const live = await fetchLiveFubDeals({
         fields: "allFields",
-        limit: limit ?? 1,
+        limit: limit ?? 25,
         status: "Active",
       });
       if (live.error || !live.data) {
@@ -46,7 +46,7 @@ export async function loader({ request }: { request: Request }) {
     const deal = loadFixture<FUBDeal>("fub-deal-all-fields.json");
     return Response.json({
       deals: [deal],
-      _metadata: { total: 1, limit: String(limit ?? 1) },
+      _metadata: { total: 1, limit: String(limit ?? 25) },
     });
   }
 

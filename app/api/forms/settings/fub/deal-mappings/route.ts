@@ -1,7 +1,11 @@
 import { listDealMappings } from "@/app/api/_services/settingsQueries";
+import { enforceSettingsAdminAuth } from "@/app/api/_services/settingsAdminAuth";
 import { parseFormKindParam } from "@/app/forms/_core/formIdentity";
 
 export async function loader({ request }: { request: Request }) {
+  const authError = enforceSettingsAdminAuth(request);
+  if (authError) return authError;
+
   const form = parseFormKindParam(new URL(request.url).searchParams.get("form"));
   if (!form) {
     return Response.json(

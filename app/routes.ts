@@ -19,6 +19,7 @@ export default [
   route("api/fub/users", "api/fub/users/route.ts"),
   route("api/fub/appointment-types", "api/fub/appointment-types/route.ts"),
   route("api/fub/stages", "api/fub/stages/route.ts"),
+  route("api/fub/tags", "api/fub/tags/route.ts"),
   route("api/fub/pipelines", "api/fub/pipelines/route.ts"),
   route("api/fub/people", "api/fub/people/route.ts"),
   route("api/fub/people/:personId", "api/fub/people/[personId]/route.ts"),
@@ -50,6 +51,7 @@ export default [
   route("api/forms/closed/submit", "api/forms/closed/submit/route.ts"),
 
   // Settings
+  route("api/forms/settings/auth", "api/forms/settings/auth/route.ts"),
   route("api/forms/settings/gmail", "api/forms/settings/gmail/route.ts"),
   route(
     "api/forms/settings/gmail/oauth/start",

@@ -35,7 +35,7 @@ export type SelectInputProps = Omit<
   SelectHTMLAttributes<HTMLSelectElement>,
   "value" | "children" | "onChange"
 > & {
-  label: string;
+  label?: string;
   id: string;
   hint?: string;
   wrapperClassName?: string;

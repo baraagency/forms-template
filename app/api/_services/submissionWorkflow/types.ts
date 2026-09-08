@@ -82,6 +82,7 @@ export type RunSubmissionWorkflowResult = {
   formType: FormKind;
   message: string;
   dealId?: number;
+  dealName?: string;
   appointmentId?: string;
   transaction?: SISUCreateTransactionResponse;
   email: SubmissionSummaryEmailPayload;

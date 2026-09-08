@@ -11,6 +11,10 @@ import {
   isSubmissionDebugEnvironment,
 } from "@/app/forms/_core/submissionUtils";
 import { normalizeSettingsEnvironment } from "@/app/forms/_core/formIdentity";
+import {
+  pickFubStageForClientType,
+  pickFubTagsForClientType,
+} from "@/app/forms/_core/fubClientTypeSettings";
 import { isFubApiEnabled } from "@/app/api/_services/fubApiMode";
 import { isSisuApiEnabled } from "@/app/api/_services/sisuApiMode";
 import {
@@ -71,29 +75,14 @@ function pickEnabledStage(
   target: "person" | "deal",
   clientType: string | null,
 ): FormFubStage | null {
-  const enabled = stages.filter(
-    (stage) => stage.enabled && stage.target === target,
-  );
-  if (enabled.length === 0) {
-    return null;
-  }
+  return pickFubStageForClientType(stages, target, clientType);
+}
 
-  if (clientType) {
-    const exact = enabled.find(
-      (stage) =>
-        stage.client_type &&
-        stage.client_type.trim().toLowerCase() === clientType.toLowerCase(),
-    );
-    if (exact) {
-      return exact;
-    }
-  }
-
-  return (
-    enabled.find((stage) => stage.client_type === null || stage.client_type === "") ??
-    enabled[0] ??
-    null
-  );
+function pickEnabledTags(
+  tags: FormFubTag[],
+  clientType: string | null,
+): FormFubTag[] {
+  return pickFubTagsForClientType(tags, clientType);
 }
 
 function recordStep(
@@ -142,6 +131,21 @@ function extractDealId(deal: FUBDeal | null, fallback: number | null): number | 
     }
   }
   return fallback;
+}
+
+function extractDealName(
+  deal: FUBDeal | null,
+  dealPayload: Partial<FUBDeal>,
+): string | undefined {
+  if (typeof deal?.name === "string" && deal.name.trim()) {
+    return deal.name.trim();
+  }
+
+  if (typeof dealPayload.name === "string" && dealPayload.name.trim()) {
+    return dealPayload.name.trim();
+  }
+
+  return undefined;
 }
 
 /** FUB requires `name` on POST /deals; mappings often omit it. */
@@ -305,7 +309,10 @@ export async function runSubmissionWorkflow(
   const dealMappings = dealMapsResult.data ?? [];
   const sisuMappings = sisuMapsResult.data ?? [];
   const stages = stagesResult.data ?? [];
-  const tags = (tagsResult.data ?? []).filter((tag: FormFubTag) => tag.enabled);
+  const enabledTags = (tagsResult.data ?? []).filter((tag: FormFubTag) => tag.enabled);
+  const personStage = pickEnabledStage(stages, "person", clientType);
+  const dealStage = pickEnabledStage(stages, "deal", clientType);
+  const tags = pickEnabledTags(enabledTags, clientType);
 
   ctx.personPayload = applyFubFieldMappings(
     formState,
@@ -316,9 +323,6 @@ export async function runSubmissionWorkflow(
     dealMappings,
   ) as Partial<FUBDeal>;
   ctx.sisuPayload = applySisuFieldMappings(formState, sisuMappings);
-
-  const personStage = pickEnabledStage(stages, "person", clientType);
-  const dealStage = pickEnabledStage(stages, "deal", clientType);
 
   if (personStage) {
     if (personStage.stage_name?.trim()) {
@@ -769,6 +773,9 @@ export async function runSubmissionWorkflow(
   );
 
   const debugEnabled = isSubmissionDebugEnvironment(process.env.ENVIRONMENT);
+  const dealName = ctx.dealId
+    ? extractDealName(ctx.deal, ctx.dealPayload)
+    : undefined;
 
   const result: RunSubmissionWorkflowResult = {
     formType: input.form,
@@ -776,6 +783,7 @@ export async function runSubmissionWorkflow(
     email: ctx.email,
     steps: ctx.steps,
     ...(ctx.dealId ? { dealId: ctx.dealId } : {}),
+    ...(dealName ? { dealName } : {}),
     ...(ctx.appointmentId ? { appointmentId: ctx.appointmentId } : {}),
     ...(transaction ? { transaction } : {}),
     ...(ctx.warnings.length > 0 ? { warnings: ctx.warnings } : {}),
@@ -785,7 +793,12 @@ export async function runSubmissionWorkflow(
       ? {
           debug: {
             ...(ctx.dealId || ctx.deal
-              ? { deal: { id: ctx.dealId ?? ctx.deal?.id } }
+              ? {
+                  deal: {
+                    id: ctx.dealId ?? ctx.deal?.id,
+                    ...(dealName ? { name: dealName } : {}),
+                  },
+                }
               : {}),
             ...(transaction ? { transaction } : {}),
             ...(ctx.appointmentId

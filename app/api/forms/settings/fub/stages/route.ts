@@ -3,9 +3,17 @@ import {
   listFubStages,
   setDesiredFubStage,
 } from "@/app/api/_services/settingsQueries";
+import { enforceSettingsAdminAuth } from "@/app/api/_services/settingsAdminAuth";
 import { parseFormKindParam } from "@/app/forms/_core/formIdentity";
+import {
+  formSupportsFubClientType,
+  normalizeFubClientType,
+} from "@/app/forms/_core/fubClientTypeSettings";
 
 export async function loader({ request }: { request: Request }) {
+  const authError = enforceSettingsAdminAuth(request);
+  if (authError) return authError;
+
   const form = parseFormKindParam(new URL(request.url).searchParams.get("form"));
   if (!form) {
     return Response.json(
@@ -26,8 +34,11 @@ export async function loader({ request }: { request: Request }) {
 }
 
 export async function action({ request }: { request: Request }) {
+  const authError = enforceSettingsAdminAuth(request);
+  if (authError) return authError;
+
   if (request.method === "PUT") {
-    /** Set the single desired stage for form + target (replaces prior null-client_type rows). */
+    /** Set the single desired stage for form + target + client type. */
     let body: unknown;
     try {
       body = await request.json();
@@ -71,10 +82,24 @@ export async function action({ request }: { request: Request }) {
       typeof (body as { stage_name?: unknown }).stage_name === "string"
         ? (body as { stage_name: string }).stage_name
         : null;
+    const requiresClientType = formSupportsFubClientType(form);
+    const clientType = normalizeFubClientType(
+      typeof (body as { client_type?: unknown }).client_type === "string"
+        ? (body as { client_type: string }).client_type
+        : null,
+    );
+
+    if (requiresClientType && !clientType) {
+      return Response.json(
+        { message: "client_type must be Buyer or Seller." },
+        { status: 400 },
+      );
+    }
 
     const result = await setDesiredFubStage({
       form,
       target,
+      client_type: requiresClientType ? clientType : null,
       stage_id: stageId,
       stage_name: stageName,
     });

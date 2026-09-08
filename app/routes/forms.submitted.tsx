@@ -72,6 +72,7 @@ export default function SubmittedPage({ loaderData }: Route.ComponentProps) {
   const agentName = getSingleSearchParam(resolvedSearchParams, "agentName");
   const address = getSingleSearchParam(resolvedSearchParams, "address");
   const dealId = getSingleSearchParam(resolvedSearchParams, "dealId");
+  const dealName = getSingleSearchParam(resolvedSearchParams, "dealName");
   const sisuTransactionId = getSingleSearchParam(
     resolvedSearchParams,
     "sisuTransactionId",
@@ -93,11 +94,6 @@ export default function SubmittedPage({ loaderData }: Route.ComponentProps) {
 
   const contextRows = [
     {
-      label: "Form",
-      value: formLabel,
-      caption: "",
-    },
-    {
       label: "Client",
       value: clientName || "Client not provided",
       caption: personId ? `FUB person ID: ${personId}` : "",
@@ -114,11 +110,15 @@ export default function SubmittedPage({ loaderData }: Route.ComponentProps) {
         ? `SISU transaction ID: ${sisuTransactionId}`
         : "",
     },
-    {
-      label: "FUB Deal",
-      value: dealId || "Deal ID not provided",
-      caption: "",
-    },
+    ...(dealName || dealId
+      ? [
+          {
+            label: "FUB Deal",
+            value: dealName || `Deal #${dealId}`,
+            caption: dealName && dealId ? `FUB deal ID: ${dealId}` : "",
+          },
+        ]
+      : []),
   ];
 
   return (

@@ -13,6 +13,7 @@ import { AppTheme } from "./AppTheme";
 import { createEmotionCache } from "./emotionCache";
 import type { Route } from "./+types/root";
 import { SkipToMain } from "./forms/_core/SkipToMain";
+import { AppFooter } from "./forms/_core/AppFooter";
 import "./forms/_core/ui/bara-primitives.css";
 import "./globals.css";
 import "./component-transitions.css";
@@ -72,7 +73,10 @@ function EmotionProviders({ children }: { children: ReactNode }) {
 export default function App() {
   return (
     <EmotionProviders>
-      <Outlet />
+      <div className="app-shell">
+        <Outlet />
+        <AppFooter />
+      </div>
     </EmotionProviders>
   );
 }
@@ -102,6 +106,7 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
           <code>{stack}</code>
         </pre>
       ) : null}
+      <AppFooter />
     </main>
   );
 }

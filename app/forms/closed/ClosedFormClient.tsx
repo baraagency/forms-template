@@ -42,6 +42,7 @@ import {
   buildPostSubmissionHref,
   buildSubmittedAddress,
   getSubmittedFubDealId,
+  getSubmittedFubDealName,
   getSubmittedSisuTransactionId,
   getSubmissionErrorMessage,
   getSubmissionSummaryEmailWarning,
@@ -361,6 +362,7 @@ export function ClosedFormClient({
           personId: formState.personId,
           agentId: formState.agentId,
           dealId: getSubmittedFubDealId(payload) || formState.dealId,
+          dealName: getSubmittedFubDealName(payload),
           address: buildSubmittedAddress(
             formState.addressLine1,
             formState.city,

@@ -2,6 +2,7 @@ import {
   deleteEmailRecipient,
   updateEmailRecipient,
 } from "@/app/api/_services/settingsQueries";
+import { enforceSettingsAdminAuth } from "@/app/api/_services/settingsAdminAuth";
 import {
   isSettingsFormKind,
   normalizeSettingsEnvironment,
@@ -24,6 +25,9 @@ export async function action({
   request: Request;
   params: { recipientId: string };
 }) {
+  const authError = enforceSettingsAdminAuth(request);
+  if (authError) return authError;
+
   const id = parseId(params.recipientId);
   if (!id) {
     return Response.json({ message: "Invalid recipient id." }, { status: 400 });

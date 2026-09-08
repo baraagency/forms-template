@@ -130,7 +130,8 @@ Prefer darkening `color-mix` tokens over changing brand hues when a pair fails.
 - Subsections use `.settings-fub-subsection` inset surface (see Depth)
 - Person stages: flat list from `/api/fub/stages`
 - Deal stages: from `/api/fub/pipelines` nested stages; display label `Pipeline · Stage` (SelectInput flattens optgroups)
-- Desired stage: one row per form+target (`client_type` null); save immediately on Select change via `PUT /api/forms/settings/fub/stages`
+- Desired stage: one row per form+target+`client_type` (`Buyer` / `Seller`); save immediately on Select change via `PUT /api/forms/settings/fub/stages`
+- Person tags: separate Buyer / Seller lists (`client_type` on `form_fub_tags`)
 
 ### Pill toggle
 

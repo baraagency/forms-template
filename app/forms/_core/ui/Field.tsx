@@ -11,7 +11,7 @@ export function Field({
   invalid,
   children,
 }: {
-  label: string;
+  label?: string;
   htmlFor: string;
   required?: boolean;
   hint?: string;
@@ -20,19 +20,21 @@ export function Field({
 }) {
   return (
     <BaseField.Root className="bara-field" invalid={invalid}>
-      <div className="bara-field__label-row">
-        <BaseField.Label
-          htmlFor={htmlFor}
-          className={joinClassNames(
-            baseLabelClassName,
-            hint && "bara-label--hinted",
-          )}
-        >
-          {label}
-          {required ? <span className="bara-required-marker">*</span> : null}
-        </BaseField.Label>
-        {hint ? <p className="bara-field__hint">{hint}</p> : null}
-      </div>
+      {label ? (
+        <div className="bara-field__label-row">
+          <BaseField.Label
+            htmlFor={htmlFor}
+            className={joinClassNames(
+              baseLabelClassName,
+              hint && "bara-label--hinted",
+            )}
+          >
+            {label}
+            {required ? <span className="bara-required-marker">*</span> : null}
+          </BaseField.Label>
+          {hint ? <p className="bara-field__hint">{hint}</p> : null}
+        </div>
+      ) : null}
       {children}
     </BaseField.Root>
   );

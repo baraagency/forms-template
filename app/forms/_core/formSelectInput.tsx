@@ -1,5 +1,6 @@
 import { Combobox } from "@base-ui/react/combobox";
 import type { ComponentProps } from "react";
+import { useEffect, useRef, useState } from "react";
 import { fieldSelectA11yProps } from "./useFieldIds";
 import { FieldError } from "./FieldError";
 import {
@@ -62,6 +63,30 @@ function ClearIcon(props: ComponentProps<"svg">) {
   );
 }
 
+function resolveSearchQueryFromInputEvent(
+  next: string,
+  selectedLabel: string,
+  event: Event | undefined,
+): string {
+  if (event instanceof InputEvent) {
+    if (
+      event.inputType === "deleteContentBackward" ||
+      event.inputType === "deleteContentForward"
+    ) {
+      return "";
+    }
+    if (event.data != null && event.data !== "") {
+      return event.data;
+    }
+  }
+
+  if (next.startsWith(selectedLabel) && next.length > selectedLabel.length) {
+    return next.slice(selectedLabel.length);
+  }
+
+  return next === selectedLabel ? "" : next;
+}
+
 /**
  * Searchable select field with a portaled menu and existing bara-select styles.
  */
@@ -81,13 +106,24 @@ export function FormSelectInput({
   ...props
 }: FormSelectInputProps) {
   const { options, placeholder } = getSelectOptions(children);
-  const placeholderText = placeholder ?? `Select ${label.toLowerCase()}`;
+  const placeholderText =
+    placeholder ?? (label ? `Select ${label.toLowerCase()}` : "Select an option");
   const selectedOption = value
     ? (options.find((option) => option.value === value) ?? {
         value,
         label: value,
       })
     : null;
+  const selectedLabel = selectedOption?.label ?? "";
+  const isFilterActiveRef = useRef(false);
+  const [inputValue, setInputValue] = useState(selectedLabel);
+
+  useEffect(() => {
+    if (!isFilterActiveRef.current) {
+      setInputValue(selectedLabel);
+    }
+  }, [selectedLabel]);
+
   const isDisabled = Boolean(props.disabled) || isLoading;
   const a11y = fieldSelectA11yProps(id, error);
   const comboboxItems = selectedOption
@@ -108,15 +144,59 @@ export function FormSelectInput({
         <Combobox.Root
           items={comboboxItems}
           value={selectedOption}
+          inputValue={inputValue}
           onValueChange={(nextValue) => {
+            isFilterActiveRef.current = false;
+            const nextLabel = nextValue?.label ?? "";
+            setInputValue(nextLabel);
             onChange?.({
               target: {
                 value: nextValue?.value ?? "",
               },
             } as SelectChangeEvent);
           }}
-          onInputValueChange={(inputValue) => {
-            onSearchInputChange?.(inputValue);
+          onOpenChange={(open) => {
+            if (!open) {
+              isFilterActiveRef.current = false;
+              setInputValue(selectedLabel);
+            }
+          }}
+          onInputValueChange={(next, eventDetails) => {
+            if (eventDetails.isCanceled) {
+              return;
+            }
+
+            const reason = eventDetails.reason;
+
+            if (reason === "input-clear") {
+              isFilterActiveRef.current = next !== "";
+              setInputValue(next);
+              onSearchInputChange?.(next);
+              return;
+            }
+
+            if (
+              reason === "input-change" &&
+              selectedOption &&
+              !isFilterActiveRef.current
+            ) {
+              isFilterActiveRef.current = true;
+              const query = resolveSearchQueryFromInputEvent(
+                next,
+                selectedLabel,
+                eventDetails.event,
+              );
+              setInputValue(query);
+              onSearchInputChange?.(query);
+              return;
+            }
+
+            if (reason === "input-change") {
+              isFilterActiveRef.current = true;
+            }
+
+            setInputValue(next);
+            onSearchInputChange?.(next);
           }}
           isItemEqualToValue={(left, right) => left.value === right.value}
           disabled={isDisabled}
@@ -147,6 +227,7 @@ export function FormSelectInput({
                 id={id}
                 placeholder={placeholderText}
                 disabled={isDisabled}
+                aria-label={label ?? props["aria-label"]}
                 aria-invalid={a11y["aria-invalid"]}
                 aria-errormessage={a11y["aria-errormessage"]}
                 aria-busy={isLoading || undefined}

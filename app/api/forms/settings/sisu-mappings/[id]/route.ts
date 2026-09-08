@@ -1,4 +1,5 @@
 import { updateSisuMapping } from "@/app/api/_services/settingsQueries";
+import { enforceSettingsAdminAuth } from "@/app/api/_services/settingsAdminAuth";
 
 function parseId(value: string): number | null {
   const parsed = Number(value);
@@ -12,6 +13,9 @@ export async function action({
   request: Request;
   params: { id: string };
 }) {
+  const authError = enforceSettingsAdminAuth(request);
+  if (authError) return authError;
+
   if (request.method !== "PATCH") {
     return Response.json({ message: "Method not allowed." }, { status: 405 });
   }

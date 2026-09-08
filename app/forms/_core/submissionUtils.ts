@@ -88,6 +88,7 @@ export type SubmissionRouteParams = {
   personId?: string;
   agentId?: string;
   dealId?: string;
+  dealName?: string;
   clientName?: string;
   agentName?: string;
   address?: string;
@@ -146,6 +147,7 @@ export function buildPostSubmissionHref({
   personId,
   agentId,
   dealId,
+  dealName,
   clientName,
   agentName,
   address,
@@ -158,6 +160,7 @@ export function buildPostSubmissionHref({
   appendOptionalParam(params, "personId", personId);
   appendOptionalParam(params, "agentId", agentId);
   appendOptionalDealIdParam(params, dealId);
+  appendOptionalParam(params, "dealName", dealName);
   appendOptionalParam(params, "clientName", clientName);
   appendOptionalParam(params, "agentName", agentName);
   appendOptionalParam(params, "address", address);
@@ -226,6 +229,29 @@ export function getSubmittedFubDealId(payload: unknown): string {
 
   const stringValue = String(value).trim();
   return stringValue ? stringValue : "";
+}
+
+export function getSubmittedFubDealName(payload: unknown): string {
+  if (typeof payload !== "object" || payload === null) {
+    return "";
+  }
+
+  const dealName = (payload as { dealName?: unknown }).dealName;
+  if (typeof dealName === "string" && dealName.trim()) {
+    return dealName.trim();
+  }
+
+  const deal = (payload as { deal?: unknown }).deal;
+  if (typeof deal !== "object" || deal === null) {
+    return "";
+  }
+
+  const name = (deal as Record<string, unknown>).name;
+  if (typeof name === "string" && name.trim()) {
+    return name.trim();
+  }
+
+  return "";
 }
 
 export function isSubmissionDebugEnvironment(environment: string | undefined): boolean {

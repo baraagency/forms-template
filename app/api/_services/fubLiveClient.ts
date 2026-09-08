@@ -425,3 +425,72 @@ export async function fetchLiveFubAppointmentTypes(): Promise<
     error: null,
   };
 }
+
+function collectTagsFromPeople(people: FUBPerson[]): string[] {
+  const tags = new Set<string>();
+  for (const person of people) {
+    for (const tag of person.tags ?? []) {
+      const trimmed = typeof tag === "string" ? tag.trim() : "";
+      if (trimmed) tags.add(trimmed);
+    }
+  }
+  return [...tags].sort((left, right) =>
+    left.localeCompare(right, undefined, { sensitivity: "base" }),
+  );
+}
+
+/**
+ * Discover tag strings from live FUB people records (fields=tags).
+ */
+export async function fetchLiveFubTags(): Promise<FubLiveResult<{ tags: string[] }>> {
+  if (!isFubApiEnabled()) {
+    return { data: null, error: "FUB_API_KEY is not configured.", status: 503 };
+  }
+
+  const tagSet = new Set<string>();
+  const limit = 100;
+  const maxPages = 5;
+
+  for (let page = 0; page < maxPages; page += 1) {
+    const params = new URLSearchParams({
+      fields: "tags",
+      limit: String(limit),
+      offset: String(page * limit),
+    });
+
+    const result = await fubRequest<FUBListPeopleResponse>(
+      "GET",
+      `/people?${params.toString()}`,
+    );
+
+    if (result.error || !result.data) {
+      if (page === 0) {
+        return {
+          data: null,
+          error: result.error ?? "Failed to load FUB tags.",
+          status: result.status,
+        };
+      }
+      break;
+    }
+
+    for (const tag of collectTagsFromPeople(result.data.people ?? [])) {
+      tagSet.add(tag);
+    }
+
+    const total = result.data._metadata?.total;
+    const fetched = (page + 1) * limit;
+    const peopleCount = result.data.people?.length ?? 0;
+    if (peopleCount < limit) break;
+    if (typeof total === "number" && fetched >= total) break;
+  }
+
+  return {
+    data: {
+      tags: [...tagSet].sort((left, right) =>
+        left.localeCompare(right, undefined, { sensitivity: "base" }),
+      ),
+    },
+    error: null,
+  };
+}

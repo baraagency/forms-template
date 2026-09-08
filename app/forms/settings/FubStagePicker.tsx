@@ -12,6 +12,10 @@ import type {
 } from "@/app/types/fub";
 import type { FormFubStage, FubStageTarget } from "@/app/types/storage";
 import type { SettingsFormKind } from "../_core/formIdentity";
+import {
+  normalizeFubClientType,
+  type FubClientType,
+} from "../_core/fubClientTypeSettings";
 
 async function readJson<T>(response: Response): Promise<T> {
   const payload = (await response.json()) as T & { message?: string };
@@ -24,10 +28,13 @@ async function readJson<T>(response: Response): Promise<T> {
 function desiredStageForTarget(
   stages: FormFubStage[],
   target: FubStageTarget,
+  clientType: FubClientType | null,
 ): FormFubStage | null {
   return (
     stages.find(
-      (stage) => stage.target === target && stage.client_type === null,
+      (stage) =>
+        stage.target === target &&
+        normalizeFubClientType(stage.client_type) === clientType,
     ) ?? null
   );
 }
@@ -46,6 +53,7 @@ function parseStageId(value: string | number): number | null {
 export function DesiredStagePicker({
   formKind,
   target,
+  clientType,
   label,
   description,
   options,
@@ -55,8 +63,9 @@ export function DesiredStagePicker({
 }: {
   formKind: SettingsFormKind;
   target: FubStageTarget;
-  label: string;
-  description: string;
+  clientType: FubClientType | null;
+  label?: string;
+  description?: string;
   options: StageOption[];
   optionsLoading: boolean;
   optionsError: string | null;
@@ -77,7 +86,7 @@ export function DesiredStagePicker({
         ),
       );
       setSavedStages(payload.stages);
-      const desired = desiredStageForTarget(payload.stages, target);
+      const desired = desiredStageForTarget(payload.stages, target, clientType);
       setSelectedId(desired ? String(desired.stage_id) : "");
       setError(null);
     } catch (loadError) {
@@ -89,7 +98,7 @@ export function DesiredStagePicker({
     } finally {
       setLoading(false);
     }
-  }, [formKind, target]);
+  }, [formKind, target, clientType]);
 
   useEffect(() => {
     void reload();
@@ -98,7 +107,7 @@ export function DesiredStagePicker({
   const selectedStillPresent = options.some(
     (option) => String(option.id) === selectedId,
   );
-  const desired = desiredStageForTarget(savedStages, target);
+  const desired = desiredStageForTarget(savedStages, target, clientType);
 
   const displayOptions = useMemo(() => {
     if (!nested) {
@@ -114,7 +123,9 @@ export function DesiredStagePicker({
 
   return (
     <div className="settings-panel-body settings-fub-stage-picker">
-      <p className="settings-section-description">{description}</p>
+      {description ? (
+        <p className="settings-section-description">{description}</p>
+      ) : null}
       {error ? <Notice tone="warning">{error}</Notice> : null}
       {optionsError ? <Notice tone="warning">{optionsError}</Notice> : null}
       {loading || optionsLoading ? (
@@ -124,8 +135,9 @@ export function DesiredStagePicker({
         </p>
       ) : (
         <FormSelectInput
-          id={`${formKind}-${target}-desired-stage`}
+          id={`${formKind}-${target}-${clientType ?? "general"}-desired-stage`}
           label={label}
+          aria-label={`${clientType ?? "General"} ${target} stage`}
           value={selectedId}
           disabled={saving}
           onChange={async (event) => {
@@ -149,6 +161,7 @@ export function DesiredStagePicker({
                   body: JSON.stringify({
                     form: formKind,
                     target,
+                    client_type: clientType,
                     stage_id: nextId,
                     stage_name: nextName,
                   }),

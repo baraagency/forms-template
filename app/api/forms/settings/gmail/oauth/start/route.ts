@@ -3,13 +3,17 @@ import {
   buildGmailOAuthStartUrl,
   isGmailOAuthConfigured,
 } from "@/app/api/_services/gmailOAuthService";
+import { enforceSettingsAdminAuth } from "@/app/api/_services/settingsAdminAuth";
 
 function setOAuthCookieHeader(state: string) {
   const secure = process.env.NODE_ENV === "production" ? "; Secure" : "";
   return `gmail_oauth_state=${state}; Path=/; HttpOnly; SameSite=Lax; Max-Age=600${secure}`;
 }
 
-export async function loader() {
+export async function loader({ request }: { request: Request }) {
+  const authError = enforceSettingsAdminAuth(request);
+  if (authError) return authError;
+
   if (!isGmailOAuthConfigured()) {
     return Response.json(
       {

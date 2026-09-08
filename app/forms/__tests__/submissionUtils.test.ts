@@ -9,6 +9,7 @@ import {
   FORM_SUBMIT_REQUEST_TIMEOUT_MS,
   getFormSubmitFailureMessage,
   getSubmittedFubDealId,
+  getSubmittedFubDealName,
   getSubmittedSisuTransactionId,
   getSubmissionErrorMessage,
   getSubmissionSummaryEmailWarning,
@@ -84,6 +85,12 @@ describe("submissionUtils", () => {
       "6495593",
     );
     expect(getSubmittedFubDealId({ dealId: "456" })).toBe("456");
+    expect(
+      getSubmittedFubDealName({ dealName: "John TestLead - Buyer consultation" }),
+    ).toBe("John TestLead - Buyer consultation");
+    expect(getSubmittedFubDealName({ deal: { name: "Listing deal" } })).toBe(
+      "Listing deal",
+    );
   });
 
   it("detects submission debug environments", () => {

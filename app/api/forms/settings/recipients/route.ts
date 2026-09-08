@@ -2,6 +2,7 @@ import {
   createEmailRecipient,
   listEmailRecipients,
 } from "@/app/api/_services/settingsQueries";
+import { enforceSettingsAdminAuth } from "@/app/api/_services/settingsAdminAuth";
 import {
   isSettingsFormKind,
   normalizeSettingsEnvironment,
@@ -13,6 +14,9 @@ function isValidEmail(value: string): boolean {
 }
 
 export async function loader({ request }: { request: Request }) {
+  const authError = enforceSettingsAdminAuth(request);
+  if (authError) return authError;
+
   const environment = normalizeSettingsEnvironment();
   const formParam = new URL(request.url).searchParams.get("form");
   const formType = formParam ? parseFormKindParam(formParam) : null;
@@ -44,6 +48,9 @@ export async function loader({ request }: { request: Request }) {
 }
 
 export async function action({ request }: { request: Request }) {
+  const authError = enforceSettingsAdminAuth(request);
+  if (authError) return authError;
+
   if (request.method !== "POST") {
     return Response.json({ message: "Method not allowed." }, { status: 405 });
   }

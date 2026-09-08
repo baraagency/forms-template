@@ -368,12 +368,13 @@ export async function listFubStages(
 }
 
 /**
- * Sets the single desired stage for a form + target (null client_type).
- * Clears prior desired stages for that pair, then inserts the new row when provided.
+ * Sets the single desired stage for a form + target + client type.
+ * Clears prior desired stages for that triple, then inserts the new row when provided.
  */
 export async function setDesiredFubStage(input: {
   form: FormKind;
   target: FubStageTarget;
+  client_type: string | null;
   stage_id: number | null;
   stage_name?: string | null;
 }): Promise<StorageResult<FormFubStage | null>> {
@@ -387,8 +388,8 @@ export async function setDesiredFubStage(input: {
     await client.query("BEGIN");
     await client.query(
       `DELETE FROM form_fub_stages
-       WHERE form = $1 AND target = $2 AND client_type IS NULL`,
-      [input.form, input.target],
+       WHERE form = $1 AND target = $2 AND client_type IS NOT DISTINCT FROM $3`,
+      [input.form, input.target, input.client_type],
     );
 
     if (input.stage_id === null) {
@@ -399,12 +400,13 @@ export async function setDesiredFubStage(input: {
     const result = await client.query<FormFubStage>(
       `INSERT INTO form_fub_stages
          (form, target, client_type, stage_id, stage_name, enabled)
-       VALUES ($1, $2, NULL, $3, $4, TRUE)
+       VALUES ($1, $2, $3, $4, $5, TRUE)
        RETURNING id, form, target, client_type, stage_id, stage_name, enabled,
                  created_at, updated_at`,
       [
         input.form,
         input.target,
+        input.client_type,
         input.stage_id,
         input.stage_name?.trim() || null,
       ],
@@ -554,10 +556,10 @@ export async function listFubTags(
 
   try {
     const result = await poolResult.data.query<FormFubTag>(
-      `SELECT id, form, tag, enabled, created_at, updated_at
+      `SELECT id, form, client_type, tag, enabled, created_at, updated_at
        FROM form_fub_tags
        WHERE form = $1
-       ORDER BY lower(tag) ASC`,
+       ORDER BY client_type ASC NULLS LAST, lower(tag) ASC`,
       [form],
     );
     return { data: result.rows, error: null };
@@ -571,6 +573,7 @@ export async function listFubTags(
 
 export async function createFubTag(input: {
   form: FormKind;
+  client_type: string | null;
   tag: string;
   enabled?: boolean;
 }): Promise<StorageResult<FormFubTag>> {
@@ -581,10 +584,10 @@ export async function createFubTag(input: {
 
   try {
     const result = await poolResult.data.query<FormFubTag>(
-      `INSERT INTO form_fub_tags (form, tag, enabled)
-       VALUES ($1, $2, $3)
-       RETURNING id, form, tag, enabled, created_at, updated_at`,
-      [input.form, input.tag.trim(), input.enabled ?? true],
+      `INSERT INTO form_fub_tags (form, client_type, tag, enabled)
+       VALUES ($1, $2, $3, $4)
+       RETURNING id, form, client_type, tag, enabled, created_at, updated_at`,
+      [input.form, input.client_type, input.tag.trim(), input.enabled ?? true],
     );
     return { data: result.rows[0], error: null };
   } catch (error) {
@@ -621,7 +624,7 @@ export async function updateFubTag(
     const result = await poolResult.data.query<FormFubTag>(
       `UPDATE form_fub_tags SET ${sets.join(", ")}
        WHERE id = $1
-       RETURNING id, form, tag, enabled, created_at, updated_at`,
+       RETURNING id, form, client_type, tag, enabled, created_at, updated_at`,
       [id, ...values],
     );
     if (result.rows.length === 0) {
@@ -656,6 +659,64 @@ export async function deleteFubTag(id: number): Promise<StorageResult<boolean>> 
       data: null,
       error: error instanceof Error ? error.message : "Failed to delete FUB tag.",
     };
+  }
+}
+
+export async function replaceFubTagsForClientType(input: {
+  form: FormKind;
+  client_type: string | null;
+  tags: string[];
+}): Promise<StorageResult<FormFubTag[]>> {
+  const poolResult = requireDbPool();
+  if (poolResult.error || !poolResult.data) {
+    return { data: null, error: poolResult.error ?? "Database unavailable." };
+  }
+
+  const normalizedTags = [
+    ...new Set(
+      input.tags
+        .map((tag) => tag.trim())
+        .filter((tag) => tag.length > 0),
+    ),
+  ].sort((left, right) =>
+    left.localeCompare(right, undefined, { sensitivity: "base" }),
+  );
+
+  const client = await poolResult.data.connect();
+
+  try {
+    await client.query("BEGIN");
+    await client.query(
+      `DELETE FROM form_fub_tags WHERE form = $1 AND client_type IS NOT DISTINCT FROM $2`,
+      [input.form, input.client_type],
+    );
+
+    for (const tag of normalizedTags) {
+      await client.query(
+        `INSERT INTO form_fub_tags (form, client_type, tag, enabled)
+         VALUES ($1, $2, $3, true)`,
+        [input.form, input.client_type, tag],
+      );
+    }
+
+    const result = await client.query<FormFubTag>(
+      `SELECT id, form, client_type, tag, enabled, created_at, updated_at
+       FROM form_fub_tags
+       WHERE form = $1 AND client_type IS NOT DISTINCT FROM $2
+       ORDER BY lower(tag) ASC`,
+      [input.form, input.client_type],
+    );
+    await client.query("COMMIT");
+    return { data: result.rows, error: null };
+  } catch (error) {
+    await client.query("ROLLBACK").catch(() => undefined);
+    return {
+      data: null,
+      error:
+        error instanceof Error ? error.message : "Failed to replace FUB tags.",
+    };
+  } finally {
+    client.release();
   }
 }
 

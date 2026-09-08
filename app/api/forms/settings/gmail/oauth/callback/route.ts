@@ -3,6 +3,7 @@ import {
   exchangeGmailOAuthCode,
   getAppBaseUrl,
 } from "@/app/api/_services/gmailOAuthService";
+import { enforceSettingsAdminAuth } from "@/app/api/_services/settingsAdminAuth";
 
 function clearOAuthCookieHeader() {
   return "gmail_oauth_state=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0";
@@ -23,6 +24,9 @@ function settingsRedirect(params: Record<string, string>) {
 }
 
 export async function loader({ request }: { request: Request }) {
+  const authError = enforceSettingsAdminAuth(request);
+  if (authError) return authError;
+
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get("code");
   const state = requestUrl.searchParams.get("state");

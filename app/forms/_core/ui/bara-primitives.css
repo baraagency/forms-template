@@ -489,9 +489,16 @@
 }
 
 .bara-select__empty {
-  padding: 0.75rem;
   color: var(--placeholder-color);
   font-size: 0.875rem;
+}
+
+.bara-select__empty:empty {
+  display: none;
+}
+
+.bara-select__empty:not(:empty) {
+  padding: 0.75rem;
 }
 
 .bara-select__option {

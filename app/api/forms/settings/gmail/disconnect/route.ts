@@ -1,6 +1,10 @@
 import { disconnectGmailForCurrentEnvironment } from "@/app/api/_services/gmailOAuthService";
+import { enforceSettingsAdminAuth } from "@/app/api/_services/settingsAdminAuth";
 
 export async function action({ request }: { request: Request }) {
+  const authError = enforceSettingsAdminAuth(request);
+  if (authError) return authError;
+
   if (request.method !== "POST") {
     return Response.json({ message: "Method not allowed." }, { status: 405 });
   }

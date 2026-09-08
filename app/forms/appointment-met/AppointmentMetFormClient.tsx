@@ -46,6 +46,7 @@ import {
 import {
   buildPostSubmissionHref,
   getSubmittedFubDealId,
+  getSubmittedFubDealName,
   getSubmittedSisuTransactionId,
   getSubmissionErrorMessage,
   getSubmissionSummaryEmailWarning,
@@ -338,6 +339,7 @@ export function AppointmentMetFormClient({
           personId: formState.personId,
           agentId: formState.agentSubmitting || formState.agentId,
           dealId: getSubmittedFubDealId(payload) || formState.dealId,
+          dealName: getSubmittedFubDealName(payload),
           clientName: [formState.clientFirstName, formState.clientLastName]
             .filter(Boolean)
             .join(" "),

@@ -51,6 +51,7 @@ import {
   buildPostSubmissionHref,
   buildSubmittedAddress,
   getSubmittedFubDealId,
+  getSubmittedFubDealName,
   getSubmittedSisuTransactionId,
   getSubmissionErrorMessage,
   getSubmissionSummaryEmailWarning,
@@ -512,6 +513,7 @@ export function PendingFormClient({
           personId: formState.personId,
           agentId: formState.agentId,
           dealId: getSubmittedFubDealId(payload) || formState.dealId,
+          dealName: getSubmittedFubDealName(payload),
           agentName: routedAgentName,
           clientName: [formState.clientFirstName, formState.clientLastName]
             .filter(Boolean)

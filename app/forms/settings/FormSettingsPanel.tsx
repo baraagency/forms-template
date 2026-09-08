@@ -2,10 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import {
   Notice,
   Spinner,
-  TextInput,
-  secondaryButtonClassName,
 } from "../_core/ui";
-import { PrimaryButton } from "../_core/PrimaryButton";
 import type {
   FormFubDealMapping,
   FormFubPersonMapping,
@@ -24,10 +21,17 @@ import {
   useDealStageOptions,
   usePersonStageOptions,
 } from "./FubStagePicker";
+import {
+  FUB_CLIENT_TYPES,
+  formSupportsFubClientType,
+  normalizeFubClientType,
+  type FubClientType,
+} from "../_core/fubClientTypeSettings";
 import { SisuMappingsTable } from "./SisuMappingsTable";
 import { FormRecipientsPanel } from "./GmailAndRecipientsPanels";
 import { PillToggle } from "./PillToggle";
 import { useRovingTabIndex } from "../_core/useRovingTabIndex";
+import { FubTagsMultiSelect, useFubTagOptions } from "./FubTagsMultiSelect";
 
 async function readJson<T>(response: Response): Promise<T> {
   const payload = (await response.json()) as T & { message?: string };
@@ -37,11 +41,23 @@ async function readJson<T>(response: Response): Promise<T> {
   return payload;
 }
 
-export function TagsEditor({ formKind }: { formKind: SettingsFormKind }) {
+export function TagsEditor({
+  formKind,
+  clientType,
+  fubTagOptions,
+  fubTagsLoading,
+  fubTagsError,
+}: {
+  formKind: SettingsFormKind;
+  clientType: FubClientType | null;
+  fubTagOptions: string[];
+  fubTagsLoading: boolean;
+  fubTagsError: string | null;
+}) {
   const [tags, setTags] = useState<FormFubTag[]>([]);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [tag, setTag] = useState("");
 
   const reload = useCallback(async () => {
     setLoading(true);
@@ -62,91 +78,69 @@ export function TagsEditor({ formKind }: { formKind: SettingsFormKind }) {
     }
   }, [formKind]);
 
+  const clientTags = tags.filter(
+    (row) => normalizeFubClientType(row.client_type) === clientType,
+  );
+  const selectedTags = clientTags
+    .filter((row) => row.enabled)
+    .map((row) => row.tag);
+
   useEffect(() => {
     void reload();
   }, [reload]);
 
+  const saveTags = async (nextTags: string[]) => {
+    setSaving(true);
+    try {
+      const payload = await readJson<{ tags: FormFubTag[] }>(
+        await fetch("/api/forms/settings/fub/tags", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            form: formKind,
+            client_type: clientType,
+            tags: nextTags,
+          }),
+        }),
+      );
+      setTags((current) => {
+        const otherClientTags = current.filter(
+          (row) => normalizeFubClientType(row.client_type) !== clientType,
+        );
+        return [...otherClientTags, ...payload.tags];
+      });
+      setError(null);
+    } catch (saveError) {
+      setError(
+        saveError instanceof Error ? saveError.message : "Failed to save tags.",
+      );
+      await reload();
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="settings-panel-body">
+        <Spinner />
+      </div>
+    );
+  }
+
   return (
     <div className="settings-panel-body">
       {error ? <Notice tone="warning">{error}</Notice> : null}
-      {loading ? (
-        <Spinner />
-      ) : tags.length === 0 ? (
-        <p className="settings-hint">No tags configured yet.</p>
-      ) : (
-        <div className="settings-recipient-list">
-          {tags.map((row) => (
-            <div key={row.id} className="settings-recipient-row">
-              <p className="settings-recipient-email">{row.tag}</p>
-              <div className="settings-recipient-actions">
-                <PillToggle
-                  label="Enabled"
-                  checked={row.enabled}
-                  onChange={async (enabled) => {
-                    await readJson(
-                      await fetch(`/api/forms/settings/fub/tags/${row.id}`, {
-                        method: "PATCH",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ enabled }),
-                      }),
-                    );
-                    await reload();
-                  }}
-                />
-                <button
-                  type="button"
-                  className={`app-button-press ${secondaryButtonClassName}`}
-                  onClick={async () => {
-                    await readJson(
-                      await fetch(`/api/forms/settings/fub/tags/${row.id}`, {
-                        method: "DELETE",
-                      }),
-                    );
-                    await reload();
-                  }}
-                >
-                  Remove
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      <form
-        className="settings-dynamic-recipient-form"
-        onSubmit={async (event) => {
-          event.preventDefault();
-          try {
-            await readJson(
-              await fetch("/api/forms/settings/fub/tags", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ form: formKind, tag }),
-              }),
-            );
-            setTag("");
-            await reload();
-          } catch (createError) {
-            setError(
-              createError instanceof Error
-                ? createError.message
-                : "Failed to add tag.",
-            );
-          }
-        }}
-      >
-        <TextInput
-          id={`${formKind}-new-tag`}
-          label="Tag"
-          value={tag}
-          onChange={(event) => setTag(event.target.value)}
-          required
-        />
-        <div className="settings-dynamic-recipient-actions">
-          <PrimaryButton type="submit">Add tag</PrimaryButton>
-        </div>
-      </form>
+      <FubTagsMultiSelect
+        id={`${formKind}-${clientType ?? "general"}-tags`}
+        ariaLabel={`${clientType ?? "General"} tags`}
+        value={selectedTags}
+        options={fubTagOptions}
+        optionsLoading={fubTagsLoading}
+        optionsError={fubTagsError}
+        saving={saving}
+        onChange={saveTags}
+      />
     </div>
   );
 }
@@ -168,6 +162,12 @@ function FubPersonSection({
 }) {
   const personStages = usePersonStageOptions();
   const personFields = useFubPersonFieldKeys();
+  const fubTagCatalog = useFubTagOptions();
+  const clientTypes: readonly (FubClientType | null)[] = formSupportsFubClientType(
+    formKind,
+  )
+    ? FUB_CLIENT_TYPES
+    : [null];
 
   return (
     <div
@@ -178,27 +178,35 @@ function FubPersonSection({
       hidden={hidden}
     >
       <p className="settings-section-description text-pretty">
-        Desired person stage, tags applied on submit, and field mappings into a
-        Follow Up Boss person record.
+        {clientTypes.length > 1
+          ? "Desired person stages and tags by client type, plus field mappings into a Follow Up Boss person record."
+          : "Desired person stage and tags, plus field mappings into a Follow Up Boss person record."}
       </p>
 
       <div className="settings-fub-subsections">
-        <div className="settings-fub-subsection">
-          <h4 className="settings-subsection-title">Stage</h4>
-          <DesiredStagePicker
-            formKind={formKind}
-            target="person"
-            label="Desired person stage"
-            description="Choose the Follow Up Boss person stage to set after submit."
-            options={personStages.options}
-            optionsLoading={personStages.loading}
-            optionsError={personStages.error}
-          />
-        </div>
-
-        <div className="settings-fub-subsection">
-          <h4 className="settings-subsection-title">Tags</h4>
-          <TagsEditor formKind={formKind} />
+        <div className="settings-fub-client-type-grid">
+          {clientTypes.map((clientType) => (
+            <div key={clientType ?? "general"} className="settings-fub-subsection">
+              <h4 className="settings-subsection-title">{clientType ?? "General"}</h4>
+              <h5 className="settings-subsection-eyebrow">Stage</h5>
+              <DesiredStagePicker
+                formKind={formKind}
+                target="person"
+                clientType={clientType}
+                options={personStages.options}
+                optionsLoading={personStages.loading}
+                optionsError={personStages.error}
+              />
+              <h5 className="settings-subsection-eyebrow">Tags</h5>
+              <TagsEditor
+                formKind={formKind}
+                clientType={clientType}
+                fubTagOptions={fubTagCatalog.tags}
+                fubTagsLoading={fubTagCatalog.loading}
+                fubTagsError={fubTagCatalog.error}
+              />
+            </div>
+          ))}
         </div>
 
         <div className="settings-fub-subsection">
@@ -253,6 +261,11 @@ function FubDealSection({
 }) {
   const dealStages = useDealStageOptions();
   const dealFields = useFubDealFieldKeys();
+  const clientTypes: readonly (FubClientType | null)[] = formSupportsFubClientType(
+    formKind,
+  )
+    ? FUB_CLIENT_TYPES
+    : [null];
 
   return (
     <div
@@ -263,23 +276,28 @@ function FubDealSection({
       hidden={hidden}
     >
       <p className="settings-section-description text-pretty">
-        Desired deal stage from your pipelines, and field mappings into a Follow
-        Up Boss deal.
+        {clientTypes.length > 1
+          ? "Desired deal stages by client type from your pipelines, and field mappings into a Follow Up Boss deal."
+          : "Desired deal stage from your pipelines, and field mappings into a Follow Up Boss deal."}
       </p>
 
       <div className="settings-fub-subsections">
-        <div className="settings-fub-subsection">
-          <h4 className="settings-subsection-title">Stage</h4>
-          <DesiredStagePicker
-            formKind={formKind}
-            target="deal"
-            label="Desired deal stage"
-            description="Choose a pipeline stage to set on the deal after submit."
-            options={dealStages.options}
-            optionsLoading={dealStages.loading}
-            optionsError={dealStages.error}
-            nested
-          />
+        <div className="settings-fub-client-type-grid">
+          {clientTypes.map((clientType) => (
+            <div key={clientType ?? "general"} className="settings-fub-subsection">
+              <h4 className="settings-subsection-title">{clientType ?? "General"}</h4>
+              <h5 className="settings-subsection-eyebrow">Stage</h5>
+              <DesiredStagePicker
+                formKind={formKind}
+                target="deal"
+                clientType={clientType}
+                options={dealStages.options}
+                optionsLoading={dealStages.loading}
+                optionsError={dealStages.error}
+                nested
+              />
+            </div>
+          ))}
         </div>
 
         <div className="settings-fub-subsection">

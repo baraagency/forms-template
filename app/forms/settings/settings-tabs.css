@@ -177,9 +177,28 @@
   text-wrap: balance;
 }
 
+.settings-subsection-eyebrow {
+  color: var(--body-color);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.settings-fub-client-type-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+
 .settings-fub-stage-picker {
   display: grid;
   gap: 10px;
+}
+
+.settings-fub-stage-picker .bara-select__control {
+  margin-top: 0;
 }
 
 .settings-mapping-form-field {
@@ -325,6 +344,10 @@
 }
 
 @media (max-width: 900px) {
+  .settings-fub-client-type-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   .settings-mapping-table__head {
     display: none;
   }

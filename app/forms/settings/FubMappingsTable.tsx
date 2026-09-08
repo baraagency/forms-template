@@ -16,7 +16,7 @@ import { FormSelectInput } from "../_core/formSelectInput";
 import { PrimaryButton } from "../_core/PrimaryButton";
 import { FormEmptyState } from "../_core/FormEmptyState";
 import { FormNotice } from "../_core/FormNotice";
-import { getFormFieldLabel, sortByFormFieldAppearanceOrder } from "./formFieldCatalog";
+import { getFormFieldLabel, sortMappingsByMappedFirst } from "./formFieldCatalog";
 
 const ROWS_PER_PAGE = 5;
 
@@ -117,7 +117,11 @@ export function FubMappingsTable({
           return haystack.includes(normalizedSearch);
         });
 
-    return sortByFormFieldAppearanceOrder(formKind, matched);
+    return sortMappingsByMappedFirst(formKind, matched, (row) => {
+      const draft = drafts[row.id];
+      const fubFieldName = (draft?.fubFieldName ?? row.fub_field_name ?? "").trim();
+      return fubFieldName.length > 0;
+    });
   }, [drafts, formKind, normalizedSearch, rows]);
 
   useEffect(() => {

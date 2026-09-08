@@ -2,6 +2,7 @@
   "formType": "appointmentSet",
   "message": "Appointment Set workflow complete (mock).",
   "dealId": 456,
+  "dealName": "Jane Client - Buyer consultation",
   "appointmentId": "appt-1001",
   "transaction": {
     "transaction_id": 789,

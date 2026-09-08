@@ -197,3 +197,25 @@ export function sortByFormFieldAppearanceOrder<
     compareFormFieldsByAppearanceOrder(form, left.field_name, right.field_name),
   );
 }
+
+/** Mapped rows first; within each group, preserve form field appearance order. */
+export function sortMappingsByMappedFirst<
+  T extends { field_name: string },
+>(
+  form: SettingsFormKind,
+  rows: readonly T[],
+  isMapped: (row: T) => boolean,
+): T[] {
+  return [...rows].sort((left, right) => {
+    const leftMapped = isMapped(left);
+    const rightMapped = isMapped(right);
+    if (leftMapped !== rightMapped) {
+      return leftMapped ? -1 : 1;
+    }
+    return compareFormFieldsByAppearanceOrder(
+      form,
+      left.field_name,
+      right.field_name,
+    );
+  });
+}

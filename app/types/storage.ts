@@ -163,6 +163,7 @@ export type FormFubStageInsert = {
 export type FormFubTag = {
   id: number;
   form: FormKind;
+  client_type: string | null;
   tag: string;
   enabled: boolean;
   created_at: Date;
@@ -171,6 +172,7 @@ export type FormFubTag = {
 
 export type FormFubTagInsert = {
   form: FormKind;
+  client_type?: string | null;
   tag: string;
   enabled?: boolean;
   created_at?: Date | string;

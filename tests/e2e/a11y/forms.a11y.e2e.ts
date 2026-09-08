@@ -1,5 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
+import { unlockSettingsIfNeeded } from "../utils/settingsAuth";
 
 const WCAG_TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"] as const;
 
@@ -93,11 +94,26 @@ test.describe("accessibility", () => {
     await expectNoCriticalViolations(page);
   });
 
+  test("settings login panel has no critical axe violations", async ({ page }) => {
+    test.skip(
+      !process.env.ADMIN_PASSWORD,
+      "ADMIN_PASSWORD is unset, so /forms/settings never shows the login panel.",
+    );
+
+    await page.goto("/forms/settings");
+    await expect(page.getByRole("heading", { name: /form settings/i })).toBeVisible({
+      timeout: 15_000,
+    });
+    await expect(page.getByLabel(/admin password/i)).toBeVisible();
+    await expectNoCriticalViolations(page);
+  });
+
   test("settings has no critical axe violations", async ({ page }) => {
     await page.goto("/forms/settings");
     await expect(page.getByRole("heading", { name: /form settings/i })).toBeVisible({
       timeout: 15_000,
     });
+    await unlockSettingsIfNeeded(page);
     await expectNoCriticalViolations(page);
   });
 
@@ -138,6 +154,10 @@ test.describe("accessibility", () => {
 
   test("settings tabs respond to arrow keys", async ({ page }) => {
     await page.goto("/forms/settings");
+    await expect(page.getByRole("heading", { name: /form settings/i })).toBeVisible({
+      timeout: 15_000,
+    });
+    await unlockSettingsIfNeeded(page);
     await expect(page.getByRole("tab", { name: /appointment set/i })).toBeVisible({
       timeout: 15_000,
     });

@@ -2,6 +2,7 @@ import { describe, expect, it } from "bun:test";
 import {
   compareFormFieldsByAppearanceOrder,
   sortByFormFieldAppearanceOrder,
+  sortMappingsByMappedFirst,
 } from "../formFieldCatalog";
 
 describe("sortByFormFieldAppearanceOrder", () => {
@@ -41,5 +42,27 @@ describe("sortByFormFieldAppearanceOrder", () => {
         "notes",
       ),
     ).toBeLessThan(0);
+  });
+});
+
+describe("sortMappingsByMappedFirst", () => {
+  it("lists mapped rows before unmapped rows", () => {
+    const sorted = sortMappingsByMappedFirst(
+      "pending",
+      [
+        { field_name: "clientFirstName", mapped: false },
+        { field_name: "clientLastName", mapped: true },
+        { field_name: "clientEmail", mapped: false },
+        { field_name: "clientType", mapped: true },
+      ],
+      (row) => row.mapped,
+    );
+
+    expect(sorted.map((row) => row.field_name)).toEqual([
+      "clientLastName",
+      "clientType",
+      "clientFirstName",
+      "clientEmail",
+    ]);
   });
 });

@@ -5,7 +5,7 @@ React Router v8 (Framework mode) template for Follow Up Boss embedded forms with
 ## What's included
 
 - Form router (`/forms`) with FUB embedded context verification
-- Form settings (`/forms/settings`) — Gmail, recipients, per-form visibility and mappings
+- Form settings (`/forms/settings`) — Gmail, recipients, per-form visibility and mappings (password-protected when `ADMIN_PASSWORD` is set)
 - Pending form example (`/forms/pending`) — multi-step intake UI
 - Appointment Set form example (`/forms/appointment-set`)
 - Appointment Met form example (`/forms/appointment-met`)
@@ -87,6 +87,8 @@ docker run --rm -d --name forms-pg \
 ```
 
 Gmail OAuth on `/forms/settings` needs `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, and optionally `GOOGLE_REDIRECT_URI` / `APP_BASE_URL` (defaults assume `http://localhost:5173`).
+
+Set `ADMIN_PASSWORD` to require a password before opening `/forms/settings` or calling settings APIs.
 
 ## Deploy (Heroku)
 

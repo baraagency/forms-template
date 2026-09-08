@@ -23,9 +23,51 @@ const transactionTypeCandidates = [
   "rentals_63",
 ] as const;
 
+const clientTypeFallbackOptions: TeamFieldSelectOption[] = [
+  { value: "Buyer", label: "Buyer" },
+  { value: "Seller", label: "Seller" },
+];
+
+const clientTypeCandidates = [
+  "clientType",
+  "client_type",
+  "Client Type",
+  "lead_type_id",
+  "type_id",
+] as const;
+
 export type ClosedSelectOptions = {
   transactionTypeOptions: TeamFieldSelectOption[];
+  clientTypeOptions: TeamFieldSelectOption[];
 };
+
+function normalizeSelection(value: string): string {
+  return value.trim().toLowerCase();
+}
+
+function normalizeClientTypeOptions(
+  options: TeamFieldSelectOption[],
+): TeamFieldSelectOption[] {
+  const normalizedOptions = options
+    .map((option) => {
+      const labelValue = normalizeSelection(option.label);
+      const optionValue = normalizeSelection(option.value);
+
+      if (labelValue === "buyer" || optionValue === "buyer") {
+        return { value: "Buyer", label: option.label || "Buyer" };
+      }
+      if (labelValue === "seller" || optionValue === "seller") {
+        return { value: "Seller", label: option.label || "Seller" };
+      }
+
+      return null;
+    })
+    .filter((option): option is TeamFieldSelectOption => option !== null);
+
+  return normalizedOptions.length >= 2
+    ? normalizedOptions
+    : clientTypeFallbackOptions;
+}
 
 export function getClosedSelectOptions(fields: TeamFieldCatalog): ClosedSelectOptions {
   return {
@@ -34,11 +76,14 @@ export function getClosedSelectOptions(fields: TeamFieldCatalog): ClosedSelectOp
       [...transactionTypeCandidates],
       transactionTypeFallbackOptions,
     ),
+    clientTypeOptions: normalizeClientTypeOptions(
+      getTeamFieldOptions(fields, [...clientTypeCandidates], clientTypeFallbackOptions),
+    ),
   };
 }
 
-function normalizeSelection(value: string): string {
-  return value.trim().toLowerCase();
+export function isSellerClientTypeSelection(value: string): boolean {
+  return normalizeSelection(value) === "seller";
 }
 
 export function resolveTransactionTypeOption(

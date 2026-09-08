@@ -177,10 +177,12 @@ export function ClosedFormClient({
   );
   const [submitMessage, setSubmitMessage] = useState<string | null>(null);
 
-  const transactionTypeOptions = useMemo(
-    () => getClosedSelectOptions(teamFields).transactionTypeOptions,
+  const closedSelectOptions = useMemo(
+    () => getClosedSelectOptions(teamFields),
     [teamFields],
   );
+  const transactionTypeOptions = closedSelectOptions.transactionTypeOptions;
+  const clientTypeOptions = closedSelectOptions.clientTypeOptions;
   const showLeaseRentalFields = isLeaseOrRentalSelection(
     formState.transactionType,
     transactionTypeOptions,
@@ -455,6 +457,28 @@ export function ClosedFormClient({
         >
           <div>
             <SectionCard title="Transaction Data">
+              <FieldGroup>
+                <div>
+                  <FormSelectInput
+                    id="clientType"
+                    label="Client Type"
+                    value={formState.clientType}
+                    required
+                    onChange={(event) =>
+                      updateField("clientType", event.target.value)
+                    }
+                    error={errors.clientType}
+                  >
+                    <option value="">Select type...</option>
+                    {clientTypeOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </FormSelectInput>
+                </div>
+              </FieldGroup>
+
               <FieldGroup>
                 <div>
                   <FormSelectInput

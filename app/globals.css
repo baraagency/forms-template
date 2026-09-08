@@ -286,7 +286,9 @@ body {
 
 .app-footer__text {
     margin: 0;
-    color: var(--placeholder-color);
+    /* --placeholder-color fails WCAG AA (4.49:1) on --background for real text;
+       --body-color is verified ≥4.5:1 (see its definition above). */
+    color: var(--body-color);
     font-size: 0.8125rem;
     font-weight: 400;
     letter-spacing: 0.02em;

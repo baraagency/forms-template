@@ -42,6 +42,26 @@ const CLOSED_AMOUNT_FIELDS = new Set<keyof ClosedFormState>([
 
 const CLOSED_DATE_FIELDS = new Set<keyof ClosedFormState>(["settlementDate"]);
 
+function deriveClosedClientTypeFromSisu(transaction: SISUTransaction): string {
+  const typeId = readSisuValue(transaction, ["type_id"]).trim().toLowerCase();
+  if (typeId === "s" || typeId === "seller") {
+    return "Seller";
+  }
+  if (typeId === "b" || typeId === "buyer") {
+    return "Buyer";
+  }
+
+  const clientType = readSisuValue(transaction, ["client_type"]).trim().toLowerCase();
+  if (clientType === "seller") {
+    return "Seller";
+  }
+  if (clientType === "buyer") {
+    return "Buyer";
+  }
+
+  return "";
+}
+
 function parsePositiveId(value: string | undefined): boolean {
   if (!value?.trim()) {
     return false;
@@ -100,6 +120,7 @@ export function applyClosedSisuTransactionPrefill(
       current.personId || readSisuValue(transaction, [...CLOSED_SISU_FIELD_KEYS.fubId]),
     dealId:
       current.dealId || readSisuValue(transaction, [...CLOSED_SISU_FIELD_KEYS.fubDealId]),
+    clientType: current.clientType || deriveClosedClientTypeFromSisu(transaction),
   };
 
   for (const fieldName of Object.keys(CLOSED_SISU_FIELD_KEYS) as ClosedSisuFieldKey[]) {

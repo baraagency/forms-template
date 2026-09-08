@@ -5,47 +5,22 @@ function normalizeLeadTypeLabel(value: unknown): string {
 }
 
 /**
- * SISU expects client_type keys (0/1/2) and type_id (b/s), not UI labels like "Buyer".
+ * The Client Type field is mapped to SISU's type_id field. SISU expects
+ * type_id "b"/"s", not UI labels like "Buyer"/"Seller", so translate here.
  */
 export function normalizeSisuClientTypeFields(
   payload: SISUCreateTransactionRequest,
 ): SISUCreateTransactionRequest {
   const next: SISUCreateTransactionRequest = { ...payload };
-  const raw = next.client_type;
-  const normalized = normalizeLeadTypeLabel(raw);
+  const normalized = normalizeLeadTypeLabel(next.type_id);
 
-  if (
-    normalized === "buyer" ||
-    normalized === "0" ||
-    normalized === "b"
-  ) {
-    next.client_type = "0";
-    if (!next.type_id) {
-      next.type_id = "b";
-    }
+  if (normalized === "buyer" || normalized === "b") {
+    next.type_id = "b";
     return next;
   }
 
-  if (
-    normalized === "seller" ||
-    normalized === "1" ||
-    normalized === "s"
-  ) {
-    next.client_type = "1";
-    if (!next.type_id) {
-      next.type_id = "s";
-    }
-    return next;
-  }
-
-  if (
-    normalized === "buyerseller" ||
-    normalized === "buyer seller" ||
-    normalized === "buyer/seller" ||
-    normalized === "buyer and seller" ||
-    normalized === "2"
-  ) {
-    next.client_type = "2";
+  if (normalized === "seller" || normalized === "s") {
+    next.type_id = "s";
     return next;
   }
 

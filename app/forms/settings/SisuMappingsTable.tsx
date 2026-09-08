@@ -19,7 +19,11 @@ import { FormSelectInput } from "../_core/formSelectInput";
 import { PrimaryButton } from "../_core/PrimaryButton";
 import { FormEmptyState } from "../_core/FormEmptyState";
 import { FormNotice } from "../_core/FormNotice";
-import { getFormFieldLabel, sortMappingsByMappedFirst } from "./formFieldCatalog";
+import {
+  getFormFieldLabel,
+  isLockedClientTypeSisuMapping,
+  sortMappingsByMappedFirst,
+} from "./formFieldCatalog";
 
 const ROWS_PER_PAGE = 5;
 
@@ -246,10 +250,13 @@ export function SisuMappingsTable({
   const dirtyRows = useMemo(
     () =>
       rows.filter((row) => {
+        if (isLockedClientTypeSisuMapping(formKind, row.field_name)) {
+          return false;
+        }
         const draft = drafts[row.id];
         return draft ? isDirty(row, draft) : false;
       }),
-    [drafts, rows],
+    [drafts, formKind, rows],
   );
   const dirtyCount = dirtyRows.length;
 
@@ -374,6 +381,14 @@ export function SisuMappingsTable({
                 const selectedStillPresent = sisuFieldOptions.some(
                   (option) => option.value === draft.sisuFieldName,
                 );
+                const isLocked = isLockedClientTypeSisuMapping(
+                  formKind,
+                  row.field_name,
+                );
+                const lockedSisuLabel =
+                  sisuFieldOptions.find(
+                    (option) => option.value === draft.sisuFieldName,
+                  )?.label ?? draft.sisuFieldName;
 
                 return (
                   <TableRow key={row.id} hover>
@@ -384,35 +399,48 @@ export function SisuMappingsTable({
                     </TableCell>
                     <TableCell>
                       <div className="settings-mapping-table-select">
-                        <FormSelectInput
-                          id={`sisu-field-${row.id}`}
-                          label="SISU field"
-                          value={draft.sisuFieldName}
-                          disabled={teamFieldsLoading || saving}
-                          onChange={(event) => {
-                            const nextName = event.target.value;
-                            setDrafts((current) => ({
-                              ...current,
-                              [row.id]: syncDraftWithSisuField(
-                                draft,
-                                nextName,
-                                sisuFieldOptions,
-                              ),
-                            }));
-                          }}
-                        >
-                          <option value="">Select SISU field...</option>
-                          {draft.sisuFieldName && !selectedStillPresent ? (
-                            <option value={draft.sisuFieldName}>
-                              {draft.sisuFieldName} (not in catalog)
-                            </option>
-                          ) : null}
-                          {sisuFieldOptions.map((option) => (
-                            <option key={option.value} value={option.value}>
-                              {option.label}
-                            </option>
-                          ))}
-                        </FormSelectInput>
+                        {isLocked ? (
+                          <span
+                            className="settings-mapping-locked-value"
+                            title="This mapping is fixed and can't be edited."
+                          >
+                            {lockedSisuLabel}
+                            <span className="settings-mapping-locked-badge">
+                              {" "}
+                              (Fixed)
+                            </span>
+                          </span>
+                        ) : (
+                          <FormSelectInput
+                            id={`sisu-field-${row.id}`}
+                            label="SISU field"
+                            value={draft.sisuFieldName}
+                            disabled={teamFieldsLoading || saving}
+                            onChange={(event) => {
+                              const nextName = event.target.value;
+                              setDrafts((current) => ({
+                                ...current,
+                                [row.id]: syncDraftWithSisuField(
+                                  draft,
+                                  nextName,
+                                  sisuFieldOptions,
+                                ),
+                              }));
+                            }}
+                          >
+                            <option value="">Select SISU field...</option>
+                            {draft.sisuFieldName && !selectedStillPresent ? (
+                              <option value={draft.sisuFieldName}>
+                                {draft.sisuFieldName} (not in catalog)
+                              </option>
+                            ) : null}
+                            {sisuFieldOptions.map((option) => (
+                              <option key={option.value} value={option.value}>
+                                {option.label}
+                              </option>
+                            ))}
+                          </FormSelectInput>
+                        )}
                       </div>
                     </TableCell>
                     <TableCell>

@@ -127,6 +127,7 @@ export const FORM_FIELD_OPTIONS: Record<
     { value: "agentSubmitting", label: "Agent Submitting" },
   ],
   closed: [
+    { value: "clientType", label: "Client Type" },
     { value: "transactionType", label: "Is this a Rental/Lease/Referral?" },
     { value: "addressLine1", label: "Address" },
     { value: "city", label: "City" },
@@ -218,4 +219,31 @@ export function sortMappingsByMappedFirst<
       right.field_name,
     );
   });
+}
+
+/** The SISU field the Client Type form field is always mapped to. */
+export const CLIENT_TYPE_SISU_FIELD_NAME = "type_id";
+
+/**
+ * Form field key that holds the Buyer/Seller distinction, per form. Only
+ * forms with a "Client Type" field are listed; others (e.g. closed) have
+ * no entry.
+ */
+const CLIENT_TYPE_FORM_FIELD_NAME: Partial<Record<SettingsFormKind, string>> = {
+  pending: "clientType",
+  appointmentSet: "leadType",
+  appointmentMet: "leadType",
+  closed: "clientType",
+};
+
+/**
+ * The Client Type field's mapping to the SISU type_id field is fixed
+ * and must not be editable in Settings — this identifies that row so the
+ * UI/API can lock it.
+ */
+export function isLockedClientTypeSisuMapping(
+  form: SettingsFormKind,
+  fieldName: string,
+): boolean {
+  return CLIENT_TYPE_FORM_FIELD_NAME[form] === fieldName;
 }

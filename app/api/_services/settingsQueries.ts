@@ -10,7 +10,10 @@ import type {
   GmailAccountCredential,
 } from "@/app/types/storage";
 import { isSettingsFormKind } from "@/app/forms/_core/formIdentity";
-import { sortByFormFieldAppearanceOrder } from "@/app/forms/settings/formFieldCatalog";
+import {
+  isLockedClientTypeSisuMapping,
+  sortByFormFieldAppearanceOrder,
+} from "@/app/forms/settings/formFieldCatalog";
 import { requireDbPool, type StorageResult } from "./dbPool";
 
 export async function getGmailCredentialForEnvironment(
@@ -291,6 +294,32 @@ export async function updateSisuMapping(
   const poolResult = requireDbPool();
   if (poolResult.error || !poolResult.data) {
     return { data: null, error: poolResult.error ?? "Database unavailable." };
+  }
+
+  try {
+    const existing = await poolResult.data.query<{
+      form: string;
+      field_name: string;
+    }>(`SELECT form, field_name FROM form_sisu_mappings WHERE id = $1`, [id]);
+    const row = existing.rows[0];
+    if (!row) {
+      return { data: null, error: "SISU mapping not found." };
+    }
+    if (
+      isSettingsFormKind(row.form) &&
+      isLockedClientTypeSisuMapping(row.form, row.field_name)
+    ) {
+      return {
+        data: null,
+        error: "The Client Type mapping is fixed and cannot be edited.",
+      };
+    }
+  } catch (error) {
+    return {
+      data: null,
+      error:
+        error instanceof Error ? error.message : "Failed to load SISU mapping.",
+    };
   }
 
   const sets: string[] = ["updated_at = NOW()"];

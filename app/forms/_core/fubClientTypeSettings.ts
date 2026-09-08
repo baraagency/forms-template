@@ -6,15 +6,16 @@ export type FubClientType = (typeof FUB_CLIENT_TYPES)[number];
 
 /**
  * Forms whose form state carries a Buyer/Seller distinction (clientType /
- * leadType). Forms outside this set (e.g. "closed", which only has a
- * transaction type) have no client type to key stages/tags off of, so their
- * FUB stage/tag settings must be stored and matched with a null client type
- * instead of forcing a meaningless Buyer/Seller split.
+ * leadType). Forms outside this set (e.g. "agreementSigned") have no client
+ * type to key stages/tags off of, so their FUB stage/tag settings must be
+ * stored and matched with a null client type instead of forcing a
+ * meaningless Buyer/Seller split.
  */
 const FORM_KINDS_WITH_CLIENT_TYPE: readonly FormKind[] = [
   "pending",
   "appointmentSet",
   "appointmentMet",
+  "closed",
 ];
 
 export function formSupportsFubClientType(form: FormKind): boolean {

@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router";
-import { type ReactNode, useCallback, useEffect, useState } from "react";
+import { type ReactNode, useCallback, useEffect, useRef, useState } from "react";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import {
@@ -267,6 +267,12 @@ export function PendingFormClient({
   >("idle");
   const [submitMessage, setSubmitMessage] = useState<string | null>(null);
 
+  // Fields the user has manually edited. The async SISU transaction lookup
+  // below fills in empty fields once it resolves; without this guard, a
+  // field the user cleared while that fetch was still in flight could get
+  // silently repopulated by the prefill once it lands.
+  const userEditedFieldsRef = useRef(new Set<keyof PendingFormState>());
+
   const {
     clientTypeOptions,
     hasSecondaryClientOptions,
@@ -436,12 +442,18 @@ export function PendingFormClient({
         }
 
         if (result.transaction) {
-          setFormState((current) =>
-            applyPendingSisuTransactionPrefill(
+          setFormState((current) => {
+            const prefilled = applyPendingSisuTransactionPrefill(
               clearDiscardedSisuTransactionId(current, discardedSisuTransactionId),
               result.transaction!,
-            ),
-          );
+            );
+            // Don't let the prefill overwrite anything the user already
+            // edited by hand while this fetch was in flight.
+            for (const field of userEditedFieldsRef.current) {
+              prefilled[field] = current[field];
+            }
+            return prefilled;
+          });
         }
       } catch (requestError) {
         if (
@@ -462,6 +474,7 @@ export function PendingFormClient({
 
   const updateField = useCallback(
     (field: keyof PendingFormState, value: string) => {
+      userEditedFieldsRef.current.add(field);
       setFormState((current) => {
         const nextState = { ...current, [field]: value };
         if (field === "clientType") {

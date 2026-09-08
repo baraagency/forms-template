@@ -29,6 +29,7 @@ describe("isLeaseOrRentalSelection", () => {
 describe("validateClosedForm", () => {
   const base = {
     ...getInitialClosedFormState({ personId: "1", agentId: "2", dealId: "42" }),
+    clientType: "Buyer",
     transactionType: "none",
     addressLine1: "123 Main St",
     city: "Charleston",
@@ -75,6 +76,15 @@ describe("validateClosedForm", () => {
 
     expect(errors.settlementDate).toBeTruthy();
   });
+
+  it("requires Client Type", () => {
+    const errors = validateClosedForm(
+      { ...base, clientType: "" },
+      { transactionTypeOptions },
+    );
+
+    expect(errors.clientType).toBe("This field is required.");
+  });
 });
 
 describe("applyClosedSisuTransactionPrefill", () => {
@@ -101,5 +111,28 @@ describe("applyClosedSisuTransactionPrefill", () => {
     expect(next.personId).toBe("321");
     expect(next.dealId).toBe("654");
     expect(next.sisuTransactionId).toBe("999");
+  });
+
+  it("derives Client Type from SISU type_id", () => {
+    const seller = applyClosedSisuTransactionPrefill(
+      getInitialClosedFormState({ personId: "" }),
+      { type_id: "seller" },
+    );
+    const buyer = applyClosedSisuTransactionPrefill(
+      getInitialClosedFormState({ personId: "" }),
+      { type_id: "buyer" },
+    );
+
+    expect(seller.clientType).toBe("Seller");
+    expect(buyer.clientType).toBe("Buyer");
+  });
+
+  it("does not overwrite a typed Client Type", () => {
+    const next = applyClosedSisuTransactionPrefill(
+      { ...getInitialClosedFormState({ personId: "" }), clientType: "Buyer" },
+      { type_id: "seller" },
+    );
+
+    expect(next.clientType).toBe("Buyer");
   });
 });

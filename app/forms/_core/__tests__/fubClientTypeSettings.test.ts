@@ -81,18 +81,19 @@ describe("fubClientTypeSettings", () => {
     expect(formSupportsFubClientType("pending")).toBe(true);
     expect(formSupportsFubClientType("appointmentSet")).toBe(true);
     expect(formSupportsFubClientType("appointmentMet")).toBe(true);
-    expect(formSupportsFubClientType("closed")).toBe(false);
+    expect(formSupportsFubClientType("closed")).toBe(true);
+    expect(formSupportsFubClientType("agreementSigned")).toBe(false);
   });
 
-  it("matches a null-client-type stage/tags for forms without a client type (e.g. closed)", () => {
+  it("matches a null-client-type stage/tags for forms without a client type (e.g. agreementSigned)", () => {
     const stages: FormFubStage[] = [
       {
         id: 1,
-        form: "closed",
+        form: "agreementSigned",
         target: "deal",
         client_type: null,
         stage_id: 30,
-        stage_name: "Closed stage",
+        stage_name: "Agreement stage",
         enabled: true,
         created_at: new Date(),
         updated_at: new Date(),
@@ -101,9 +102,9 @@ describe("fubClientTypeSettings", () => {
     const tags: FormFubTag[] = [
       {
         id: 1,
-        form: "closed",
+        form: "agreementSigned",
         client_type: null,
-        tag: "Closed deal",
+        tag: "Agreement signed",
         enabled: true,
         created_at: new Date(),
         updated_at: new Date(),
@@ -112,7 +113,7 @@ describe("fubClientTypeSettings", () => {
 
     expect(pickFubStageForClientType(stages, "deal", null)?.stage_id).toBe(30);
     expect(pickFubTagsForClientType(tags, null).map((tag) => tag.tag)).toEqual([
-      "Closed deal",
+      "Agreement signed",
     ]);
   });
 });

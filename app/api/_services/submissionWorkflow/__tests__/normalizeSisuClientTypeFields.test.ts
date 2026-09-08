@@ -2,37 +2,54 @@ import { describe, expect, test } from "bun:test";
 import { normalizeSisuClientTypeFields } from "../normalizeSisuClientTypeFields";
 
 describe("normalizeSisuClientTypeFields", () => {
-  test("maps Buyer label to client_type 0 and type_id b", () => {
+  test("maps Buyer label to type_id b", () => {
     expect(
       normalizeSisuClientTypeFields({
         first_name: "Test",
-        client_type: "Buyer",
+        type_id: "Buyer",
       }),
     ).toEqual({
       first_name: "Test",
-      client_type: "0",
       type_id: "b",
     });
   });
 
-  test("maps Seller label to client_type 1 and type_id s", () => {
+  test("maps Seller label to type_id s", () => {
     expect(
       normalizeSisuClientTypeFields({
-        client_type: "Seller",
+        type_id: "Seller",
       }),
     ).toEqual({
-      client_type: "1",
       type_id: "s",
     });
   });
 
-  test("leaves unknown client_type unchanged", () => {
+  test("leaves an already-normalized type_id unchanged", () => {
+    expect(normalizeSisuClientTypeFields({ type_id: "b" })).toEqual({
+      type_id: "b",
+    });
+    expect(normalizeSisuClientTypeFields({ type_id: "s" })).toEqual({
+      type_id: "s",
+    });
+  });
+
+  test("leaves unknown type_id values unchanged", () => {
     expect(
       normalizeSisuClientTypeFields({
-        client_type: "Investor",
+        type_id: "Investor",
       }),
     ).toEqual({
-      client_type: "Investor",
+      type_id: "Investor",
+    });
+  });
+
+  test("leaves payloads without type_id unchanged", () => {
+    expect(
+      normalizeSisuClientTypeFields({
+        first_name: "Test",
+      }),
+    ).toEqual({
+      first_name: "Test",
     });
   });
 });

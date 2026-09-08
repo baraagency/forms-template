@@ -10,6 +10,7 @@ function buildValidPayload() {
       dealId: "456",
       sisuTransactionId: "789",
     }),
+    clientType: "Buyer",
     transactionType: "none",
     addressLine1: "123 Main St",
     city: "Charleston",

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import {
   compareFormFieldsByAppearanceOrder,
+  isLockedClientTypeSisuMapping,
   sortByFormFieldAppearanceOrder,
   sortMappingsByMappedFirst,
 } from "../formFieldCatalog";
@@ -42,6 +43,28 @@ describe("sortByFormFieldAppearanceOrder", () => {
         "notes",
       ),
     ).toBeLessThan(0);
+  });
+});
+
+describe("isLockedClientTypeSisuMapping", () => {
+  it("locks the Client Type field on forms that have one", () => {
+    expect(isLockedClientTypeSisuMapping("pending", "clientType")).toBe(true);
+    expect(isLockedClientTypeSisuMapping("appointmentSet", "leadType")).toBe(
+      true,
+    );
+    expect(isLockedClientTypeSisuMapping("appointmentMet", "leadType")).toBe(
+      true,
+    );
+    expect(isLockedClientTypeSisuMapping("closed", "clientType")).toBe(true);
+  });
+
+  it("does not lock unrelated fields or forms without a Client Type field", () => {
+    expect(isLockedClientTypeSisuMapping("pending", "clientFirstName")).toBe(
+      false,
+    );
+    expect(isLockedClientTypeSisuMapping("closed", "transactionType")).toBe(
+      false,
+    );
   });
 });
 

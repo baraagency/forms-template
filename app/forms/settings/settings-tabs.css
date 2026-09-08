@@ -225,6 +225,19 @@
   font-variant-numeric: tabular-nums;
 }
 
+.settings-mapping-locked-value {
+  color: var(--body-color);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.settings-mapping-locked-badge {
+  color: var(--body-color-muted, var(--body-color));
+  font-size: 0.78rem;
+  font-weight: 500;
+  opacity: 0.75;
+}
+
 .settings-mapping-search-row {
   align-items: end;
   display: grid;

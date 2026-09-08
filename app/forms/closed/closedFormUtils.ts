@@ -12,6 +12,7 @@ export type ClosedFormState = {
   agentId: string;
   dealId: string;
   sisuTransactionId: string;
+  clientType: string;
   transactionType: string;
   addressLine1: string;
   city: string;
@@ -31,6 +32,7 @@ export const CLOSED_SECTIONS: ClosedSection[] = ["transaction", "dates"];
 
 const requiredFieldsBySection: Record<ClosedSection, Array<keyof ClosedFormState>> = {
   transaction: [
+    "clientType",
     "transactionType",
     "addressLine1",
     "city",
@@ -66,6 +68,7 @@ export function getInitialClosedFormState(values: {
     agentId: values.agentId ?? "",
     dealId: values.dealId ?? "",
     sisuTransactionId: values.sisuTransactionId ?? "",
+    clientType: "",
     transactionType: "",
     addressLine1: "",
     city: "",
@@ -115,6 +118,7 @@ export function validateClosedSection(
 }
 
 export const CLOSED_FORM_VALIDATION_FIELD_ORDER = [
+  "clientType",
   "transactionType",
   "addressLine1",
   "city",

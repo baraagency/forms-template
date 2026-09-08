@@ -96,6 +96,7 @@ export type SubmissionRouteParams = {
   debugKey?: string;
   emailWarning?: string;
   timeoutWarning?: string;
+  workflowWarning?: string;
 };
 
 export type SubmittedDebugRecord = {
@@ -155,6 +156,7 @@ export function buildPostSubmissionHref({
   debugKey,
   emailWarning,
   timeoutWarning,
+  workflowWarning,
 }: SubmissionRouteParams): string {
   const params = new URLSearchParams({ form: formType });
   appendOptionalParam(params, "personId", personId);
@@ -168,6 +170,7 @@ export function buildPostSubmissionHref({
   appendOptionalParam(params, "debugKey", debugKey);
   appendOptionalParam(params, "emailWarning", emailWarning);
   appendOptionalParam(params, "timeoutWarning", timeoutWarning);
+  appendOptionalParam(params, "workflowWarning", workflowWarning);
 
   return `/forms/submitted?${params.toString()}`;
 }
@@ -375,6 +378,24 @@ function getSubmissionSummaryEmailPayload(payload: unknown): SubmissionSummaryEm
   }
 
   return email as SubmissionSummaryEmailPayload;
+}
+
+export function getSubmissionWorkflowWarning(payload: unknown): string | null {
+  if (typeof payload !== "object" || payload === null) {
+    return null;
+  }
+
+  const warnings = (payload as { warnings?: unknown }).warnings;
+  if (!Array.isArray(warnings)) {
+    return null;
+  }
+
+  const messages = warnings
+    .filter((warning): warning is string => typeof warning === "string")
+    .map((warning) => warning.trim())
+    .filter(Boolean);
+
+  return messages.length > 0 ? messages.join(" ") : null;
 }
 
 export function getSubmissionSummaryEmailWarning(payload: unknown): string | null {

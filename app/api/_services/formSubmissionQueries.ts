@@ -154,3 +154,42 @@ export async function findLatestAppointmentIdByDealFubId(
 }
 
 export type { FormKind, FormSubmission };
+
+export async function findLatestFormSubmissionByDealFubId(
+  dealFubId: number,
+): Promise<StorageResult<FormSubmission | null>> {
+  const poolResult = requireDbPool();
+  if (poolResult.error || !poolResult.data) {
+    return { data: null, error: poolResult.error ?? "Database unavailable." };
+  }
+
+  try {
+    const result = await poolResult.data.query<FormSubmission>(
+      `SELECT id, created_at, form, lead_fub_id, deal_fub_id, form_data,
+              lead_type, appointment_id, successful
+       FROM form_submissions
+       WHERE (deal_fub_id = $1 OR form_data->>'dealId' = $1::text)
+         AND (successful IS NULL OR successful = TRUE)
+       ORDER BY
+         CASE
+           WHEN COALESCE(TRIM(form_data->>'sisuTransactionId'), '') ~ '^[0-9]+$'
+             AND (form_data->>'sisuTransactionId')::numeric > 0
+           THEN 0
+           ELSE 1
+         END,
+         created_at DESC
+       LIMIT 1`,
+      [dealFubId],
+    );
+
+    return { data: result.rows[0] ?? null, error: null };
+  } catch (error) {
+    return {
+      data: null,
+      error:
+        error instanceof Error
+          ? error.message
+          : "Failed to load prior form submission.",
+    };
+  }
+}

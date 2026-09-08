@@ -1,9 +1,9 @@
 import { AppointmentMetFormClient } from "../forms/appointment-met/AppointmentMetFormClient";
-import { buildLocalDemoFormLoaderData } from "./formLoaderUtils";
+import { buildFormLoaderData } from "./formLoaderUtils";
 import type { Route } from "./+types/forms.appointment-met";
 
 export async function loader({ request }: Route.LoaderArgs) {
-  return buildLocalDemoFormLoaderData(request);
+  return buildFormLoaderData(request);
 }
 
 export default function AppointmentMetFormPage({
@@ -12,7 +12,7 @@ export default function AppointmentMetFormPage({
   return (
     <AppointmentMetFormClient
       searchParams={loaderData.searchParams}
-      previousSubmissionFormData={null}
+      previousSubmissionFormData={loaderData.previousSubmissionFormData}
       localDemoEnabled={loaderData.localDemoEnabled}
     />
   );

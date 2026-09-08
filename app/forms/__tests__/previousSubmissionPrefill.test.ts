@@ -1,5 +1,10 @@
 import { describe, expect, it } from "bun:test";
-import { applyPreviousSubmissionFormData } from "../_core/previousSubmissionPrefill";
+import {
+  applyPreviousSubmissionFormData,
+  buildPreviousSubmissionFormDataFromRecord,
+} from "../_core/previousSubmissionPrefill";
+import type { FormSubmission } from "@/app/types/storage";
+import { parseDealFubIdFromSearchParams } from "../../routes/formLoaderUtils";
 
 describe("applyPreviousSubmissionFormData", () => {
   it("populates matching string form fields from a previous submission", () => {
@@ -69,5 +74,41 @@ describe("applyPreviousSubmissionFormData", () => {
       appointmentDate: "2027-01-14",
       notes: "Previous notes",
     });
+  });
+});
+
+describe("buildPreviousSubmissionFormDataFromRecord", () => {
+  it("adds dealId from the submission row when form_data omitted it", () => {
+    const submission: FormSubmission = {
+      id: 24,
+      created_at: new Date("2026-09-08T16:54:55.796Z"),
+      form: "appointmentSet",
+      lead_fub_id: 143,
+      deal_fub_id: 41,
+      form_data: {
+        clientFirstName: "Tom",
+        clientLastName: "Hanks",
+        dealId: "",
+        sisuTransactionId: "6747355",
+      },
+      lead_type: "Buyer",
+      appointment_id: "15732",
+      successful: true,
+    };
+
+    expect(buildPreviousSubmissionFormDataFromRecord(submission)).toEqual({
+      clientFirstName: "Tom",
+      clientLastName: "Hanks",
+      dealId: "41",
+      sisuTransactionId: "6747355",
+    });
+  });
+});
+
+describe("parseDealFubIdFromSearchParams", () => {
+  it("parses a positive deal id and ignores create-new", () => {
+    expect(parseDealFubIdFromSearchParams({ dealId: "41" })).toBe(41);
+    expect(parseDealFubIdFromSearchParams({ dealId: "create-new" })).toBeNull();
+    expect(parseDealFubIdFromSearchParams({})).toBeNull();
   });
 });

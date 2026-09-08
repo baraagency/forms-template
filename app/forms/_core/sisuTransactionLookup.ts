@@ -1,3 +1,4 @@
+import type { JsonValue } from "@/app/types/storage";
 import type { SISUTransaction } from "@/app/types/sisu";
 
 export const SISU_TRANSACTION_NOT_FOUND_WARNING =
@@ -33,6 +34,58 @@ export function shouldResolveSisuTransactionLookup({
   dealId?: string;
 }): boolean {
   return Boolean(parsePositiveId(sisuTransactionId) || parsePositiveId(dealId));
+}
+
+export function readPrefilledSisuTransactionId(
+  formData: JsonValue | null | undefined,
+): string | null {
+  if (typeof formData !== "object" || formData === null || Array.isArray(formData)) {
+    return null;
+  }
+
+  return parsePositiveId(
+    (formData as { sisuTransactionId?: unknown }).sisuTransactionId as
+      | string
+      | number
+      | undefined,
+  );
+}
+
+export function shouldShowSisuTransactionLookupWarning(
+  sisuTransactionId?: string | null,
+): boolean {
+  return !parsePositiveId(sisuTransactionId ?? undefined);
+}
+
+export function resolveRetainedSisuTransactionId({
+  previousSubmissionFormData,
+  trustedPrefilledSisuTransactionId,
+  currentSisuTransactionId,
+}: {
+  previousSubmissionFormData?: JsonValue | null;
+  trustedPrefilledSisuTransactionId?: string | null;
+  currentSisuTransactionId?: string | null;
+}): string | null {
+  return (
+    readPrefilledSisuTransactionId(previousSubmissionFormData) ??
+    parsePositiveId(trustedPrefilledSisuTransactionId ?? undefined) ??
+    parsePositiveId(currentSisuTransactionId ?? undefined)
+  );
+}
+
+export function shouldClearDiscardedSisuTransactionId(
+  currentSisuTransactionId: string,
+  discardedSisuTransactionId?: string,
+  trustedPrefilledSisuTransactionId?: string | null,
+): boolean {
+  if (
+    !discardedSisuTransactionId ||
+    currentSisuTransactionId !== discardedSisuTransactionId
+  ) {
+    return false;
+  }
+
+  return discardedSisuTransactionId !== trustedPrefilledSisuTransactionId;
 }
 
 async function readMessageFromResponse(response: Response): Promise<string | null> {

@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router";
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import {
@@ -36,7 +36,6 @@ import {
 } from "./closedFormUtils";
 import {
   applyClosedSisuTransactionPrefill,
-  shouldResolveClosedSisuTransactionPrefill,
 } from "./closedSisuTransactionPrefill";
 import {
   buildPostSubmissionHref,
@@ -46,6 +45,7 @@ import {
   getSubmittedSisuTransactionId,
   getSubmissionErrorMessage,
   getSubmissionSummaryEmailWarning,
+  getSubmissionWorkflowWarning,
   storeSubmittedDebugRecord,
 } from "../_core/submissionUtils";
 import { FormRouterBackLink } from "../_core/formRouterBackLink";
@@ -56,10 +56,15 @@ import {
   readFormDraft,
   writeFormDraft,
 } from "../_core/formDraftCache";
+import type { JsonValue } from "@/app/types/storage";
 import {
   clearDiscardedSisuTransactionId,
   removeSisuTransactionIdFromCurrentUrl,
+  readPrefilledSisuTransactionId,
   resolveSisuTransactionLookup,
+  shouldClearDiscardedSisuTransactionId,
+  shouldResolveSisuTransactionLookup,
+  shouldShowSisuTransactionLookupWarning,
   SISU_TRANSACTION_NOT_FOUND_WARNING,
 } from "../_core/sisuTransactionLookup";
 
@@ -146,29 +151,38 @@ function buildRouterHref(
 
 export function ClosedFormClient({
   searchParams,
+  previousSubmissionFormData = null,
   localDemoEnabled = false,
 }: {
   searchParams: Record<string, string | string[] | undefined>;
+  previousSubmissionFormData?: JsonValue | null;
   localDemoEnabled?: boolean;
 }) {
   const navigate = useNavigate();
+  const trustedPrefilledSisuTransactionIdRef = useRef(
+    readPrefilledSisuTransactionId(previousSubmissionFormData),
+  );
   const [formState, setFormState] = useState<ClosedFormState>(() =>
-    getInitialClosedFormState({
-      personId:
-        getSingleSearchParam(searchParams, "clientId") ||
-        getSingleSearchParam(searchParams, "personId"),
-      agentId: getSingleSearchParam(searchParams, "agentId"),
-      dealId: getSingleSearchParam(searchParams, "dealId"),
-      sisuTransactionId: getSingleSearchParam(searchParams, "sisuTransactionId"),
-    }),
+    applyPreviousSubmissionFormData(
+      getInitialClosedFormState({
+        personId:
+          getSingleSearchParam(searchParams, "clientId") ||
+          getSingleSearchParam(searchParams, "personId"),
+        agentId: getSingleSearchParam(searchParams, "agentId"),
+        dealId: getSingleSearchParam(searchParams, "dealId"),
+        sisuTransactionId: getSingleSearchParam(searchParams, "sisuTransactionId"),
+      }),
+      previousSubmissionFormData,
+    ),
   );
   const [errors, setErrors] = useState<ClosedFieldErrors>({});
   const [submitAttempted, setSubmitAttempted] = useState(false);
   const [teamFields, setTeamFields] = useState<TeamFieldCatalog>({});
   const [loadingTransaction, setLoadingTransaction] = useState(
-    shouldResolveClosedSisuTransactionPrefill(
-      getSingleSearchParam(searchParams, "sisuTransactionId"),
-    ),
+    shouldResolveSisuTransactionLookup({
+      sisuTransactionId: getSingleSearchParam(searchParams, "sisuTransactionId"),
+      dealId: getSingleSearchParam(searchParams, "dealId"),
+    }),
   );
   const [optionsError, setOptionsError] = useState<string | null>(null);
   const [transactionError, setTransactionError] = useState<string | null>(null);
@@ -196,19 +210,22 @@ export function ClosedFormClient({
     }
 
     setFormState((current) => {
+      let nextState = applyPreviousSubmissionFormData(
+        current,
+        previousSubmissionFormData ?? undefined,
+      );
       const cachedDraft = readFormDraft<ClosedFormState>("closed", personId);
-      if (!cachedDraft) {
-        return current;
+      if (cachedDraft) {
+        nextState = applyPreviousSubmissionFormData(nextState, cachedDraft);
       }
 
-      const nextState = applyPreviousSubmissionFormData(current, cachedDraft);
       const changed = (Object.keys(nextState) as Array<keyof ClosedFormState>).some(
         (field) => nextState[field] !== current[field],
       );
 
       return changed ? nextState : current;
     });
-  }, [formState.personId]);
+  }, [formState.personId, previousSubmissionFormData]);
 
   const updateField = useCallback(
     <K extends keyof ClosedFormState>(field: K, value: ClosedFormState[K]) => {
@@ -272,7 +289,12 @@ export function ClosedFormClient({
   }, []);
 
   useEffect(() => {
-    if (!shouldResolveClosedSisuTransactionPrefill(formState.sisuTransactionId)) {
+    if (
+      !shouldResolveSisuTransactionLookup({
+        sisuTransactionId: formState.sisuTransactionId,
+        dealId: formState.dealId,
+      })
+    ) {
       setLoadingTransaction(false);
       return;
     }
@@ -291,8 +313,11 @@ export function ClosedFormClient({
         const discardedSisuTransactionId = result.discardedSisuTransactionId;
 
         if (
-          discardedSisuTransactionId &&
-          formState.sisuTransactionId === discardedSisuTransactionId
+          shouldClearDiscardedSisuTransactionId(
+            formState.sisuTransactionId,
+            discardedSisuTransactionId,
+            trustedPrefilledSisuTransactionIdRef.current,
+          )
         ) {
           removeSisuTransactionIdFromCurrentUrl();
           setFormState((current) =>
@@ -301,7 +326,12 @@ export function ClosedFormClient({
         }
 
         if (result.error) {
-          setTransactionError(result.error);
+          const retainedSisuTransactionId =
+            trustedPrefilledSisuTransactionIdRef.current ||
+            formState.sisuTransactionId;
+          if (shouldShowSisuTransactionLookupWarning(retainedSisuTransactionId)) {
+            setTransactionError(result.error);
+          }
           return;
         }
 
@@ -314,7 +344,14 @@ export function ClosedFormClient({
         if (requestError instanceof DOMException && requestError.name === "AbortError") {
           return;
         }
-        setTransactionError(SISU_TRANSACTION_NOT_FOUND_WARNING);
+        setTransactionError(
+          shouldShowSisuTransactionLookupWarning(
+            trustedPrefilledSisuTransactionIdRef.current ||
+              formState.sisuTransactionId,
+          )
+            ? SISU_TRANSACTION_NOT_FOUND_WARNING
+            : null,
+        );
       } finally {
         setLoadingTransaction(false);
       }
@@ -375,6 +412,7 @@ export function ClosedFormClient({
             getSubmittedSisuTransactionId(payload) || formState.sisuTransactionId,
           debugKey,
           emailWarning: getSubmissionSummaryEmailWarning(payload) ?? undefined,
+          workflowWarning: getSubmissionWorkflowWarning(payload) ?? undefined,
         }),
       );
     } catch (submitError) {

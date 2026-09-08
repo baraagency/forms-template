@@ -13,6 +13,7 @@ import {
   getSubmittedSisuTransactionId,
   getSubmissionErrorMessage,
   getSubmissionSummaryEmailWarning,
+  getSubmissionWorkflowWarning,
   isFormSubmitClientTimeoutError,
   isFormSubmitGatewayTimeoutStatus,
   isSubmissionDebugEnvironment,
@@ -123,5 +124,15 @@ describe("submissionUtils", () => {
       }),
     ).toBe("Summary email failed to send.");
     expect(storeSubmittedDebugRecord("pending", {})).toBe("");
+  });
+
+  it("reads workflow warnings from submit payloads", () => {
+    expect(
+      getSubmissionWorkflowWarning({
+        warnings: [
+          "SISU transaction was not written: SISU_API_KEY is not configured.",
+        ],
+      }),
+    ).toBe("SISU transaction was not written: SISU_API_KEY is not configured.");
   });
 });

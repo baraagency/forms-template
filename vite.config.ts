@@ -1,10 +1,18 @@
 import { reactRouter } from "@react-router/dev/vite";
 import tailwindcss from "@tailwindcss/vite";
-import { defineConfig } from "vite";
+import { defineConfig, loadEnv } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 
-export default defineConfig({
-  plugins: [tailwindcss(), reactRouter(), tsconfigPaths()],
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), "");
+  for (const [key, value] of Object.entries(env)) {
+    if (!process.env[key]?.trim() && value.trim()) {
+      process.env[key] = value;
+    }
+  }
+
+  return {
+    plugins: [tailwindcss(), reactRouter(), tsconfigPaths()],
   resolve: {
     // Keep a single React copy so Base UI and React Router share the same dispatcher.
     dedupe: ["react", "react-dom"],
@@ -51,4 +59,5 @@ export default defineConfig({
       "dayjs/plugin/utc",
     ],
   },
+  };
 });

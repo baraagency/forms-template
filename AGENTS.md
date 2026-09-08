@@ -27,7 +27,7 @@ APIs, conventions, and file structure may differ from Next.js or older React Rou
 
 - Multi-section intake; SISU prefill via `app/forms/_core/sisuTransactionLookup.ts`.
 - Submit: `POST /api/forms/pending/submit` → shared submission workflow.
-- Resubmission prefill: disabled in template (`previousSubmissionFormData={null}`).
+- Resubmission prefill: when a form opens with a `dealId`, the loader loads the latest successful `form_submissions` row for that deal into `previousSubmissionFormData` (including `sisuTransactionId` when stored).
 
 ## Appointment Set Example
 
@@ -41,7 +41,7 @@ APIs, conventions, and file structure may differ from Next.js or older React Rou
 - Disposition branches: Met with Customer, Customer Cancelled / No Show, Rescheduled.
 - Agent Submitting from `GET /api/fub/users`; appointment outcomes hardcoded.
 - Submit: `POST /api/forms/appointment-met/submit` → shared submission workflow + FUB appointment update (outcome / reschedule).
-- Resubmission prefill: disabled in template (`previousSubmissionFormData={null}`).
+- Resubmission prefill: when a form opens with a `dealId`, the loader loads the latest successful `form_submissions` row for that deal into `previousSubmissionFormData` (including `sisuTransactionId` when stored).
 
 ## Closed Example
 
@@ -70,7 +70,7 @@ APIs, conventions, and file structure may differ from Next.js or older React Rou
 - Settings mapping tables: labels only (hide field slugs); rows sorted by form appearance order; SISU / FUB Person / FUB Deal in tabs in one container; target fields are clearable Selects where cleared means disabled (no Enabled column); Save belongs outside the table (not in an Actions column); paginated (5 rows/page).
 - Email recipients: no Active toggle—remove a row to disable; editable emails; add-email input above the list.
 - FUB Person tag settings: Beui multi-select per Buyer/Seller; options from FUB tag catalog; allow custom tags; auto-save on change.
-- Submitted confirmation page: no separate Form row in the summary (page title carries the form name).
+- Submitted confirmation page: no separate Form row in the summary (page title carries the form name); workflow/integration warnings on the page, not raw API errors.
 - Keep local Docker/Postgres test database setup out of the repo; use it only for local testing.
 - Form display order on `/forms` and `/forms/settings`: Appointment Set, Appointment Met, Pending, Closed.
 - Brand colors use navy/sky with a near-black primary accent (`--palette-1` `#1E1E1E`); primary CTAs share solid black fill + border with centered text; page/section titles use DM Serif Display (settings page titles only), font-weight 500; form sections get a divider under the section header before fields, not above the section.
@@ -80,13 +80,13 @@ APIs, conventions, and file structure may differ from Next.js or older React Rou
 
 - Reusable forms template (GitHub slug `forms-template`); visual design reference in Notion: [Forms Template — Visual Design System](https://app.notion.com/p/3a6a4516f72b814caff0cc286f33e2bd) (update when tokens or CTA chrome change).
 - Accessibility: WCAG 2.1 AA target; canonical guide `docs/a11y.md`; `test:a11y` and CI a11y workflow are advisory until `STRICT_A11Y=1` or the workflow gate is enabled.
-- Form draft cache (`formDraftCache.ts`): `localStorage` keyed by `personId` + form type; save on field change, restore on load (fill-only merge), clear on successful submit.
+- Form prefill: draft cache (`formDraftCache.ts`) uses `localStorage` by `personId` + form type (fill-only merge, clear on submit); with `dealId` in URL, `buildFormLoaderData` loads latest successful `form_submissions` into `previousSubmissionFormData` (including `sisuTransactionId`); successful workflow patches stored `form_data` with resolved `dealId` and `sisuTransactionId`.
 - Settings SISU team-fields and FUB person/deal field option catalogs use live APIs when the corresponding API keys are set; otherwise fixtures.
 - `/api/fub/users`, `/api/fub/people`, `/api/fub/deals`, `/api/fub/appointment-types`, and `/api/fub/tags` use live FUB when `FUB_API_KEY` is set; otherwise fixtures. Appointment Type values use FUB `/appointmentTypes` element `id`. Tag catalog aggregates unique tags from live people (`fields=tags`). Deals stay on fixtures when `DEMO_MODE=true` even if a FUB key is present (form deal pickers show live deals only when Demo Mode is off). Demo mode (UI label, not "Local demo mode") is active only when `DEMO_MODE=true`.
 - FUB deal create requires `name` and `stageId` (plus `peopleIds`); do not send `personId` or a string `stage` field.
 - SISU writes require enabled mappings with non-empty `sisu_field_name`; the Client Type field (`clientType`/`leadType`) is locked to SISU's `type_id`, normalized Buyer/Seller → `b`/`s` (see `normalizeSisuClientTypeFields.ts`); set `agent_id` by resolving submitting FUB user email via `POST /v1/agent/find-agent` (omit on failure; appointment-met uses `agentSubmitting || agentId`).
 - FUB form settings split into Person (Buyer/Seller `client_type` stages, tags, mappings) and Deal (Buyer/Seller stages, mappings; no tags); person stages from `/api/fub/stages`, deal stages from `/api/fub/pipelines`; person tags via Beui multi-select (catalog `GET /api/fub/tags`, custom tags allowed, bulk save `PUT /api/forms/settings/fub/tags`).
 - When `ADMIN_PASSWORD` is set, settings auth uses `settings_admin_auth` HttpOnly session cookie via `POST /api/forms/settings/auth`; all `/api/forms/settings/*` routes enforce it.
-- Submitted page (`/forms/submitted`): FUB Deal card shows deal name when created (deal ID as caption); hides when no deal; workflow passes `dealName` through redirect query params.
+- Submitted page (`/forms/submitted`): FUB Deal card shows deal name when created (deal ID as caption); hides when no deal; workflow passes `dealName` through redirect query params; skipped/failed workflow steps surface via `workflowWarning` (same pattern as `emailWarning`).
 - Global footer (`AppFooter` in root layout): "Created by Bara Agency" linking to https://baraagency.com/.
-- Deploy target is Heroku (Node 22.22+, `Procfile` → `release: npm run db:migrations` then `web: npm run start` / `@react-router/serve`); `scripts/db/migrate.ts` auto-loads project `.env` when `DATABASE_URL` is unset in the shell.
+- Deploy target is Heroku (Node 22.22+, `Procfile` → `release: npm run db:migrations` then `web: npm run start` / `@react-router/serve`); `scripts/db/migrate.ts` and local dev (`loadProjectEnv.ts`, Vite `.env` merge, `npm run dev` with `--env-file=.env`) load integration keys from `.env` without requiring a server restart.

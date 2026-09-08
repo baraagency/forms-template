@@ -662,23 +662,29 @@ export async function runSubmissionWorkflow(
 
   if (budgetExhausted(deadlineMs)) {
     markTimeout();
+    const message = "Side-effect budget exhausted.";
     recordStep(ctx.steps, {
       step: "sisu_transaction",
       status: "skipped",
-      message: "Side-effect budget exhausted.",
+      message,
     });
+    pushWarning(ctx, "SISU transaction was not written: side-effect budget exhausted.");
   } else if (!isSisuApiEnabled()) {
+    const message = "SISU_API_KEY is not configured.";
     recordStep(ctx.steps, {
       step: "sisu_transaction",
       status: "skipped",
-      message: "SISU_API_KEY is not configured.",
+      message,
     });
+    pushWarning(ctx, "SISU transaction was not written: SISU_API_KEY is not configured.");
   } else if (enabledSisuMappings.length === 0) {
+    const message = "No enabled SISU mappings configured.";
     recordStep(ctx.steps, {
       step: "sisu_transaction",
       status: "skipped",
-      message: "No enabled SISU mappings configured.",
+      message,
     });
+    pushWarning(ctx, `SISU transaction was not written: ${message}`);
   } else {
     try {
       if (ctx.dealId && !ctx.sisuPayload.fub_deal_id) {
@@ -745,10 +751,21 @@ export async function runSubmissionWorkflow(
 
   // --- 6. Patch submission ---
   if (ctx.submissionId) {
+    const patchedFormState: Record<string, unknown> = {
+      ...ctx.formState,
+    };
+    if (ctx.dealId) {
+      patchedFormState.dealId = String(ctx.dealId);
+    }
+    if (ctx.sisuTransactionId) {
+      patchedFormState.sisuTransactionId = String(ctx.sisuTransactionId);
+    }
+
     const patchResult = await updateFormSubmission(ctx.submissionId, {
       deal_fub_id: ctx.dealId,
       appointment_id: ctx.appointmentId,
       successful: true,
+      form_data: patchedFormState as JsonValue,
     });
     if (patchResult.error) {
       recordStep(ctx.steps, {

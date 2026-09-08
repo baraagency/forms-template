@@ -50,12 +50,16 @@ import {
   getSubmittedSisuTransactionId,
   getSubmissionErrorMessage,
   getSubmissionSummaryEmailWarning,
+  getSubmissionWorkflowWarning,
   storeSubmittedDebugRecord,
 } from "../_core/submissionUtils";
 import {
   clearDiscardedSisuTransactionId,
   removeSisuTransactionIdFromCurrentUrl,
+  readPrefilledSisuTransactionId,
   resolveSisuTransactionLookup,
+  shouldClearDiscardedSisuTransactionId,
+  shouldShowSisuTransactionLookupWarning,
   SISU_TRANSACTION_NOT_FOUND_WARNING,
   shouldResolveSisuTransactionLookup,
 } from "../_core/sisuTransactionLookup";
@@ -110,6 +114,9 @@ export function AppointmentMetFormClient({
   const routedAgentName = getSingleSearchParam(searchParams, "agentName");
   const previousSubmissionFormDataRef = useRef<JsonValue | null>(
     previousSubmissionFormData ?? null,
+  );
+  const trustedPrefilledSisuTransactionIdRef = useRef(
+    readPrefilledSisuTransactionId(previousSubmissionFormData),
   );
 
   const applyCachedPreviousSubmission = useCallback(
@@ -262,8 +269,11 @@ export function AppointmentMetFormClient({
         const discardedSisuTransactionId = result.discardedSisuTransactionId;
 
         if (
-          discardedSisuTransactionId &&
-          formState.sisuTransactionId === discardedSisuTransactionId
+          shouldClearDiscardedSisuTransactionId(
+            formState.sisuTransactionId,
+            discardedSisuTransactionId,
+            trustedPrefilledSisuTransactionIdRef.current,
+          )
         ) {
           removeSisuTransactionIdFromCurrentUrl();
           setFormState((current) =>
@@ -272,7 +282,12 @@ export function AppointmentMetFormClient({
         }
 
         if (result.error) {
-          setTransactionError(result.error);
+          const retainedSisuTransactionId =
+            trustedPrefilledSisuTransactionIdRef.current ||
+            formState.sisuTransactionId;
+          if (shouldShowSisuTransactionLookupWarning(retainedSisuTransactionId)) {
+            setTransactionError(result.error);
+          }
           return;
         }
 
@@ -289,7 +304,14 @@ export function AppointmentMetFormClient({
         if (requestError instanceof DOMException && requestError.name === "AbortError") {
           return;
         }
-        setTransactionError(SISU_TRANSACTION_NOT_FOUND_WARNING);
+        setTransactionError(
+          shouldShowSisuTransactionLookupWarning(
+            trustedPrefilledSisuTransactionIdRef.current ||
+              formState.sisuTransactionId,
+          )
+            ? SISU_TRANSACTION_NOT_FOUND_WARNING
+            : null,
+        );
       } finally {
         setLoadingTransaction(false);
       }
@@ -348,6 +370,7 @@ export function AppointmentMetFormClient({
             getSubmittedSisuTransactionId(payload) || formState.sisuTransactionId,
           debugKey,
           emailWarning: getSubmissionSummaryEmailWarning(payload) ?? undefined,
+          workflowWarning: getSubmissionWorkflowWarning(payload) ?? undefined,
         }),
       );
     } catch (submitError) {

@@ -3,6 +3,9 @@ import {
   buildUrlWithoutSisuTransactionId,
   getSisuTransactionId,
   resolveSisuTransactionLookup,
+  resolveRetainedSisuTransactionId,
+  shouldClearDiscardedSisuTransactionId,
+  shouldShowSisuTransactionLookupWarning,
   SISU_TRANSACTION_NOT_FOUND_WARNING,
   shouldResolveSisuTransactionLookup,
 } from "../_core/sisuTransactionLookup";
@@ -239,5 +242,29 @@ describe("sisuTransactionLookup", () => {
       }),
     ).toBe(false);
     expect(shouldResolveSisuTransactionLookup({})).toBe(false);
+  });
+
+  it("does not show the lookup warning when a trusted SISU id is already present", () => {
+    expect(shouldShowSisuTransactionLookupWarning("6747374")).toBe(false);
+    expect(shouldShowSisuTransactionLookupWarning("")).toBe(true);
+  });
+
+  it("resolves retained SISU ids from loader prefill before URL state", () => {
+    expect(
+      resolveRetainedSisuTransactionId({
+        previousSubmissionFormData: { sisuTransactionId: "6747374" },
+        trustedPrefilledSisuTransactionId: null,
+        currentSisuTransactionId: "",
+      }),
+    ).toBe("6747374");
+  });
+
+  it("keeps trusted prefilled SISU ids when live lookup discards the id", () => {
+    expect(
+      shouldClearDiscardedSisuTransactionId("6747374", "6747374", "6747374"),
+    ).toBe(false);
+    expect(
+      shouldClearDiscardedSisuTransactionId("6747374", "6747374", null),
+    ).toBe(true);
   });
 });

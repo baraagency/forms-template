@@ -1,6 +1,9 @@
 import { MOCK_TRANSACTION_ID } from "@/app/api/_fixtures/constants";
 import { loadFixture } from "@/app/api/_mock/loadFixture";
+import { fetchLiveSisuTransactionById } from "@/app/api/_services/sisuLiveClient";
+import { isSisuApiEnabled } from "@/app/api/_services/sisuApiMode";
 import type { SISUTransaction } from "@/app/types/sisu";
+import { hasValidSisuTransactionId } from "../sisuTransactionRouteUtils";
 
 function parseTransactionId(value: string | undefined): number | null {
   if (!value) {
@@ -24,6 +27,32 @@ export async function loader({
       { message: "A valid transactionId is required." },
       { status: 400 },
     );
+  }
+
+  if (isSisuApiEnabled()) {
+    const live = await fetchLiveSisuTransactionById(transactionId);
+    if (live.error || !live.data) {
+      return Response.json(
+        {
+          message:
+            live.error ??
+            "No valid SISU transaction found for the selected transaction id.",
+        },
+        { status: live.status ?? 404 },
+      );
+    }
+
+    if (!hasValidSisuTransactionId(live.data)) {
+      return Response.json(
+        {
+          message:
+            "No valid SISU transaction found for the selected transaction id.",
+        },
+        { status: 404 },
+      );
+    }
+
+    return Response.json({ transaction: live.data });
   }
 
   if (transactionId !== MOCK_TRANSACTION_ID) {

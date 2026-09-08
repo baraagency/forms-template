@@ -79,6 +79,10 @@ export default function SubmittedPage({ loaderData }: Route.ComponentProps) {
   );
   const debugKey = getSingleSearchParam(resolvedSearchParams, "debugKey");
   const emailWarning = getSingleSearchParam(resolvedSearchParams, "emailWarning");
+  const workflowWarning = getSingleSearchParam(
+    resolvedSearchParams,
+    "workflowWarning",
+  );
   const timeoutWarning = getSingleSearchParam(
     resolvedSearchParams,
     "timeoutWarning",
@@ -221,6 +225,27 @@ export default function SubmittedPage({ loaderData }: Route.ComponentProps) {
                 }}
               >
                 {emailWarning}
+              </Box>
+            ) : null}
+            {workflowWarning ? (
+              <Box
+                role="status"
+                sx={{
+                  bgcolor: "var(--warning-bg)",
+                  border: "1px solid rgba(102, 60, 0, 0.18)",
+                  borderRadius: "var(--btn-radius)",
+                  color: "var(--warning-color)",
+                  fontSize: "0.95rem",
+                  fontWeight: 700,
+                  lineHeight: 1.65,
+                  maxWidth: 560,
+                  px: 2,
+                  py: 1.5,
+                  textAlign: "center",
+                  width: "100%",
+                }}
+              >
+                {workflowWarning}
               </Box>
             ) : null}
           </Stack>

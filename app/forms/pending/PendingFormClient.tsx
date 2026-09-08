@@ -55,12 +55,16 @@ import {
   getSubmittedSisuTransactionId,
   getSubmissionErrorMessage,
   getSubmissionSummaryEmailWarning,
+  getSubmissionWorkflowWarning,
   storeSubmittedDebugRecord,
 } from "../_core/submissionUtils";
 import {
   clearDiscardedSisuTransactionId,
   removeSisuTransactionIdFromCurrentUrl,
+  readPrefilledSisuTransactionId,
   resolveSisuTransactionLookup,
+  shouldClearDiscardedSisuTransactionId,
+  shouldShowSisuTransactionLookupWarning,
   SISU_TRANSACTION_NOT_FOUND_WARNING,
   shouldResolveSisuTransactionLookup,
 } from "../_core/sisuTransactionLookup";
@@ -272,6 +276,9 @@ export function PendingFormClient({
   // field the user cleared while that fetch was still in flight could get
   // silently repopulated by the prefill once it lands.
   const userEditedFieldsRef = useRef(new Set<keyof PendingFormState>());
+  const trustedPrefilledSisuTransactionIdRef = useRef(
+    readPrefilledSisuTransactionId(previousSubmissionFormData),
+  );
 
   const {
     clientTypeOptions,
@@ -427,8 +434,11 @@ export function PendingFormClient({
         const discardedSisuTransactionId = result.discardedSisuTransactionId;
 
         if (
-          discardedSisuTransactionId &&
-          formState.sisuTransactionId === discardedSisuTransactionId
+          shouldClearDiscardedSisuTransactionId(
+            formState.sisuTransactionId,
+            discardedSisuTransactionId,
+            trustedPrefilledSisuTransactionIdRef.current,
+          )
         ) {
           removeSisuTransactionIdFromCurrentUrl();
           setFormState((current) =>
@@ -437,7 +447,12 @@ export function PendingFormClient({
         }
 
         if (result.error) {
-          setTransactionError(result.error);
+          const retainedSisuTransactionId =
+            trustedPrefilledSisuTransactionIdRef.current ||
+            formState.sisuTransactionId;
+          if (shouldShowSisuTransactionLookupWarning(retainedSisuTransactionId)) {
+            setTransactionError(result.error);
+          }
           return;
         }
 
@@ -462,7 +477,14 @@ export function PendingFormClient({
         ) {
           return;
         }
-        setTransactionError(SISU_TRANSACTION_NOT_FOUND_WARNING);
+        setTransactionError(
+          shouldShowSisuTransactionLookupWarning(
+            trustedPrefilledSisuTransactionIdRef.current ||
+              formState.sisuTransactionId,
+          )
+            ? SISU_TRANSACTION_NOT_FOUND_WARNING
+            : null,
+        );
       } finally {
         setLoadingTransaction(false);
       }
@@ -542,6 +564,7 @@ export function PendingFormClient({
             getSubmittedSisuTransactionId(payload) || formState.sisuTransactionId,
           debugKey,
           emailWarning: getSubmissionSummaryEmailWarning(payload) ?? undefined,
+          workflowWarning: getSubmissionWorkflowWarning(payload) ?? undefined,
         }),
       );
     } catch (submitError) {

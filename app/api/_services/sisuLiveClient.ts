@@ -4,6 +4,8 @@ import type {
   SISUDropdownOption,
   SISUFindAgentRequest,
   SISUFindAgentResponse,
+  SISUTransaction,
+  SISUTransactionResponse,
   SISUTeamField,
   SISUTeamFieldCatalogEntry,
   SISUTeamFieldsCatalogResponse,
@@ -336,6 +338,51 @@ export async function createOrUpdateLiveSisuTransaction(
     "/v1/client/edit-client",
     payload,
   );
+}
+
+function normalizeLiveSisuTransaction(
+  payload: SISUTransactionResponse | null | undefined,
+): SISUTransaction | null {
+  if (!payload) {
+    return null;
+  }
+
+  if (payload.client && typeof payload.client === "object") {
+    return payload.client;
+  }
+
+  return null;
+}
+
+/**
+ * Live GET /v1/client/edit-client/:transactionId — returns the nested client record.
+ */
+export async function fetchLiveSisuTransactionById(
+  transactionId: number,
+): Promise<SisuLiveResult<SISUTransaction>> {
+  const result = await sisuRequest<SISUTransactionResponse>(
+    "GET",
+    `/v1/client/edit-client/${transactionId}`,
+  );
+
+  if (result.error || !result.data) {
+    return {
+      data: null,
+      error: result.error ?? "Failed to load SISU transaction.",
+      status: result.status,
+    };
+  }
+
+  const transaction = normalizeLiveSisuTransaction(result.data);
+  if (!transaction) {
+    return {
+      data: null,
+      error: "SISU transaction response missing client.",
+      status: 502,
+    };
+  }
+
+  return { data: transaction, error: null };
 }
 
 export function pickSisuAgentIdFromFindResponse(

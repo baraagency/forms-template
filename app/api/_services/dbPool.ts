@@ -1,5 +1,6 @@
 import { Pool } from "pg";
 import { getDatabasePoolConfig } from "@/db/connection";
+import { ensureIntegrationEnvLoaded } from "./loadProjectEnv";
 
 export type StorageResult<T> =
   | { data: T; error: null }
@@ -8,6 +9,7 @@ export type StorageResult<T> =
 let pool: Pool | null = null;
 
 export function getDbPool(): Pool | null {
+  ensureIntegrationEnvLoaded();
   const databaseUrl = process.env.DATABASE_URL?.trim();
   if (!databaseUrl) {
     return null;

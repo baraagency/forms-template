@@ -20,7 +20,7 @@ APIs, conventions, and file structure may differ from Next.js or older React Rou
 - Form router return URLs omit `agentId`.
 - Mock APIs: fixtures in `app/api/_fixtures/`; stable IDs in `app/api/_fixtures/constants.ts`.
 - Branding: replace `public/form-banner.svg`; shared header via `app/forms/_core/FormBanner.tsx`.
-- Visual design (canonical): [Forms Template — Visual Design System](https://app.notion.com/p/3a6a4516f72b814caff0cc286f33e2bd) — palette, type, elevation, CTAs, motion, and anti-patterns for agents adapting this template. When you change colors, typography, shadows, motion, or primary CTA chrome, update that Notion page (and keep `app/globals.css`, `app/AppTheme.tsx`, and `.interface-design/system.md` in sync).
+- Visual design (canonical): [Interface Design System](https://app.notion.com/p/3d8a4516f72b81ffaff9cfdf161072f7) — palette, type, elevation, CTAs, motion, layout/render rules, and anti-patterns for agents adapting this template. Primitive colors/dimensions live in `tokens/primitives.json` (`bun run tokens:build` → `app/generated/`). When you change colors, typography, shadows, motion, or primary CTA chrome, update tokens + Notion + `.interface-design/system.md`.
 - Framework: React Router v8 Framework mode (Vite). UI routes live in `app/routes/*.tsx`; HTTP APIs are resource routes (`loader`/`action`, no default component) under `app/api/**/route.ts`, registered in `app/routes.ts`.
 
 ## Pending Example
@@ -65,9 +65,9 @@ APIs, conventions, and file structure may differ from Next.js or older React Rou
 
 - When adapting forms from client apps, strip client-specific branding, labels, and notices (e.g. Jeff Cook, JCRE, Usaj); keep this project's visual design.
 - New example forms should call the shared submission workflow after validate/normalize; put form-specific side effects in workflow hooks.
-- Keep shared form controls and section/divider spacing visually consistent with the Pending form reference (e.g. submit button size, FieldGroup spacing).
-- Shared date picker should fit fully in its viewport without scrolling, especially on mobile.
-- Settings mapping tables: labels only (hide field slugs); rows sorted by form appearance order; SISU / FUB Person / FUB Deal in tabs in one container; target fields are clearable Selects where cleared means disabled (no Enabled column); Save belongs outside the table (not in an Actions column); paginated (5 rows/page).
+- Keep shared form controls, section/divider spacing, and date picker sizing visually consistent with the Pending form reference (picker must fit its viewport without scrolling, especially on mobile).
+- When opening the form router in a new tab, include only `clientId` in the URL—not FUB embedded `context`/`signature` params.
+- Settings mapping tables: labels only (hide field slugs); rows sorted by form appearance order; SISU / FUB Person / FUB Deal in tabs in one container; target fields are clearable Selects where cleared means disabled (no Enabled column); Save belongs outside the table (not in an Actions column); fixed-height scroll viewport with infinite scroll (10 rows per batch).
 - Email recipients: no Active toggle—remove a row to disable; editable emails; add-email input above the list.
 - FUB Person tag settings: Beui multi-select per Buyer/Seller; options from FUB tag catalog; allow custom tags; auto-save on change.
 - Submitted confirmation page: no separate Form row in the summary (page title carries the form name); workflow/integration warnings on the page, not raw API errors.
@@ -78,12 +78,12 @@ APIs, conventions, and file structure may differ from Next.js or older React Rou
 
 ## Learned Workspace Facts
 
-- Reusable forms template (GitHub slug `forms-template`); visual design reference in Notion: [Forms Template — Visual Design System](https://app.notion.com/p/3a6a4516f72b814caff0cc286f33e2bd) (update when tokens or CTA chrome change).
+- Reusable forms template (GitHub slug `forms-template`); visual design reference in Notion: [Interface Design System](https://app.notion.com/p/3d8a4516f72b81ffaff9cfdf161072f7) (update when tokens or CTA chrome change).
 - Accessibility: WCAG 2.1 AA target; canonical guide `docs/a11y.md`; `test:a11y` and CI a11y workflow are advisory until `STRICT_A11Y=1` or the workflow gate is enabled.
 - Form prefill: draft cache (`formDraftCache.ts`) uses `localStorage` by `personId` + form type (fill-only merge, clear on submit); with `dealId` in URL, `buildFormLoaderData` loads latest successful `form_submissions` into `previousSubmissionFormData` (including `sisuTransactionId`); successful workflow patches stored `form_data` with resolved `dealId` and `sisuTransactionId`.
 - Settings SISU team-fields and FUB person/deal field option catalogs use live APIs when the corresponding API keys are set; otherwise fixtures.
-- `/api/fub/users`, `/api/fub/people`, `/api/fub/deals`, `/api/fub/appointment-types`, and `/api/fub/tags` use live FUB when `FUB_API_KEY` is set; otherwise fixtures. Appointment Type values use FUB `/appointmentTypes` element `id`. Tag catalog aggregates unique tags from live people (`fields=tags`). Deals stay on fixtures when `DEMO_MODE=true` even if a FUB key is present (form deal pickers show live deals only when Demo Mode is off). Demo mode (UI label, not "Local demo mode") is active only when `DEMO_MODE=true`.
-- FUB deal create requires `name` and `stageId` (plus `peopleIds`); do not send `personId` or a string `stage` field.
+- `/api/fub/users`, `/api/fub/people`, `/api/fub/deals`, `/api/fub/appointment-types`, and `/api/fub/tags` use live FUB when `FUB_API_KEY` is set; otherwise fixtures. Appointment Type values use FUB `/appointmentTypes` element `id`. Tag catalog aggregates unique tags from live people (`fields=tags`). Deals stay on fixtures when `DEMO_MODE=true` even if a FUB key is present (form deal pickers show live deals only when Demo Mode is off). Demo mode (UI label, not "Local demo mode") is active only when `DEMO_MODE=true`. FUB deal create requires `name`, `stageId`, and `peopleIds`; do not send `personId` or a string `stage` field.
+- FUB submission notes (`buildFormSubmissionSummary`): bordered HTML tables; labels from the field catalog; values formatted with the same display rules as the forms.
 - SISU writes require enabled mappings with non-empty `sisu_field_name`; the Client Type field (`clientType`/`leadType`) is locked to SISU's `type_id`, normalized Buyer/Seller → `b`/`s` (see `normalizeSisuClientTypeFields.ts`); set `agent_id` by resolving submitting FUB user email via `POST /v1/agent/find-agent` (omit on failure; appointment-met uses `agentSubmitting || agentId`).
 - FUB form settings split into Person (Buyer/Seller `client_type` stages, tags, mappings) and Deal (Buyer/Seller stages, mappings; no tags); person stages from `/api/fub/stages`, deal stages from `/api/fub/pipelines`; person tags via Beui multi-select (catalog `GET /api/fub/tags`, custom tags allowed, bulk save `PUT /api/forms/settings/fub/tags`).
 - When `ADMIN_PASSWORD` is set, settings auth uses `settings_admin_auth` HttpOnly session cookie via `POST /api/forms/settings/auth`; all `/api/forms/settings/*` routes enforce it.

@@ -7,8 +7,9 @@
     "node": ">=22.22.0"
   },
   "scripts": {
-    "dev": "NODE_OPTIONS='--env-file=.env' react-router dev",
-    "build": "react-router build",
+    "tokens:build": "style-dictionary build --config sd.config.mjs",
+    "dev": "bun run tokens:build && react-router dev",
+    "build": "bun run tokens:build && react-router build",
     "start": "react-router-serve ./build/server/index.js",
     "typecheck": "react-router typegen && tsc",
     "lint": "eslint",
@@ -58,6 +59,7 @@
     "@types/react-dom": "^19.2.3",
     "eslint": "^9",
     "eslint-plugin-jsx-a11y": "^6.10.2",
+    "style-dictionary": "^5.5.3",
     "tailwindcss": "^4",
     "typescript": "^5.9",
     "typescript-eslint": "^8.65.0",

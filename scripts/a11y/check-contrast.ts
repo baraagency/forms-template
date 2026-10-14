@@ -2,7 +2,7 @@
  * WCAG 2.1 contrast audit for design-token pairs.
  * Advisory by default; set STRICT_A11Y=1 to exit non-zero on failures.
  */
-import pairs from "./contrast-pairs.json";
+import pairs from "../../app/generated/contrast-pairs.json";
 
 type ContrastPair = {
   name: string;

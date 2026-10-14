@@ -3,22 +3,19 @@ import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
 import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
-import TablePagination from "@mui/material/TablePagination";
 import TableRow from "@mui/material/TableRow";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import {
-  Spinner,
-  TextInput,
-  secondaryButtonClassName,
-} from "../_core/ui";
+import { TextInput, secondaryButtonClassName } from "../_core/ui";
 import type { SettingsFormKind } from "../_core/formIdentity";
 import { FormSelectInput } from "../_core/formSelectInput";
 import { PrimaryButton } from "../_core/PrimaryButton";
 import { FormEmptyState } from "../_core/FormEmptyState";
 import { FormNotice } from "../_core/FormNotice";
 import { getFormFieldLabel, sortMappingsByMappedFirst } from "./formFieldCatalog";
-
-const ROWS_PER_PAGE = 5;
+import {
+  MAPPING_TABLE_SKELETON_ROWS,
+  useMappingTableInfiniteScroll,
+} from "./useMappingTableInfiniteScroll";
 
 type FubMappingRow = {
   id: number;
@@ -98,7 +95,6 @@ export function FubMappingsTable({
 }: FubMappingsTableProps) {
   const [drafts, setDrafts] = useState<Record<number, FubDraft>>({});
   const [searchQuery, setSearchQuery] = useState("");
-  const [page, setPage] = useState(0);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -112,10 +108,6 @@ export function FubMappingsTable({
       ),
     );
   }, [rows]);
-
-  useEffect(() => {
-    setPage(0);
-  }, [searchQuery, formKind]);
 
   const normalizedSearch = searchQuery.trim().toLowerCase();
 
@@ -142,17 +134,10 @@ export function FubMappingsTable({
     });
   }, [drafts, formKind, normalizedSearch, rows]);
 
-  useEffect(() => {
-    const maxPage = Math.max(0, Math.ceil(filteredRows.length / ROWS_PER_PAGE) - 1);
-    if (page > maxPage) {
-      setPage(maxPage);
-    }
-  }, [filteredRows.length, page]);
-
-  const paginatedRows = useMemo(() => {
-    const start = page * ROWS_PER_PAGE;
-    return filteredRows.slice(start, start + ROWS_PER_PAGE);
-  }, [filteredRows, page]);
+  const { scrollRef, visibleRows, onScroll } = useMappingTableInfiniteScroll(
+    filteredRows,
+    `${formKind}:${normalizedSearch}`,
+  );
 
   const dirtyRows = useMemo(
     () =>
@@ -244,15 +229,16 @@ export function FubMappingsTable({
         </p>
       </div>
 
-      {fieldOptionsLoading ? (
-        <p className="settings-hint flex items-center gap-2">
-          <Spinner className="h-4 w-4" />
-          Loading {targetLabel} options…
-        </p>
-      ) : null}
-
-      <TableContainer className="settings-mapping-table-container">
-        <Table size="small" aria-label={tableAriaLabel}>
+      <TableContainer
+        className="settings-mapping-table-container"
+        aria-busy={fieldOptionsLoading}
+      >
+        <div
+          ref={scrollRef}
+          className="settings-mapping-table-scroll"
+          onScroll={onScroll}
+        >
+          <Table size="small" aria-label={tableAriaLabel}>
           <TableHead>
             <TableRow>
               <TableCell scope="col">Form field</TableCell>
@@ -260,7 +246,27 @@ export function FubMappingsTable({
             </TableRow>
           </TableHead>
           <TableBody>
-            {paginatedRows.length === 0 ? (
+            {fieldOptionsLoading ? (
+              Array.from({ length: MAPPING_TABLE_SKELETON_ROWS }, (_, index) => (
+                <TableRow
+                  key={`fub-mapping-skeleton-${index}`}
+                  className="settings-mapping-table-row--skeleton"
+                >
+                  <TableCell>
+                    <div
+                      className="settings-mapping-table-skeleton-bar"
+                      aria-hidden="true"
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <div
+                      className="settings-mapping-table-skeleton-bar"
+                      aria-hidden="true"
+                    />
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : visibleRows.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={2}>
                   <p className="settings-hint py-2">
@@ -269,7 +275,7 @@ export function FubMappingsTable({
                 </TableCell>
               </TableRow>
             ) : (
-              paginatedRows.map((row) => {
+              visibleRows.map((row) => {
                 const draft = drafts[row.id] ?? {
                   fubFieldName: row.fub_field_name ?? "",
                 };
@@ -319,20 +325,8 @@ export function FubMappingsTable({
               })
             )}
           </TableBody>
-        </Table>
-        <TablePagination
-          component="div"
-          className="settings-mapping-pagination"
-          count={filteredRows.length}
-          page={page}
-          onPageChange={(_event, nextPage) => setPage(nextPage)}
-          rowsPerPage={ROWS_PER_PAGE}
-          onRowsPerPageChange={() => undefined}
-          rowsPerPageOptions={[ROWS_PER_PAGE]}
-          labelDisplayedRows={({ from, to, count }) =>
-            `${from}–${to} of ${count !== -1 ? count : `more than ${to}`}`
-          }
-        />
+          </Table>
+        </div>
       </TableContainer>
     </div>
   );

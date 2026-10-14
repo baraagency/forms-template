@@ -3,14 +3,9 @@ import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
 import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
-import TablePagination from "@mui/material/TablePagination";
 import TableRow from "@mui/material/TableRow";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import {
-  Spinner,
-  TextInput,
-  secondaryButtonClassName,
-} from "../_core/ui";
+import { TextInput, secondaryButtonClassName } from "../_core/ui";
 import type { SISUTeamFieldsCatalogResponse } from "@/app/types/sisu";
 import type { FormSisuMapping } from "@/app/types/storage";
 import type { SettingsFormKind } from "../_core/formIdentity";
@@ -24,8 +19,10 @@ import {
   isLockedClientTypeSisuMapping,
   sortMappingsByMappedFirst,
 } from "./formFieldCatalog";
-
-const ROWS_PER_PAGE = 5;
+import {
+  MAPPING_TABLE_SKELETON_ROWS,
+  useMappingTableInfiniteScroll,
+} from "./useMappingTableInfiniteScroll";
 
 const RESERVED_SISU_FIELD_NAMES = new Set([
   "agent_id",
@@ -139,7 +136,6 @@ export function SisuMappingsTable({
 }: SisuMappingsTableProps) {
   const [drafts, setDrafts] = useState<Record<number, SisuDraft>>({});
   const [searchQuery, setSearchQuery] = useState("");
-  const [page, setPage] = useState(0);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [teamFields, setTeamFields] = useState<TeamFieldCatalog>({});
@@ -187,10 +183,6 @@ export function SisuMappingsTable({
     );
   }, [rows]);
 
-  useEffect(() => {
-    setPage(0);
-  }, [searchQuery, formKind]);
-
   const sisuFieldOptions = useMemo(
     () => getSisuFieldSelectOptions(teamFields),
     [teamFields],
@@ -235,17 +227,10 @@ export function SisuMappingsTable({
     });
   }, [drafts, formKind, normalizedSearch, rows, sisuFieldOptions]);
 
-  useEffect(() => {
-    const maxPage = Math.max(0, Math.ceil(filteredRows.length / ROWS_PER_PAGE) - 1);
-    if (page > maxPage) {
-      setPage(maxPage);
-    }
-  }, [filteredRows.length, page]);
-
-  const paginatedRows = useMemo(() => {
-    const start = page * ROWS_PER_PAGE;
-    return filteredRows.slice(start, start + ROWS_PER_PAGE);
-  }, [filteredRows, page]);
+  const { scrollRef, visibleRows, onScroll } = useMappingTableInfiniteScroll(
+    filteredRows,
+    `${formKind}:${normalizedSearch}`,
+  );
 
   const dirtyRows = useMemo(
     () =>
@@ -344,15 +329,16 @@ export function SisuMappingsTable({
         </p>
       </div>
 
-      {teamFieldsLoading ? (
-        <p className="settings-hint flex items-center gap-2">
-          <Spinner className="h-4 w-4" />
-          Loading SISU team fields…
-        </p>
-      ) : null}
-
-      <TableContainer className="settings-mapping-table-container">
-        <Table size="small" aria-label="SISU field mappings">
+      <TableContainer
+        className="settings-mapping-table-container"
+        aria-busy={teamFieldsLoading}
+      >
+        <div
+          ref={scrollRef}
+          className="settings-mapping-table-scroll"
+          onScroll={onScroll}
+        >
+          <Table size="small" aria-label="SISU field mappings">
           <TableHead>
             <TableRow>
               <TableCell scope="col">Form field</TableCell>
@@ -362,7 +348,39 @@ export function SisuMappingsTable({
             </TableRow>
           </TableHead>
           <TableBody>
-            {paginatedRows.length === 0 ? (
+            {teamFieldsLoading ? (
+              Array.from({ length: MAPPING_TABLE_SKELETON_ROWS }, (_, index) => (
+                <TableRow
+                  key={`sisu-mapping-skeleton-${index}`}
+                  className="settings-mapping-table-row--skeleton"
+                >
+                  <TableCell>
+                    <div
+                      className="settings-mapping-table-skeleton-bar"
+                      aria-hidden="true"
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <div
+                      className="settings-mapping-table-skeleton-bar"
+                      aria-hidden="true"
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <div
+                      className="settings-mapping-table-skeleton-bar"
+                      aria-hidden="true"
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <div
+                      className="settings-mapping-table-skeleton-bar"
+                      aria-hidden="true"
+                    />
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : visibleRows.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={4}>
                   <p className="settings-hint py-2">
@@ -371,7 +389,7 @@ export function SisuMappingsTable({
                 </TableCell>
               </TableRow>
             ) : (
-              paginatedRows.map((row) => {
+              visibleRows.map((row) => {
                 const draft = drafts[row.id] ?? {
                   sisuFieldName: row.sisu_field_name ?? "",
                   sisuFieldType: row.sisu_field_type ?? "",
@@ -458,20 +476,8 @@ export function SisuMappingsTable({
               })
             )}
           </TableBody>
-        </Table>
-        <TablePagination
-          component="div"
-          className="settings-mapping-pagination"
-          count={filteredRows.length}
-          page={page}
-          onPageChange={(_event, nextPage) => setPage(nextPage)}
-          rowsPerPage={ROWS_PER_PAGE}
-          onRowsPerPageChange={() => undefined}
-          rowsPerPageOptions={[ROWS_PER_PAGE]}
-          labelDisplayedRows={({ from, to, count }) =>
-            `${from}–${to} of ${count !== -1 ? count : `more than ${to}`}`
-          }
-        />
+          </Table>
+        </div>
       </TableContainer>
     </div>
   );

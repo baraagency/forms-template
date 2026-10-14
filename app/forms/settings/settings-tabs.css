@@ -294,11 +294,92 @@
   }
 }
 
+.settings-mapping-table-container.MuiTableContainer-root,
 .settings-mapping-table-container {
+  /* Fixed viewport: ~5 visible rows; infinite scroll loads 10 at a time */
+  --settings-mapping-viewport-rows: 5;
+  --settings-mapping-pagination-height: 3.5rem;
+  --settings-mapping-head-row-height: 2.5rem;
+  --settings-mapping-body-row-height: 3.5rem;
+  --settings-mapping-table-height: calc(
+    var(--settings-mapping-head-row-height) +
+      var(--settings-mapping-body-row-height) * var(--settings-mapping-viewport-rows) +
+      var(--settings-mapping-pagination-height)
+  );
   background: var(--card-bg);
   border: 1px solid color-mix(in srgb, var(--body-color) 18%, transparent);
   border-radius: var(--card-radius);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  height: var(--settings-mapping-table-height);
+  min-height: var(--settings-mapping-table-height);
   overflow: hidden;
+}
+
+.settings-mapping-table-scroll {
+  flex: 1 1 auto;
+  height: 100%;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  /* Prevent tall table content from expanding page scroll height */
+  contain: strict;
+}
+
+.settings-mapping-table-container .MuiTableHead-root {
+  background: var(--card-bg);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.settings-mapping-table-container .MuiTableHead-root .MuiTableCell-root {
+  box-sizing: border-box;
+  height: var(--settings-mapping-head-row-height);
+  padding-block: 0;
+  vertical-align: middle;
+}
+
+.settings-mapping-table-container .MuiTableBody-root .MuiTableRow-root {
+  height: var(--settings-mapping-body-row-height);
+}
+
+.settings-mapping-table-container .MuiTableBody-root .MuiTableCell-root {
+  box-sizing: border-box;
+  height: var(--settings-mapping-body-row-height);
+  padding-block: 0;
+  vertical-align: middle;
+}
+
+.settings-mapping-table-container .settings-mapping-table-row--skeleton .MuiTableCell-root {
+  padding-block: calc(
+    (var(--settings-mapping-body-row-height) - var(--settings-field-control-height)) / 2
+  );
+}
+
+.settings-mapping-table-skeleton-bar {
+  background: color-mix(in srgb, var(--body-color) 12%, var(--card-bg));
+  border-radius: var(--btn-radius);
+  height: var(--settings-field-control-height);
+  width: 100%;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .settings-mapping-table-skeleton-bar {
+    animation: settings-mapping-skeleton-pulse 1.4s ease-in-out infinite;
+  }
+}
+
+@keyframes settings-mapping-skeleton-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+
+  50% {
+    opacity: 1;
+  }
 }
 
 .settings-mapping-table-select .bara-field__label-row,
@@ -337,25 +418,6 @@
   justify-content: flex-end;
 }
 
-.settings-mapping-pagination {
-  border-top: 1px solid color-mix(in srgb, var(--body-color) 14%, transparent);
-  font-variant-numeric: tabular-nums;
-}
-
-.settings-mapping-pagination .MuiTablePagination-displayedRows,
-.settings-mapping-pagination .MuiTablePagination-selectLabel {
-  font-variant-numeric: tabular-nums;
-}
-
-.settings-mapping-pagination .MuiTablePagination-actions button {
-  min-width: 40px;
-  min-height: 40px;
-}
-
-.settings-mapping-pagination .MuiTablePagination-actions button:active {
-  transform: scale(var(--scale-large));
-}
-
 @media (max-width: 900px) {
   .settings-fub-client-type-grid {
     grid-template-columns: minmax(0, 1fr);
@@ -385,8 +447,9 @@
     display: none;
   }
 
-  .settings-mapping-table-container {
+  .settings-mapping-table-scroll {
     overflow-x: auto;
+    overflow-y: auto;
   }
 }
 

@@ -1,13 +1,9 @@
 import { CssBaseline } from "@mui/material";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import type { ReactNode } from "react";
+import { designTokens } from "./generated/design-tokens";
 
-/** Colors aligned with forms-template palette (black accent + navy + sky) */
-const BARA_NAVY = "#003a55";
-const BARA_ACCENT = "#1E1E1E";
-const BARA_SKY = "#0099cc";
-const BARA_CHARCOAL = "#404040";
-const BARA_BG = "#f0f7fa";
+const cardRadius = Number.parseInt(designTokens.cardRadius, 10);
 
 const theme = createTheme({
   cssVariables: true,
@@ -15,39 +11,39 @@ const theme = createTheme({
     light: {
       palette: {
         background: {
-          default: BARA_BG,
-          paper: "#ffffff",
+          default: designTokens.background,
+          paper: designTokens.cardBg,
         },
         primary: {
-          main: BARA_NAVY,
-          contrastText: "#ffffff",
+          main: designTokens.palette2,
+          contrastText: designTokens.btnPrimaryColor,
         },
         secondary: {
-          main: BARA_ACCENT,
-          contrastText: "#ffffff",
+          main: designTokens.palette1,
+          contrastText: designTokens.btnPrimaryColor,
         },
         info: {
-          main: BARA_SKY,
+          main: designTokens.brandSky,
         },
         text: {
-          primary: BARA_NAVY,
-          secondary: "#4a6b7c",
-          disabled: "#5a7585",
+          primary: designTokens.palette2,
+          secondary: designTokens.bodyColor,
+          disabled: designTokens.placeholderColor,
         },
         warning: {
-          main: BARA_CHARCOAL,
+          main: designTokens.palette3,
         },
         success: {
-          main: BARA_SKY,
+          main: designTokens.brandSky,
         },
         error: {
-          main: BARA_CHARCOAL,
+          main: designTokens.palette3,
         },
       },
     },
   },
   shape: {
-    borderRadius: 8,
+    borderRadius: cardRadius,
   },
   typography: {
     fontFamily: "var(--font-family), Arial, sans-serif",
@@ -100,7 +96,7 @@ const theme = createTheme({
     MuiCard: {
       styleOverrides: {
         root: {
-          borderRadius: 8,
+          borderRadius: cardRadius,
         },
       },
     },

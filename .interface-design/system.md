@@ -1,10 +1,14 @@
 # Interface Design System — Forms Template
 
+**Canonical Notion doc:** [Interface Design System](https://app.notion.com/p/3d8a4516f72b81ffaff9cfdf161072f7) — keep in sync when tokens or patterns change.
+
 ## Direction and feel
 
 Ops settings for real-estate form workflows (SISU + Follow Up Boss). Calm, dense enough for mapping tables, quiet elevation — not a marketing dashboard. Agent/admin configuring router visibility, email, and field mappings between desk work.
 
 ## Color (baraagency.com)
+
+Primitive hex values: `tokens/primitives.json` → `bun run tokens:build` → `app/generated/design-tokens.css` (consumed by `globals.css` + `AppTheme.tsx`).
 
 | Token | Hex | Role |
 | --- | --- | --- |
@@ -110,7 +114,13 @@ Prefer darkening `color-mix` tokens over changing brand hues when a pair fails.
 
 ### Mapping table (SISU / FUB)
 
-- Shared layout: search + Save mappings (same row) → optional loading hint → MUI table (5 rows/page) → pagination
+- Shared layout: search + Save mappings (same row) → fixed-height MUI table with **internal scroll** (not page scroll)
+- **Viewport:** ~5 visible body rows + sticky header; container height fixed via `--settings-mapping-table-height` in `settings-tabs.css` — page height must not grow as rows load
+- **Infinite scroll (not pagination):** initial 10 rows (`MAPPING_TABLE_BATCH_SIZE`); load 10 more near scroll bottom; search/filter resets to first 10 and scrolls to top; no pagination controls
+- **DOM:** `TableContainer.settings-mapping-table-container` (fixed height, `overflow: hidden`) → `.settings-mapping-table-scroll` (`overflow-y: auto`, **`contain: strict`**) → MUI `Table`
+- **Scroll containment (required):** `contain: strict` on `.settings-mapping-table-scroll` prevents tall table content from leaking into document scroll height
+- **Hidden panels:** destination tabs and form tabs stay mounted (`hidden`) for draft persistence — auto-load must skip when `clientHeight === 0` so hidden tables do not prefetch the full dataset
+- **Loading:** in-table skeleton rows (5) while catalog loads; no spinner above table; skeletons must not resize the outer container
 - Row order: form-field appearance order from `formFieldCatalog.ts` (`FORM_FIELD_OPTIONS` array order), not A–Z `field_name`
 - Columns: Form field (label only) → target Select (+ SISU Type / Custom)
 - No per-row Actions column — edit freely, then **Save mappings** beside search commits all dirty rows
@@ -119,7 +129,7 @@ Prefer darkening `color-mix` tokens over changing brand hues when a pair fails.
 - SISU: also Type + Custom (auto from team-fields catalog)
 - FUB person/deal: Select options = top-level keys from one sample (`/api/fub/people?fields=allFields&limit=1`, `/api/fub/deals?fields=allFields&limit=1`). Person sample uses live FUB when `FUB_API_KEY` is set; otherwise fixture.
 - SISU field Select: live `/api/sisu/team-fields` when `SISU_API_KEY` is set; otherwise fixture
-- Components: `SisuMappingsTable.tsx`, `FubMappingsTable.tsx`
+- Components: `SisuMappingsTable.tsx`, `FubMappingsTable.tsx`, `useMappingTableInfiniteScroll.ts`, `settings-tabs.css`
 
 ### FUB Person / FUB Deal (mapping tabs)
 

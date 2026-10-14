@@ -4,27 +4,21 @@
 @custom-variant dark (&:is(.dark *));
 
 /* ─── Global Design Tokens ────────────────────────────────────────────────────
-   Edit these variables to customise fonts, colours, spacing, and borders
-   across the entire app without touching component code.
+   Primitive colors/dimensions: tokens/primitives.json → bun run tokens:build
+   Semantic tokens below reference generated CSS variables.
    ──────────────────────────────────────────────────────────────────────────── */
 
-:root {
-    /* Brand palette */
-    --palette-1: #1E1E1E; /* primary accent (CTAs) */
-    --palette-2: #003a55; /* deep navy (text / structure) */
-    --palette-3: #404040; /* charcoal (errors / danger) */
+@import "./generated/design-tokens.css";
 
+:root {
     /* Brand (mapped to palette) */
     --brand-charcoal: var(--palette-2);
     --brand-charcoal-dark: color-mix(in srgb, var(--palette-2) 86%, #000000);
     --brand-cyan: var(--palette-1);
     --brand-cyan-dark: color-mix(in srgb, var(--palette-1) 78%, #000000);
     --brand-cyan-soft: color-mix(in srgb, var(--palette-1) 14%, #ffffff);
-    --brand-sky: #0099cc;
-    --brand-sky-soft: #d4ecf7;
 
     /* Page chrome */
-    --background: #f0f7fa;
     --foreground: var(--palette-2);
 
     /* Typography — Lato body + DM Serif Display headers (baraagency.com) */
@@ -44,8 +38,6 @@
     --body-size: 0.875rem;
     --body-weight: 400;
     --body-line-height: 1.625;
-  /* WCAG AA: ≥4.5:1 on --card-bg / --background */
-    --body-color: #4a6b7c;
     --eyebrow-size: 0.875rem;
     --eyebrow-weight: 700;
     --eyebrow-tracking: 0.2em;
@@ -62,9 +54,7 @@
     --field-min-width: 180px;
 
     /* Card sections */
-    --card-bg: #ffffff;
     --card-padding: 24px;
-    --card-radius: 8px;
     --card-shadow: 0 16px 36px color-mix(in srgb, var(--palette-2) 8%, transparent);
     --card-border: 1px solid color-mix(in srgb, var(--palette-2) 12%, #ffffff);
     /* Soft layered elevation — same light as cards (down, not diagonal sticker) */
@@ -85,17 +75,14 @@
 
     /* Buttons */
     --btn-primary-bg: var(--palette-1);
-    --btn-primary-color: #fff;
     --btn-primary-hover-bg: var(--palette-1);
     --btn-outline-color: var(--palette-2);
     --btn-outline-border: var(--brand-sky);
-    --btn-radius: 6px;
     /* TextInput control height — beside-field CTAs match this */
     --settings-field-control-height: 2.625rem;
     --highlight-color: var(--palette-1);
     --highlight-bg: var(--brand-cyan-soft);
     --menu-hover-bg: color-mix(in srgb, var(--brand-sky) 12%, #ffffff);
-    --icon-muted: #5a7585;
 
     /* Status colours */
     --success-bg: color-mix(in srgb, var(--brand-sky) 14%, #ffffff);
@@ -103,7 +90,6 @@
     --warning-bg: color-mix(in srgb, var(--palette-1) 12%, #ffffff);
     --warning-color: color-mix(in srgb, var(--palette-3) 85%, #000000);
     --error-color: var(--palette-3);
-    --placeholder-color: #5a7585;
     --card: oklch(1 0 0);
     --card-foreground: oklch(0.145 0 0);
     --popover: oklch(1 0 0);

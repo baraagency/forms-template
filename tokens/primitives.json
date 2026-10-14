@@ -1,0 +1,15 @@
+{
+  "palette-1": { "$type": "color", "$value": "#1E1E1E" },
+  "palette-2": { "$type": "color", "$value": "#003a55" },
+  "palette-3": { "$type": "color", "$value": "#404040" },
+  "brand-sky": { "$type": "color", "$value": "#0099cc" },
+  "brand-sky-soft": { "$type": "color", "$value": "#d4ecf7" },
+  "background": { "$type": "color", "$value": "#f0f7fa" },
+  "card-bg": { "$type": "color", "$value": "#ffffff" },
+  "body-color": { "$type": "color", "$value": "#4a6b7c" },
+  "placeholder-color": { "$type": "color", "$value": "#5a7585" },
+  "icon-muted": { "$type": "color", "$value": "#5a7585" },
+  "btn-primary-color": { "$type": "color", "$value": "#ffffff" },
+  "card-radius": { "$type": "dimension", "$value": "8px" },
+  "btn-radius": { "$type": "dimension", "$value": "6px" }
+}

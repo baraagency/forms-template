@@ -8,17 +8,28 @@ Ops settings for real-estate form workflows (SISU + Follow Up Boss). Calm, dense
 
 ## Color (baraagency.com)
 
-Primitive hex values: `tokens/primitives.json` → `bun run tokens:build` → `app/generated/design-tokens.css` (consumed by `globals.css` + `AppTheme.tsx`).
+Primitive hex values: `tokens/primitives.json` → `bun run tokens:build` → `app/generated/design-tokens.css` (consumed by `globals.css` + `AppTheme.tsx`). These are the **template defaults**.
 
 | Token | Hex | Role |
 | --- | --- | --- |
-| `--palette-1` | `#1E1E1E` | Near-black accent / primary CTAs |
-| `--palette-2` | `#003A55` | Deep navy text & structure |
-| `--palette-3` | `#404040` | Charcoal errors |
-| `--brand-sky` | `#0099CC` | Brand blue (focus, outlines, success tint) |
-| `--background` | `#F0F7FA` | Cool blue-tinted page wash |
+| `--palette-1` | `#1E1E1E` | Default action color (secondary in Appearance) — primary CTAs, selected states |
+| `--palette-2` | `#003A55` | Default structure color (primary in Appearance) — headings, labels, text |
+| `--palette-3` | `#404040` | Charcoal errors (semantic, not theme-derived) |
+| `--brand-sky` | `#0099CC` | Default derived focus / accent (outlines, success tint) |
+| `--background` | `#F0F7FA` | Default derived page wash |
 
-Keep Lato; prefer CSS variables over hard-coded hex in components.
+### Runtime appearance
+
+`/forms/settings` → **Appearance** stores two colors in the singleton `app_theme_settings` table:
+
+- **Primary** = structure: headings, labels, page wash, body/placeholder text, borders.
+- **Secondary** = actions: primary CTA fill, selected radio/option/tag states, focus/hover accent.
+
+`app/theme/appTheme.ts` derives every role token and `app/root.tsx` writes the resolved values as `:root:root` CSS variables (and feeds the MUI palette) before hydration. The exact default pair short-circuits to the values above, so the template look is unchanged until an admin saves a custom pair. Custom text pairs target ≥4.5:1 (structure text 6.5:1 for hover-tint headroom); the focus/accent target is ≥3:1. Invalid stored values fall back to the defaults.
+
+Summary emails and FUB notes use the same resolved colors (header `accentSoft`, text `structure`, border `emailBorder`) with the hosted logo. `/forms/settings` → **Branding** stores an absolute http(s) logo URL + alt text in the same singleton row; when set, it is used by the app header, HTML summary email, and FUB notes. A blank URL uses the built-in `public/logo-banner.png` in the app and omits the logo from emails/notes; a failed hosted image falls back to the built-in banner in the app header. The URL is never fetched server-side.
+
+Keep Lato; prefer CSS variables over hard-coded hex in components. New components should consume the semantic variables, not the raw palette values.
 
 ## Depth strategy
 
@@ -98,6 +109,8 @@ Verified pairs — run `bun run test:a11y:contrast` after token changes.
 | `--field-focus-ring` | `--card-bg` | 3:1 | Focus indicator vs adjacent |
 
 Prefer darkening `color-mix` tokens over changing brand hues when a pair fails.
+
+For saved custom appearance pairs, `app/theme/__tests__/appTheme.test.ts` checks these targets across a broad color grid; `bun run test:a11y:contrast` audits the template defaults.
 
 ---
 

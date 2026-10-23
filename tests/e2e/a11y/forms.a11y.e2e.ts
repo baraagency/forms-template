@@ -12,12 +12,21 @@ async function waitForDatePickersHydrated(page: Page) {
 
   await expect(month).toBeVisible({ timeout: 15_000 });
   await page.waitForFunction(() => {
+    const placeholder = getComputedStyle(document.documentElement)
+      .getPropertyValue("--placeholder-color")
+      .trim();
+    const probe = document.createElement("span");
+    probe.style.color = placeholder;
+    document.body.append(probe);
+    const expected = getComputedStyle(probe).color;
+    probe.remove();
+
     const segments = document.querySelectorAll('[aria-valuetext="Empty"]');
     if (segments.length === 0) {
       return true;
     }
     return [...segments].every(
-      (element) => getComputedStyle(element).color === "rgb(90, 117, 133)",
+      (element) => getComputedStyle(element).color === expected,
     );
   });
 }

@@ -95,7 +95,7 @@ export const datePickerTextFieldSx = {
   },
   "@media (hover: hover) and (pointer: fine)": {
     "& .MuiIconButton-root:hover": {
-      color: "var(--brand-sky)",
+      color: "var(--palette-2)",
       backgroundColor: "var(--brand-sky-soft)",
     },
   },
@@ -361,7 +361,7 @@ function DatePickerCancelActionBar({ onCancel }: { onCancel: () => void }) {
           borderRadius: "var(--btn-radius)",
           fontWeight: 700,
           textTransform: "none",
-          color: "var(--brand-sky)",
+          color: "var(--btn-outline-color)",
           transition: "transform var(--duration-quick, 150ms) var(--ease-smooth-out, cubic-bezier(0.22, 1, 0.36, 1))",
         },
         "& .MuiButton-root:active": {

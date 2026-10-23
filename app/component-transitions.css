@@ -183,7 +183,7 @@
 
 .bara-select__option--is-selected {
   background-color: var(--palette-1) !important;
-  color: #ffffff !important;
+  color: var(--btn-primary-color) !important;
 }
 
 .bara-select__control {

@@ -9,7 +9,7 @@ APIs, conventions, and file structure may differ from Next.js or older React Rou
 - Bun is the local package manager and test runner (`bun run`, `bun test`); production on Heroku uses Node 22.22+ with `@react-router/serve`.
 - Core reusable code lives in `app/forms/_core/` — do not import from example forms into `_core`.
 - New forms: copy `pending/` pattern; add a UI route in `app/routes/` + register in `app/routes.ts`; register in `formRouterFormRegistry.ts` (+ seed `router_forms`); wire settings field catalog when adding mappable fields; add a resource route under `app/api/forms/<slug>/submit/route.ts` and register it in `app/routes.ts`.
-- Settings: `/forms/settings` — password-protected when `ADMIN_PASSWORD` is set; Gmail is env-scoped; per-form tabs for visibility, recipients (`form_type`), and SISU/FUB mappings. Submit uses shared hybrid orchestrator (`app/api/_services/submissionWorkflow/`); live FUB/SISU/Gmail when keys/settings allow, otherwise skip.
+- Settings: `/forms/settings` — password-protected when `ADMIN_PASSWORD` is set; appearance colors and hosted branding; Gmail is env-scoped; per-form tabs for visibility, recipients (`form_type`), and SISU/FUB mappings. Submit uses shared hybrid orchestrator (`app/api/_services/submissionWorkflow/`); live FUB/SISU/Gmail when keys/settings allow, otherwise skip.
 - Mutually exclusive fields share one layout slot.
 - Conditional fields: hide when controlling answer empty or "No"; require only when "Yes".
 - `formLabel` must not include "Form" (email subjects append " Form Summary").
@@ -19,7 +19,7 @@ APIs, conventions, and file structure may differ from Next.js or older React Rou
 - FUB embedded context: `GET /api/fub/context` (server verifies via `app/forms/_core/fubContextVerify.ts`); agent from manual/URL/client `assignedUserId` — never embedded context user id.
 - Form router return URLs omit `agentId`.
 - Mock APIs: fixtures in `app/api/_fixtures/`; stable IDs in `app/api/_fixtures/constants.ts`.
-- Branding: replace `public/form-banner.svg`; shared header via `app/forms/_core/FormBanner.tsx`.
+- Branding: built-in banner is `public/logo-banner.png`; shared header via `app/forms/_core/FormBanner.tsx`. A hosted logo URL + alt text is editable at `/forms/settings` → Branding and is also used in summary emails/FUB notes; blank uses the built-in banner in the app and omits the logo from emails/notes.
 - Visual design (canonical): [Interface Design System](https://app.notion.com/p/3d8a4516f72b81ffaff9cfdf161072f7) — palette, type, elevation, CTAs, motion, layout/render rules, and anti-patterns for agents adapting this template. Primitive colors/dimensions live in `tokens/primitives.json` (`bun run tokens:build` → `app/generated/`). When you change colors, typography, shadows, motion, or primary CTA chrome, update tokens + Notion + `.interface-design/system.md`.
 - Framework: React Router v8 Framework mode (Vite). UI routes live in `app/routes/*.tsx`; HTTP APIs are resource routes (`loader`/`action`, no default component) under `app/api/**/route.ts`, registered in `app/routes.ts`.
 
@@ -54,7 +54,7 @@ APIs, conventions, and file structure may differ from Next.js or older React Rou
 ## Pages
 
 - `/forms` — form router (pending, appointment-set, appointment-met, closed); visibility from `router_forms`
-- `/forms/settings` — Gmail (shared), and per-form settings (recipients, SISU / FUB mappings)
+- `/forms/settings` — Appearance (primary/secondary colors), Branding (hosted logo URL/alt), Gmail (shared), and per-form settings (recipients, SISU / FUB mappings)
 - `/forms/pending` — pending reference form
 - `/forms/appointment-set` — appointment set reference form
 - `/forms/appointment-met` — appointment met reference form
@@ -83,10 +83,12 @@ APIs, conventions, and file structure may differ from Next.js or older React Rou
 - Form prefill: draft cache (`formDraftCache.ts`) uses `localStorage` by `personId` + form type (fill-only merge, clear on submit); with `dealId` in URL, `buildFormLoaderData` loads latest successful `form_submissions` into `previousSubmissionFormData` (including `sisuTransactionId`); successful workflow patches stored `form_data` with resolved `dealId` and `sisuTransactionId`.
 - Settings SISU team-fields and FUB person/deal field option catalogs use live APIs when the corresponding API keys are set; otherwise fixtures.
 - `/api/fub/users`, `/api/fub/people`, `/api/fub/deals`, `/api/fub/appointment-types`, and `/api/fub/tags` use live FUB when `FUB_API_KEY` is set; otherwise fixtures. Appointment Type values use FUB `/appointmentTypes` element `id`. Tag catalog aggregates unique tags from live people (`fields=tags`). Deals stay on fixtures when `DEMO_MODE=true` even if a FUB key is present (form deal pickers show live deals only when Demo Mode is off). Demo mode (UI label, not "Local demo mode") is active only when `DEMO_MODE=true`. FUB deal create requires `name`, `stageId`, and `peopleIds`; do not send `personId` or a string `stage` field.
-- FUB submission notes (`buildFormSubmissionSummary`): bordered HTML tables; labels from the field catalog; values formatted with the same display rules as the forms.
+- FUB submission notes (`buildFormSubmissionSummary`): bordered HTML tables themed with the resolved appearance colors and hosted logo; labels from the field catalog; values formatted with the same display rules as the forms.
 - SISU writes require enabled mappings with non-empty `sisu_field_name`; the Client Type field (`clientType`/`leadType`) is locked to SISU's `type_id`, normalized Buyer/Seller → `b`/`s` (see `normalizeSisuClientTypeFields.ts`); set `agent_id` by resolving submitting FUB user email via `POST /v1/agent/find-agent` (omit on failure; appointment-met uses `agentSubmitting || agentId`).
 - FUB form settings split into Person (Buyer/Seller `client_type` stages, tags, mappings) and Deal (Buyer/Seller stages, mappings; no tags); person stages from `/api/fub/stages`, deal stages from `/api/fub/pipelines`; person tags via Beui multi-select (catalog `GET /api/fub/tags`, custom tags allowed, bulk save `PUT /api/forms/settings/fub/tags`).
 - When `ADMIN_PASSWORD` is set, settings auth uses `settings_admin_auth` HttpOnly session cookie via `POST /api/forms/settings/auth`; all `/api/forms/settings/*` routes enforce it.
+- Appearance settings (`/forms/settings`): **primary = structure** (headings, labels, page wash, body text; maps to `--palette-2`) and **secondary = actions** (primary CTAs, selected states, focus accents; maps to `--palette-1`). `app/theme/appTheme.ts` derives AA-safe tokens; `app/root.tsx` injects them as `:root:root` CSS variables and feeds MUI; defaults stay in `tokens/primitives.json`. Summary emails and FUB notes use the same resolved colors; the summary email is `multipart/alternative` (HTML + plain text).
+- Branding settings: hosted logo URL + alt stored in `app_theme_settings.logo_url/logo_alt`; `FormBanner` uses it with an on-error fallback to `/logo-banner.png`; the same logo is embedded in summary-email/FUB-note HTML. The URL is validated as absolute http(s) and never fetched server-side.
 - Submitted page (`/forms/submitted`): FUB Deal card shows deal name when created (deal ID as caption); hides when no deal; workflow passes `dealName` through redirect query params; skipped/failed workflow steps surface via `workflowWarning` (same pattern as `emailWarning`).
 - Global footer (`AppFooter` in root layout): "Created by Bara Agency" linking to https://baraagency.com/.
 - Deploy target is Heroku (Node 22.22+, `Procfile` → `release: npm run db:migrations` then `web: npm run start` / `@react-router/serve`); `scripts/db/migrate.ts` and local dev (`loadProjectEnv.ts`, Vite `.env` merge, `npm run dev` with `--env-file=.env`) load integration keys from `.env` without requiring a server restart.

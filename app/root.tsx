@@ -5,19 +5,32 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  useRouteLoaderData,
 } from "react-router";
 import { CacheProvider } from "@emotion/react";
 import type { ReactNode } from "react";
 import { useState } from "react";
+import { getAppTheme } from "./api/_services/appThemeService";
 import { AppTheme } from "./AppTheme";
 import { createEmotionCache } from "./emotionCache";
 import type { Route } from "./+types/root";
+import { DEFAULT_RESOLVED_THEME, DEFAULT_THEME_CSS } from "./theme/appTheme";
 import { SkipToMain } from "./forms/_core/SkipToMain";
 import { AppFooter } from "./forms/_core/AppFooter";
 import "./forms/_core/ui/bara-primitives.css";
 import "./globals.css";
 import "./component-transitions.css";
 import "./forms/_core/fieldStates.css";
+
+export async function loader() {
+  const theme = await getAppTheme();
+
+  return {
+    themeCss: theme.css,
+    themePalette: theme.resolved,
+    branding: theme.branding,
+  };
+}
 
 export const links: Route.LinksFunction = () => [
   { rel: "icon", href: "/favicon.ico", sizes: "48x48" },
@@ -59,6 +72,9 @@ export const links: Route.LinksFunction = () => [
 ];
 
 function Document({ children }: { children: ReactNode }) {
+  const rootData = useRouteLoaderData<typeof loader>("root");
+  const themeCss = rootData?.themeCss ?? DEFAULT_THEME_CSS;
+
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -71,6 +87,8 @@ function Document({ children }: { children: ReactNode }) {
         />
         <Meta />
         <Links />
+        {/* Runtime appearance overrides; :root:root beats the generated :root block. */}
+        <style id="app-theme" dangerouslySetInnerHTML={{ __html: themeCss }} />
       </head>
       <body style={{ margin: 0, padding: 0, fontFamily: "var(--font-family)" }}>
         <SkipToMain />
@@ -89,9 +107,12 @@ export function Layout({ children }: { children: ReactNode }) {
 
 function EmotionProviders({ children }: { children: ReactNode }) {
   const [cache] = useState(() => createEmotionCache());
+  const rootData = useRouteLoaderData<typeof loader>("root");
+  const palette = rootData?.themePalette ?? DEFAULT_RESOLVED_THEME;
+
   return (
     <CacheProvider value={cache}>
-      <AppTheme>{children}</AppTheme>
+      <AppTheme palette={palette}>{children}</AppTheme>
     </CacheProvider>
   );
 }

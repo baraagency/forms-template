@@ -360,7 +360,7 @@
 .bara-radio-option--checked {
   border-color: var(--highlight-color);
   background: var(--highlight-color);
-  color: #fff;
+  color: var(--btn-primary-color);
 }
 
 .bara-radio-option--unchecked {

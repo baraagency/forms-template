@@ -52,6 +52,14 @@ export default [
 
   // Settings
   route("api/forms/settings/auth", "api/forms/settings/auth/route.ts"),
+  route(
+    "api/forms/settings/appearance",
+    "api/forms/settings/appearance/route.ts",
+  ),
+  route(
+    "api/forms/settings/branding",
+    "api/forms/settings/branding/route.ts",
+  ),
   route("api/forms/settings/gmail", "api/forms/settings/gmail/route.ts"),
   route(
     "api/forms/settings/gmail/oauth/start",

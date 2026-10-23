@@ -95,6 +95,26 @@ export type RouterFormInsert = {
   visible?: boolean;
 };
 
+/** Singleton row: primary = structure, secondary = actions. */
+export type AppThemeSetting = {
+  id: number;
+  primary_color: string;
+  secondary_color: string;
+  logo_url: string | null;
+  logo_alt: string;
+  created_at: Date;
+  updated_at: Date;
+};
+
+export type AppThemeSettingInsert = {
+  primary_color: string;
+  secondary_color: string;
+  logo_url?: string | null;
+  logo_alt?: string;
+  created_at?: Date | string;
+  updated_at?: Date | string;
+};
+
 export type GmailAccountCredential = {
   id: number;
   created_at: Date;
@@ -237,6 +257,11 @@ export type DatabaseTables = {
     Row: RouterForm;
     Insert: RouterFormInsert;
     Update: Partial<RouterFormInsert>;
+  };
+  app_theme_settings: {
+    Row: AppThemeSetting;
+    Insert: AppThemeSettingInsert;
+    Update: Partial<AppThemeSettingInsert>;
   };
   gmail_account_credentials: {
     Row: GmailAccountCredential;

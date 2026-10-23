@@ -15,6 +15,7 @@ import {
   pickFubStageForClientType,
   pickFubTagsForClientType,
 } from "@/app/forms/_core/fubClientTypeSettings";
+import { getAppTheme } from "@/app/api/_services/appThemeService";
 import { isFubApiEnabled } from "@/app/api/_services/fubApiMode";
 import { isSisuApiEnabled } from "@/app/api/_services/sisuApiMode";
 import {
@@ -223,10 +224,13 @@ export async function runSubmissionWorkflow(
       : String(input.agentId).trim() || null;
 
   const formState = { ...input.formState };
+  const appTheme = await getAppTheme();
   const summary = await buildFormSubmissionSummary({
     form: input.form,
     formLabel: input.formLabel,
     formState,
+    theme: appTheme.resolved,
+    branding: appTheme.branding,
   });
 
   const ctx: SubmissionWorkflowContext = {
@@ -439,6 +443,7 @@ export async function runSubmissionWorkflow(
         to: recipients.map((row) => row.email),
         subject: ctx.summarySubject,
         bodyText: ctx.summaryBody,
+        bodyHtml: ctx.summaryHtmlBody,
       });
 
       if (sendResult.sent) {

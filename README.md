@@ -5,7 +5,7 @@ React Router v8 (Framework mode) template for Follow Up Boss embedded forms with
 ## What's included
 
 - Form router (`/forms`) with FUB embedded context verification
-- Form settings (`/forms/settings`) — Gmail, recipients, per-form visibility and mappings (password-protected when `ADMIN_PASSWORD` is set)
+- Form settings (`/forms/settings`) — appearance colors, hosted logo/branding, Gmail, recipients, per-form visibility and mappings (password-protected when `ADMIN_PASSWORD` is set)
 - Pending form example (`/forms/pending`) — multi-step intake UI
 - Appointment Set form example (`/forms/appointment-set`)
 - Appointment Met form example (`/forms/appointment-met`)
@@ -64,8 +64,11 @@ See [docs/adding-a-form.md](docs/adding-a-form.md).
 
 ## Customize branding
 
-- Replace `public/form-banner.svg` with your logo (PNG/SVG also work — update `FORM_BANNER_SRC` in `app/forms/_core/FormBanner.tsx`).
-- Adjust colors in `app/globals.css` (`:root` `--palette-1` / `--palette-2` / `--palette-3`) and mirror them in `app/AppTheme.tsx`.
+- The built-in banner is `public/logo-banner.png`; `app/forms/_core/FormBanner.tsx` renders it and falls back to it if a hosted logo cannot load.
+- `/forms/settings` → **Branding** accepts an absolute http(s) logo URL and alt text. When set, the hosted logo appears in the app header, the HTML summary email, and FUB notes. Leave the URL blank to use the built-in banner in the app; summary emails/FUB notes then omit the logo.
+- Default colors live in `tokens/primitives.json` (`bun run tokens:build` → `app/generated/`). `/forms/settings` → **Appearance** accepts a primary (structure) and secondary (action) color. The pair plus logo settings are stored in `app_theme_settings`; derived text, surface, focus, and email-table shades are computed to meet WCAG AA.
+- Summary emails are sent as `multipart/alternative` (themed HTML + plain-text fallback); FUB notes use the same themed HTML.
+- `app/theme/appTheme.ts` owns the derivation and `app/root.tsx` injects the resolved CSS variables (and MUI palette) before hydration.
 - Layout chrome (`.page-form`, `.page-header`, launch buttons) lives in `app/globals.css`.
 
 ## Database
@@ -76,7 +79,7 @@ Postgres schema lives in `db/migrations/`. Set `DATABASE_URL` in `.env`, then:
 bun run db:migrations
 ```
 
-Creates submissions, SISU mappings, audit log, Gmail credentials, email recipients, `router_forms`, and FUB mapping tables.
+Creates submissions, SISU mappings, audit log, Gmail credentials, email recipients, `router_forms`, app appearance/branding settings, and FUB mapping tables.
 
 Optional local test DB (not committed):
 

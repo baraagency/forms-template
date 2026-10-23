@@ -59,8 +59,8 @@
     --card-border: 1px solid color-mix(in srgb, var(--palette-2) 12%, #ffffff);
     /* Soft layered elevation — same light as cards (down, not diagonal sticker) */
     --field-shadow:
-        0 1px 2px rgb(0 58 85 / 0.07),
-        0 5px 14px rgb(0 58 85 / 0.06);
+        0 1px 2px color-mix(in srgb, var(--palette-2) 7%, transparent),
+        0 5px 14px color-mix(in srgb, var(--palette-2) 6%, transparent);
     --field-hover-border: color-mix(in srgb, var(--brand-sky) 45%, #ffffff);
     --field-focus-ring: color-mix(in srgb, var(--brand-sky) 28%, transparent);
     --disabled-bg: color-mix(in srgb, var(--palette-2) 6%, #ffffff);
@@ -210,8 +210,8 @@ textarea::placeholder {
 
 /* MUI X date/time picker empty segments use accessible placeholder contrast */
 .MuiPickersInputBase-root [aria-valuetext="Empty"] {
-    color: #5a7585 !important;
-    -webkit-text-fill-color: #5a7585 !important;
+    color: var(--placeholder-color) !important;
+    -webkit-text-fill-color: var(--placeholder-color) !important;
     opacity: 1 !important;
 }
 
@@ -476,9 +476,10 @@ body {
     --btn-cta-hover-bg: var(--palette-1);
     /* Same light family as fields; slightly stronger for dark fills */
     --btn-cta-shadow:
-        0 1px 2px rgb(0 58 85 / 0.12),
-        0 6px 16px rgb(0 58 85 / 0.1);
-    --btn-cta-shadow-active: 0 1px 2px rgb(0 58 85 / 0.16);
+        0 1px 2px color-mix(in srgb, var(--palette-2) 12%, transparent),
+        0 6px 16px color-mix(in srgb, var(--palette-2) 10%, transparent);
+    --btn-cta-shadow-active: 0 1px 2px
+        color-mix(in srgb, var(--palette-2) 16%, transparent);
     --btn-cta-arrow-shift: 0.75rem;
     --btn-cta-label-shift: var(--distance-small, 6px);
     appearance: none;
@@ -487,7 +488,7 @@ body {
     border: solid 2px var(--btn-cta-border);
     border-radius: var(--btn-radius);
     box-shadow: var(--btn-cta-shadow);
-    color: #ffffff;
+    color: var(--btn-primary-color);
     cursor: pointer;
     display: flex;
     flex-direction: row;
@@ -883,7 +884,7 @@ section + .section-card {
 
 .settings-fub-tags-option[data-selected] {
     background-color: var(--palette-1) !important;
-    color: #ffffff !important;
+    color: var(--btn-primary-color) !important;
 }
 
 .settings-fub-tags-empty {
@@ -1234,7 +1235,7 @@ section + .section-card {
 .bara-radio-option--checked {
     background: var(--palette-1);
     border-color: var(--palette-1);
-    color: #ffffff;
+    color: var(--btn-primary-color);
     font-weight: 700;
 }
 

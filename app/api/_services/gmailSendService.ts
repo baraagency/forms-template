@@ -10,6 +10,8 @@ export type SendSummaryEmailInput = {
   to: string[];
   subject: string;
   bodyText: string;
+  /** Optional themed HTML part; falls back to plain text when omitted. */
+  bodyHtml?: string;
 };
 
 export type SendSummaryEmailResult =
@@ -24,26 +26,63 @@ function toBase64Url(value: string): string {
     .replace(/=+$/g, "");
 }
 
-function buildPlainTextRawMessage(params: {
+function sanitizeHeader(value: string): string {
+  return value.replace(/[\r\n]+/g, " ").trim();
+}
+
+export function buildSummaryRawMessage(params: {
   from: string;
   to: string[];
   subject: string;
   text: string;
+  html?: string;
 }): string {
-  const lines = [
-    `From: ${params.from}`,
-    `To: ${params.to.join(", ")}`,
-    `Subject: ${params.subject}`,
+  const headers = [
+    `From: ${sanitizeHeader(params.from)}`,
+    `To: ${params.to.map(sanitizeHeader).join(", ")}`,
+    `Subject: ${sanitizeHeader(params.subject)}`,
     "MIME-Version: 1.0",
-    'Content-Type: text/plain; charset="UTF-8"',
-    "",
-    params.text,
   ];
-  return toBase64Url(lines.join("\r\n"));
+
+  if (!params.html) {
+    return toBase64Url(
+      [
+        ...headers,
+        'Content-Type: text/plain; charset="UTF-8"',
+        "",
+        params.text,
+      ].join("\r\n"),
+    );
+  }
+
+  const boundary = `----forms-${Date.now().toString(36)}-${Math.random()
+    .toString(36)
+    .slice(2)}`;
+
+  return toBase64Url(
+    [
+      ...headers,
+      `Content-Type: multipart/alternative; boundary="${boundary}"`,
+      "",
+      `--${boundary}`,
+      'Content-Type: text/plain; charset="UTF-8"',
+      "Content-Transfer-Encoding: 8bit",
+      "",
+      params.text,
+      `--${boundary}`,
+      'Content-Type: text/html; charset="UTF-8"',
+      "Content-Transfer-Encoding: 8bit",
+      "",
+      params.html,
+      `--${boundary}--`,
+      "",
+    ].join("\r\n"),
+  );
 }
 
 /**
- * Send a plain-text summary email using the stored Gmail OAuth credential.
+ * Send a summary email using the stored Gmail OAuth credential. When HTML is
+ * provided, sends multipart/alternative with the plain-text fallback.
  */
 export async function sendSummaryEmail(
   input: SendSummaryEmailInput,
@@ -98,11 +137,12 @@ export async function sendSummaryEmail(
     const response = await gmail.users.messages.send({
       userId: "me",
       requestBody: {
-        raw: buildPlainTextRawMessage({
+        raw: buildSummaryRawMessage({
           from: input.credential.email,
           to: recipients,
           subject: input.subject,
           text: input.bodyText,
+          html: input.bodyHtml,
         }),
       },
     });

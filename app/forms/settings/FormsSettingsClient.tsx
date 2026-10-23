@@ -11,6 +11,9 @@ import {
 } from "../_core/formIdentity";
 import { GmailAccountPanel } from "./GmailAndRecipientsPanels";
 import { FormSettingsPanel } from "./FormSettingsPanel";
+import { AppearanceSettingsPanel } from "./AppearanceSettingsPanel";
+import { BrandingSettingsPanel } from "./BrandingSettingsPanel";
+import type { AppBranding, ThemeSelection } from "@/app/theme/appTheme";
 import { useRovingTabIndex } from "../_core/useRovingTabIndex";
 import "./settings-tabs.css";
 
@@ -24,10 +27,14 @@ type GmailStatus = {
 export function FormsSettingsClient({
   initialRouterForms,
   initialGmailStatus,
+  initialAppearance,
+  initialBranding,
   gmailFlash,
 }: {
   initialRouterForms: RouterForm[];
   initialGmailStatus: GmailStatus | null;
+  initialAppearance: ThemeSelection;
+  initialBranding: AppBranding;
   gmailFlash: { tone: "success" | "warning"; message: string } | null;
 }) {
   const [activeSlug, setActiveSlug] =
@@ -61,15 +68,24 @@ export function FormsSettingsClient({
         <div>
           <h1 className="page-title">Form Settings</h1>
           <p className="page-intro">
-            Configure Gmail delivery, per-form recipients, router visibility, and
-            SISU / FUB mappings. Mapping changes are stored for future workflows;
-            submit routes remain mocked in this template.
+            Configure the app's appearance and branding, Gmail delivery,
+            per-form recipients, router visibility, and SISU / FUB mappings.
+            Mapping changes are stored for future workflows; submit routes
+            remain mocked in this template.
           </p>
         </div>
 
         {gmailFlash ? (
           <Notice tone={gmailFlash.tone}>{gmailFlash.message}</Notice>
         ) : null}
+
+        <SectionCard title="Appearance">
+          <AppearanceSettingsPanel initialSelection={initialAppearance} />
+        </SectionCard>
+
+        <SectionCard title="Branding">
+          <BrandingSettingsPanel initialBranding={initialBranding} />
+        </SectionCard>
 
         <SectionCard title="Email">
           <GmailAccountPanel initialStatus={initialGmailStatus} />

@@ -1,11 +1,16 @@
 import { FormsSettingsClient } from "../forms/settings/FormsSettingsClient";
 import { SettingsLoginPanel } from "../forms/settings/SettingsLoginPanel";
+import { getAppTheme } from "@/app/api/_services/appThemeService";
 import { listRouterForms } from "@/app/api/_services/routerFormsRepo";
 import { getGmailStatusForCurrentEnvironment } from "@/app/api/_services/gmailOAuthService";
 import {
   isSettingsAdminAuthenticated,
   isSettingsAdminPasswordConfigured,
 } from "@/app/api/_services/settingsAdminAuth";
+import {
+  DEFAULT_APP_BRANDING,
+  DEFAULT_THEME_SELECTION,
+} from "@/app/theme/appTheme";
 import { FORM_ROUTER_FORM_REGISTRY } from "../forms/_core/formRouterFormRegistry";
 import type { Route } from "./+types/forms.settings";
 
@@ -19,6 +24,8 @@ export async function loader({ request }: Route.LoaderArgs) {
       isAuthenticated,
       initialRouterForms: [],
       initialGmailStatus: null,
+      initialAppearance: DEFAULT_THEME_SELECTION,
+      initialBranding: DEFAULT_APP_BRANDING,
       gmailFlash: null,
     };
   }
@@ -41,9 +48,10 @@ export async function loader({ request }: Route.LoaderArgs) {
     };
   }
 
-  const [routerResult, gmailStatus] = await Promise.all([
+  const [routerResult, gmailStatus, appTheme] = await Promise.all([
     listRouterForms(),
     getGmailStatusForCurrentEnvironment(),
+    getAppTheme(),
   ]);
 
   const fallbackRouterForms = FORM_ROUTER_FORM_REGISTRY.map((form) => ({
@@ -57,6 +65,8 @@ export async function loader({ request }: Route.LoaderArgs) {
     isAuthenticated,
     initialRouterForms: routerResult.data ?? fallbackRouterForms,
     initialGmailStatus: gmailStatus.data,
+    initialAppearance: appTheme.selection,
+    initialBranding: appTheme.branding,
     gmailFlash,
   };
 }
@@ -70,6 +80,8 @@ export default function FormsSettings({ loaderData }: Route.ComponentProps) {
     <FormsSettingsClient
       initialRouterForms={loaderData.initialRouterForms}
       initialGmailStatus={loaderData.initialGmailStatus}
+      initialAppearance={loaderData.initialAppearance}
+      initialBranding={loaderData.initialBranding}
       gmailFlash={loaderData.gmailFlash}
     />
   );

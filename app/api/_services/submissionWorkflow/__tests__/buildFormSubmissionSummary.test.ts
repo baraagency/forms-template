@@ -4,6 +4,7 @@ import {
   createEmptyFormSubmissionDisplayContext,
   formatFormSubmissionFieldValue,
 } from "@/app/forms/_core/formSubmissionDisplayValues";
+import { resolveAppTheme } from "@/app/theme/appTheme";
 
 describe("buildFormSubmissionSummary", () => {
   it("builds a plain-text body and an HTML table body for FUB notes", async () => {
@@ -83,6 +84,46 @@ describe("buildFormSubmissionSummary", () => {
 
     expect(summary.htmlBody).toContain("&lt;script&gt;alert(1)&lt;/script&gt;");
     expect(summary.htmlBody).not.toContain("<script>");
+  });
+
+  it("uses the resolved appearance colors and hosted logo", async () => {
+    const theme = resolveAppTheme({
+      primaryColor: "#0b3c5d",
+      secondaryColor: "#0e7490",
+    });
+    const summary = await buildFormSubmissionSummary({
+      form: "closed",
+      formLabel: "Closed",
+      formState: {
+        personId: "1",
+        clientType: "Buyer",
+        transactionType: "none",
+        addressLine1: "123 Main",
+        city: "Charleston",
+        state: "SC",
+        postal: "29401",
+        transactionAmount: "100000",
+        totalCommissionGci: "3000",
+        settlementDate: "2026-04-01",
+      },
+      theme,
+      branding: {
+        logoUrl: "https://cdn.example.com/logo.png",
+        logoAlt: "Acme Realty",
+      },
+    });
+
+    expect(summary.htmlBody).toContain(
+      `background-color:${theme.accentSoft}`,
+    );
+    expect(summary.htmlBody).toContain(`color:${theme.structure}`);
+    expect(summary.htmlBody).toContain(
+      `border:1px solid ${theme.emailBorder}`,
+    );
+    expect(summary.htmlBody).toContain(
+      'src="https://cdn.example.com/logo.png"',
+    );
+    expect(summary.htmlBody).toContain('alt="Acme Realty"');
   });
 
   it("handles empty submissions in both formats", async () => {

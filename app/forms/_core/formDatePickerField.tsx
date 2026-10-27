@@ -390,6 +390,7 @@ export function FormDatePickerField({
   required,
   error,
   maxDate,
+  describedBy,
   onChange,
   disabled = false,
   readOnly = false,
@@ -400,6 +401,7 @@ export function FormDatePickerField({
   required?: boolean;
   error?: string;
   maxDate?: dayjs.Dayjs;
+  describedBy?: string;
   onChange: (value: string) => void;
   disabled?: boolean;
   readOnly?: boolean;
@@ -411,6 +413,9 @@ export function FormDatePickerField({
     ? pickerValue.format("MM/DD/YYYY")
     : "";
   const a11y = fieldA11yProps(id, error);
+  const describedByIds = [a11y["aria-describedby"], describedBy]
+    .filter(Boolean)
+    .join(" ");
 
   return (
     <Field label={label} htmlFor={id} required={required}>
@@ -458,6 +463,9 @@ export function FormDatePickerField({
                   readOnly,
                   "aria-readonly": readOnly || undefined,
                   ...a11y,
+                  ...(describedByIds
+                    ? { "aria-describedby": describedByIds }
+                    : {}),
                 },
               },
             },

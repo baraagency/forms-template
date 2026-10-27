@@ -15,6 +15,7 @@ import {
 export type FormSelectInputProps = SelectInputProps & {
   error?: string;
   isLoading?: boolean;
+  describedBy?: string;
 };
 
 function optionClassName({
@@ -230,6 +231,7 @@ export function FormSelectInput({
                 aria-label={label ?? props["aria-label"]}
                 aria-invalid={a11y["aria-invalid"]}
                 aria-errormessage={a11y["aria-errormessage"]}
+                aria-describedby={props.describedBy}
                 aria-busy={isLoading || undefined}
                 className="bara-select__input"
               />

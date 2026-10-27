@@ -1,9 +1,7 @@
-import {
-  normalizeAppointmentMetPayload,
-  validateAppointmentMetForm,
-  type AppointmentMetFormState,
-} from "@/app/forms/appointment-met/appointmentMetFormUtils";
 import { formKindLabel } from "@/app/forms/_core/formIdentity";
+import { APPOINTMENT_MET_PAGE_DOCUMENT } from "@/app/forms/appointment-met/appointmentMetPageDocument";
+import { buildAppointmentMetSubmission } from "@/app/forms/appointment-met/appointmentMetPageSubmit";
+import { loadPublishedFormPage } from "@/app/api/_services/formPageService";
 import { runSubmissionWorkflow } from "@/app/api/_services/submissionWorkflow";
 import { runAppointmentMetFubAppointmentSideEffect } from "@/app/api/forms/appointment-met/appointmentMetFubAppointment";
 import { resolveAppointmentMetSubmittingAgentId } from "@/app/api/forms/appointment-met/appointmentMetSubmittingAgentId";
@@ -34,13 +32,11 @@ export async function action({ request }: { request: Request }) {
     );
   }
 
-  const formState: AppointmentMetFormState =
-    normalizeAppointmentMetPayload(payload);
-  const errors = validateAppointmentMetForm(formState);
-
-  if (!formState.personId) {
-    errors.personId = "A FUB person id is required.";
-  }
+  const document = await loadPublishedFormPage(
+    "appointmentMet",
+    APPOINTMENT_MET_PAGE_DOCUMENT,
+  );
+  const { errors, formState } = buildAppointmentMetSubmission(document, payload);
 
   if (Object.keys(errors).length > 0) {
     return Response.json(
@@ -55,15 +51,15 @@ export async function action({ request }: { request: Request }) {
   const result = await runSubmissionWorkflow({
     form: "appointmentMet",
     formLabel: formKindLabel("appointmentMet"),
-    formState: formState as unknown as Record<string, unknown>,
-    personId: formState.personId,
-    dealId: formState.dealId || null,
-    sisuTransactionId: formState.sisuTransactionId || null,
+    formState: formState as Record<string, unknown>,
+    personId: String(formState.personId),
+    dealId: String(formState.dealId || "") || null,
+    sisuTransactionId: String(formState.sisuTransactionId || "") || null,
     agentId: resolveAppointmentMetSubmittingAgentId({
-      agentSubmitting: formState.agentSubmitting,
-      agentId: formState.agentId,
+      agentSubmitting: String(formState.agentSubmitting || ""),
+      agentId: String(formState.agentId || ""),
     }),
-    leadType: formState.leadType || null,
+    leadType: String(formState.leadType || "") || null,
     hooks: {
       extraSideEffects: runAppointmentMetFubAppointmentSideEffect,
     },

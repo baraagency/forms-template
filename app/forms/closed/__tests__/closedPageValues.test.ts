@@ -3,7 +3,7 @@ import { CLOSED_PAGE_DOCUMENT } from "../closedPageDocument";
 import { buildInitialClosedValues } from "../closedPageValues";
 
 describe("buildInitialClosedValues", () => {
-  it("seeds every field and keeps routing keys out of the field map", () => {
+  it("seeds every field and keeps routing keys available for submit", () => {
     const values = buildInitialClosedValues({
       document: CLOSED_PAGE_DOCUMENT,
       personId: "123",

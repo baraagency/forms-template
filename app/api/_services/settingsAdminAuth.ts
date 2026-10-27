@@ -100,3 +100,24 @@ export function enforceSettingsAdminAuth(request: Request): Response | null {
     { status: 401 },
   );
 }
+
+/**
+ * Page editing is stricter than Settings: no ADMIN_PASSWORD means no editor.
+ */
+export function canEditFormPages(request: Request): boolean {
+  return (
+    isSettingsAdminPasswordConfigured() &&
+    isSettingsAdminAuthenticated(request)
+  );
+}
+
+export function enforcePageEditorAdmin(request: Request): Response | null {
+  if (canEditFormPages(request)) {
+    return null;
+  }
+
+  return Response.json(
+    { message: "Page editor requires admin authentication." },
+    { status: 401 },
+  );
+}

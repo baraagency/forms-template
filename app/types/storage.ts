@@ -237,6 +237,17 @@ export type FormFubDealMappingInsert = {
   updated_at?: Date | string;
 };
 
+/** One editable page document per form. Draft and published are Puck Data. */
+export type FormPageRow = {
+  form: string;
+  draft: JsonValue;
+  published: JsonValue | null;
+  schema_version: number;
+  version: number;
+  updated_at: Date | string;
+  published_at: Date | string | null;
+};
+
 export type DatabaseTables = {
   form_submissions: {
     Row: FormSubmission;
@@ -292,6 +303,12 @@ export type DatabaseTables = {
     Row: FormFubDealMapping;
     Insert: FormFubDealMappingInsert;
     Update: Partial<FormFubDealMappingInsert>;
+  };
+  form_pages: {
+    Row: FormPageRow;
+    Insert: Pick<FormPageRow, "form" | "draft"> &
+      Partial<Omit<FormPageRow, "form" | "draft">>;
+    Update: Partial<FormPageRow>;
   };
 };
 

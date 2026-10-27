@@ -50,6 +50,16 @@ export default [
   ),
   route("api/forms/closed/submit", "api/forms/closed/submit/route.ts"),
 
+  // Page editor
+  route(
+    "api/forms/page/:form/draft",
+    "api/forms/page/[form]/draft/route.ts",
+  ),
+  route(
+    "api/forms/page/:form/publish",
+    "api/forms/page/[form]/publish/route.ts",
+  ),
+
   // Settings
   route("api/forms/settings/auth", "api/forms/settings/auth/route.ts"),
   route(

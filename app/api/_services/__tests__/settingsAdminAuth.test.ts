@@ -2,6 +2,8 @@ import { afterEach, describe, expect, it } from "bun:test";
 import {
   buildSettingsAdminSessionCookieHeader,
   buildSettingsAdminSessionToken,
+  canEditFormPages,
+  enforcePageEditorAdmin,
   enforceSettingsAdminAuth,
   isSettingsAdminAuthenticated,
   verifyAdminPassword,
@@ -53,5 +55,31 @@ describe("settingsAdminAuth", () => {
     );
 
     expect(response?.status).toBe(401);
+  });
+
+  it("denies page editor access when ADMIN_PASSWORD is unset", () => {
+    delete process.env.ADMIN_PASSWORD;
+    const request = new Request("http://localhost/api/forms/page/closed/draft");
+
+    expect(canEditFormPages(request)).toBe(false);
+    expect(enforcePageEditorAdmin(request)?.status).toBe(401);
+  });
+
+  it("allows page editor access only with a valid cookie", () => {
+    process.env.ADMIN_PASSWORD = "test-admin-password";
+
+    expect(
+      canEditFormPages(
+        new Request("http://localhost/forms/closed/edit"),
+      ),
+    ).toBe(false);
+
+    const cookieHeader = buildSettingsAdminSessionCookieHeader();
+    const request = new Request("http://localhost/forms/closed/edit", {
+      headers: { Cookie: cookieHeader?.split(";")[0] ?? "" },
+    });
+
+    expect(canEditFormPages(request)).toBe(true);
+    expect(enforcePageEditorAdmin(request)).toBeNull();
   });
 });

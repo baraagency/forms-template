@@ -8,6 +8,7 @@ export default [
   index("routes/home.tsx"),
   route("forms", "routes/forms._index.tsx"),
   route("forms/settings", "routes/forms.settings.tsx"),
+  route("forms/:slug/edit", "routes/forms.$slug.edit.tsx"),
   route("forms/pending", "routes/forms.pending.tsx"),
   route("forms/appointment-set", "routes/forms.appointment-set.tsx"),
   route("forms/appointment-met", "routes/forms.appointment-met.tsx"),

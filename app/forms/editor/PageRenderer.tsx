@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { FieldBlock } from "./blocks/FieldBlock";
 import {
   DividerBlock,
@@ -5,10 +6,26 @@ import {
   SectionHeaderBlock,
   TextBlock,
 } from "./blocks/StaticBlocks";
+import { collectPageFields } from "./formPageData";
+import { getVisiblePageFields } from "./formPageVisibility";
+import { useFormRuntime } from "./FormRuntime";
 import type { FieldBlockProps, FormPageData } from "./formPageTypes";
 
 /** Renders a published page without importing Puck. */
 export function PageRenderer({ document }: { document: FormPageData }) {
+  const runtime = useFormRuntime();
+  const runtimeValues = runtime?.values;
+  const visibleFieldIds = useMemo(() => {
+    if (!runtimeValues) {
+      return null;
+    }
+    return new Set(
+      getVisiblePageFields(collectPageFields(document), runtimeValues).map(
+        (field) => field.id,
+      ),
+    );
+  }, [document, runtimeValues]);
+
   return (
     <div className="space-y-4">
       {document.content.map((block) => {
@@ -31,6 +48,9 @@ export function PageRenderer({ document }: { document: FormPageData }) {
           case "TextBlock":
             return <TextBlock key={id} text={String(block.props.text ?? "")} />;
           case "FieldBlock":
+            if (visibleFieldIds && !visibleFieldIds.has(id)) {
+              return null;
+            }
             return (
               <FieldBlock
                 key={id}

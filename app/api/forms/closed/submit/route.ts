@@ -1,10 +1,7 @@
-import {
-  normalizeClosedPayload,
-  validateClosedForm,
-  type ClosedFormState,
-} from "@/app/forms/closed/closedFormUtils";
-import { getClosedSelectOptions } from "@/app/forms/closed/closedTeamFieldOptions";
 import { formKindLabel } from "@/app/forms/_core/formIdentity";
+import { buildClosedSubmission } from "@/app/forms/closed/closedPageSubmit";
+import { CLOSED_PAGE_DOCUMENT } from "@/app/forms/closed/closedPageDocument";
+import { loadPublishedFormPage } from "@/app/api/_services/formPageService";
 import { runSubmissionWorkflow } from "@/app/api/_services/submissionWorkflow";
 
 function isClosedPayload(payload: unknown): payload is Record<string, unknown> {
@@ -31,14 +28,11 @@ export async function action({ request }: { request: Request }) {
     );
   }
 
-  const formState: ClosedFormState = normalizeClosedPayload(payload);
-  const transactionTypeOptions =
-    getClosedSelectOptions({}).transactionTypeOptions;
-  const errors = validateClosedForm(formState, { transactionTypeOptions });
-
-  if (!formState.personId) {
-    errors.personId = "A FUB person id is required.";
-  }
+  const document = await loadPublishedFormPage(
+    "closed",
+    CLOSED_PAGE_DOCUMENT,
+  );
+  const { errors, formState } = buildClosedSubmission(document, payload);
 
   if (Object.keys(errors).length > 0) {
     return Response.json(
@@ -53,11 +47,12 @@ export async function action({ request }: { request: Request }) {
   const result = await runSubmissionWorkflow({
     form: "closed",
     formLabel: formKindLabel("closed"),
-    formState: formState as unknown as Record<string, unknown>,
-    personId: formState.personId,
-    dealId: formState.dealId || null,
-    sisuTransactionId: formState.sisuTransactionId || null,
-    agentId: formState.agentId || null,
+    formState: formState as Record<string, unknown>,
+    personId: String(formState.personId),
+    dealId: String(formState.dealId || "") || null,
+    sisuTransactionId: String(formState.sisuTransactionId || "") || null,
+    agentId: String(formState.agentId || "") || null,
+    leadType: String(formState.clientType || formState.leadType || "") || null,
     hooks: {},
   });
 

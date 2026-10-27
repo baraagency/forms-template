@@ -44,16 +44,27 @@ function parsePercentage(value: string): number | null {
 
 const TIME_PATTERN = /^([01]?\d|2[0-3]):([0-5]\d)$/;
 
+function normalizeChoice(value: string): string {
+  return value.trim().toLowerCase();
+}
+
 function validateChoice(
   field: FieldBlockProps,
   value: FieldValue | undefined,
 ): string | undefined {
+  const options = resolveFieldOptions(field);
+
   if (field.kind === "multiChoice") {
     if (!Array.isArray(value)) {
       return "Select a valid option.";
     }
-    const allowed = new Set(resolveFieldOptions(field).map((option) => option.value));
-    return value.every((entry) => allowed.has(entry))
+    return value.every((entry) =>
+      options.some(
+        (option) =>
+          normalizeChoice(option.value) === normalizeChoice(entry) ||
+          normalizeChoice(option.label) === normalizeChoice(entry),
+      ),
+    )
       ? undefined
       : "Select a valid option.";
   }
@@ -65,8 +76,10 @@ function validateChoice(
   if (!stringValue) {
     return undefined;
   }
-  return resolveFieldOptions(field).some(
-    (option) => option.value === stringValue,
+  return options.some(
+    (option) =>
+      normalizeChoice(option.value) === normalizeChoice(stringValue) ||
+      normalizeChoice(option.label) === normalizeChoice(stringValue),
   )
     ? undefined
     : "Select a valid option.";

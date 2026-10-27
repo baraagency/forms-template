@@ -134,6 +134,13 @@ export function ClosedPageFormClient({
     return field ? resolveFieldOptions(field) : [];
   }, [pageDocument]);
 
+  const documentTitle = useMemo(() => {
+    const title = pageDocument.content.find(
+      (block) => block.type === "PageTitle",
+    )?.props.text;
+    return typeof title === "string" && title.trim() ? title : "Closed";
+  }, [pageDocument]);
+
   useEffect(() => {
     const personId = values.personId?.trim() ?? "";
     if (!personId) {
@@ -389,7 +396,7 @@ export function ClosedPageFormClient({
             className={`${secondaryButtonClassName} px-4 py-2 text-xs`}
           />
         </div>
-        <title>Closed</title>
+        <title>{documentTitle}</title>
 
         {localDemoEnabled ? (
           <Notice tone="warning">

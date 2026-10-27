@@ -54,6 +54,7 @@ export function VisibilityRulesField({
 
   return (
     <div className="space-y-2">
+      <p className="text-xs font-medium">Visible when all of these match</p>
       {rules.map((rule, index) => {
         const needsValue =
           rule.operator !== "isFilled" && rule.operator !== "isEmpty";

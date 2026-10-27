@@ -13,6 +13,7 @@ export function usePageAutosave(input: {
   initialData: FormPageData;
 }) {
   const [status, setStatus] = useState<SaveStatus>("idle");
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const versionRef = useRef(input.initialVersion);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingRef = useRef<Promise<number>>(Promise.resolve(input.initialVersion));
@@ -36,11 +37,13 @@ export function usePageAutosave(input: {
       }
       if (!response.ok || typeof payload.version !== "number") {
         setStatus("error");
+        setErrorMessage(payload.message ?? "Failed to save the page draft.");
         throw new Error(payload.message ?? "Failed to save the page draft.");
       }
 
       versionRef.current = payload.version;
       lastSavedJsonRef.current = JSON.stringify(data);
+      setErrorMessage(null);
       setStatus("saved");
       return payload.version;
     },
@@ -96,11 +99,13 @@ export function usePageAutosave(input: {
       }
       if (!response.ok || typeof payload.version !== "number") {
         setStatus("error");
+        setErrorMessage(payload.message ?? "Failed to publish the page.");
         throw new Error(payload.message ?? "Failed to publish the page.");
       }
 
       versionRef.current = payload.version;
       lastSavedJsonRef.current = JSON.stringify(data);
+      setErrorMessage(null);
       setStatus("saved");
       return {
         version: payload.version,
@@ -118,5 +123,5 @@ export function usePageAutosave(input: {
     };
   }, []);
 
-  return { schedule, publish, status, version: versionRef.current };
+  return { schedule, publish, status, errorMessage, version: versionRef.current };
 }

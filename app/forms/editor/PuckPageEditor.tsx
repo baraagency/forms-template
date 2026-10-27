@@ -25,7 +25,7 @@ export function PuckPageEditor({
   document: FormPageData;
   version: number;
 }) {
-  const { schedule, publish, status } = usePageAutosave({
+  const { schedule, publish, status, errorMessage } = usePageAutosave({
     form,
     initialVersion: version,
     initialData: document,
@@ -79,7 +79,9 @@ export function PuckPageEditor({
               </button>
             ) : (
               <span aria-live="polite">
-                {flash ?? STATUS_LABELS[status] ?? status}
+                {status === "error"
+                  ? (errorMessage ?? "Save failed")
+                  : (flash ?? STATUS_LABELS[status] ?? status)}
               </span>
             )}
             {children}

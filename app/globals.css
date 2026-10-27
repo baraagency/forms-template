@@ -1354,3 +1354,33 @@ section + .section-card {
     @apply font-sans;
     }
 }
+
+/* Admin-only page editor entry point. */
+.page-editor-button {
+    position: fixed;
+    right: 1rem;
+    bottom: 1rem;
+    z-index: 40;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--palette-1, #1e1e1e);
+    border-radius: var(--btn-radius, 0.5rem);
+    background: var(--palette-1, #1e1e1e);
+    color: #ffffff;
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1;
+    box-shadow: var(--card-shadow);
+    text-decoration: none;
+}
+
+.page-editor-button:hover {
+    filter: brightness(1.08);
+}
+
+.page-editor-button:focus-visible {
+    outline: 2px solid var(--brand-sky, #7dd3fc);
+    outline-offset: 2px;
+}

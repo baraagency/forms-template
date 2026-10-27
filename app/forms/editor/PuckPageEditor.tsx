@@ -4,6 +4,7 @@ import "@puckeditor/core/puck.css";
 import { formKindToSlug, type SettingsFormKind } from "@/app/forms/_core/formIdentity";
 import { formPageConfig } from "./formPageConfig";
 import type { FormPageData } from "./formPageTypes";
+import { PageOutline } from "./PageOutline";
 import { usePageAutosave } from "./usePageAutosave";
 
 const STATUS_LABELS: Record<string, string> = {
@@ -61,6 +62,7 @@ export function PuckPageEditor({
       height="100dvh"
       iframe={{ enabled: false }}
       overrides={{
+        outline: PageOutline,
         headerActions: ({ children }) => (
           <div className="flex items-center gap-3 text-sm">
             <a href={`/forms/${slug}`} className="underline underline-offset-2">

@@ -11,21 +11,22 @@
 
 Import shared code only from `app/forms/_core/`.
 
-## Page editor (Phase 1: Closed only)
+## Page editor (Phase 2: all example forms)
 
-Closed is now document-driven. Its page is a Puck `Data` document seeded in
-`app/forms/closed/closedPageDocument.ts` and stored per form in
-`form_pages.draft/published` (JSONB). The published document is rendered by
-`app/forms/editor/PageRenderer.tsx`; the admin editor lives at
-`/forms/closed/edit` behind `ADMIN_PASSWORD` plus the settings admin cookie.
+All four example forms are document-driven. Each page is a Puck `Data`
+document seeded in `app/forms/<form>/<form>PageDocument.ts` and stored per
+form in `form_pages.draft/published` (JSONB). The published document is
+rendered by `app/forms/editor/PageRenderer.tsx`; the admin editor lives at
+`/forms/<slug>/edit` behind `ADMIN_PASSWORD` plus the settings admin cookie.
 
-- Field identity is `props.id`; for Closed those ids match the existing
-  `ClosedFormState` keys so current SISU/FUB mapping rows keep working.
-- `visibleWhen` rules are evaluated in the browser and again by
-  `buildClosedSubmission`; hidden values are dropped before the workflow.
-- Publishing snapshots SISU options into `props.options`. Public pages never
-  call SISU for options.
-- New fields added in the editor submit through the doc-aware route, but
+- Field identity is `props.id`; for legacy forms those ids match the existing
+  form-state keys so current SISU/FUB mapping rows keep working.
+- `visibleWhen` rules are evaluated in the browser and again by the submit
+  helper; Pending keeps hidden legacy keys in its legacy state merge.
+- Publishing snapshots SISU team fields, SISU agents, SISU vendors, FUB users,
+  and FUB appointment types into `props.options`. Public pages never fetch
+  options at render time.
+- New fields added in the editor submit through the doc-aware routes, but
   cannot be mapped to SISU/FUB until Phase 3.
-- Appointment Set, Appointment Met, and Pending still use the steps above.
-  Creating brand-new forms in the editor is Phase 4.
+- Creating brand-new forms in the editor is Phase 4; the steps above still
+  apply to a form that is not page-driven yet.

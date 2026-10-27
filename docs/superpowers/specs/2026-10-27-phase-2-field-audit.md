@@ -1,6 +1,7 @@
 # Phase 2 — field type audit
 
 **Date:** 2026-10-27  
+**Status:** Implemented  
 **Scope:** Appointment Set, Appointment Met, Pending (Closed is already migrated).
 
 ## What each form uses

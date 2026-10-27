@@ -49,8 +49,12 @@ export function FieldBlock({
   ...field
 }: FieldBlockProps & { puck?: { isEditing?: boolean } }) {
   const runtime = useFormRuntime();
-  const { inputId, errorId } = useFieldIds(field.id);
+  const generatedIds = useFieldIds(field.id);
   const isPreview = Boolean(puck?.isEditing) || !runtime || runtime.disabled;
+  // Public forms keep the legacy static ids; the editor uses unique ids so a
+  // canvas copy and a preview copy cannot collide.
+  const inputId = runtime ? field.id : generatedIds.inputId;
+  const errorId = runtime ? `${field.id}-error` : generatedIds.errorId;
   const value =
     runtime?.values[field.id] ??
     (field.kind === "multiChoice" ? [] : "");

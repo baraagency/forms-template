@@ -1,7 +1,7 @@
 # Puck page editor
 
 **Date:** 2026-10-27  
-**Status:** Implemented (Phase 1)  
+**Status:** Implemented (Phase 2)  
 **Decision:** Use Puck (`@puckeditor/core`) as the editing UI. Keep the persisted page document and the public renderer independent of Puck so the editor can be replaced without rewriting stored pages.
 
 ## Problem

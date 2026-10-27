@@ -29,6 +29,7 @@
     "@fontsource-variable/geist": "^5.3.0",
     "@mui/material": "^9.0.0",
     "@mui/x-date-pickers": "^9.0.4",
+    "@puckeditor/core": "^0.23.0",
     "@react-router/node": "8",
     "@react-router/serve": "8",
     "class-variance-authority": "^0.7.1",

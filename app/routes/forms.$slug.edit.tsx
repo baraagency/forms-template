@@ -4,6 +4,7 @@ import {
   parseFormKindParam,
 } from "../forms/_core/formIdentity";
 import { CLOSED_PAGE_DOCUMENT } from "../forms/closed/closedPageDocument";
+import { APPOINTMENT_SET_PAGE_DOCUMENT } from "../forms/appointment-set/appointmentSetPageDocument";
 import { canEditFormPages } from "@/app/api/_services/settingsAdminAuth";
 import { loadDraftFormPage } from "@/app/api/_services/formPageService";
 import { useIsMounted } from "../forms/_core/useIsMounted";
@@ -21,11 +22,15 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   }
 
   const form = parseFormKindParam(params.slug);
-  if (form !== "closed") {
+  if (form !== "closed" && form !== "appointmentSet") {
     throw new Response("Not Found", { status: 404 });
   }
 
-  const page = await loadDraftFormPage(form, CLOSED_PAGE_DOCUMENT);
+  const fallback =
+    form === "closed"
+      ? CLOSED_PAGE_DOCUMENT
+      : APPOINTMENT_SET_PAGE_DOCUMENT;
+  const page = await loadDraftFormPage(form, fallback);
 
   return {
     form,

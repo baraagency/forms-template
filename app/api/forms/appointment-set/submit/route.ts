@@ -1,9 +1,7 @@
-import {
-  normalizeAppointmentSetPayload,
-  validateAppointmentSetForm,
-  type AppointmentSetFormState,
-} from "@/app/forms/appointment-set/appointmentSetFormUtils";
 import { formKindLabel } from "@/app/forms/_core/formIdentity";
+import { APPOINTMENT_SET_PAGE_DOCUMENT } from "@/app/forms/appointment-set/appointmentSetPageDocument";
+import { buildAppointmentSetSubmission } from "@/app/forms/appointment-set/appointmentSetPageSubmit";
+import { loadPublishedFormPage } from "@/app/api/_services/formPageService";
 import { runSubmissionWorkflow } from "@/app/api/_services/submissionWorkflow";
 import { runAppointmentSetFubAppointmentSideEffect } from "@/app/api/forms/appointment-set/appointmentSetFubAppointment";
 
@@ -33,13 +31,11 @@ export async function action({ request }: { request: Request }) {
     );
   }
 
-  const formState: AppointmentSetFormState =
-    normalizeAppointmentSetPayload(payload);
-  const errors = validateAppointmentSetForm(formState);
-
-  if (!formState.personId) {
-    errors.personId = "A FUB person id is required.";
-  }
+  const document = await loadPublishedFormPage(
+    "appointmentSet",
+    APPOINTMENT_SET_PAGE_DOCUMENT,
+  );
+  const { errors, formState } = buildAppointmentSetSubmission(document, payload);
 
   if (Object.keys(errors).length > 0) {
     return Response.json(
@@ -54,12 +50,12 @@ export async function action({ request }: { request: Request }) {
   const result = await runSubmissionWorkflow({
     form: "appointmentSet",
     formLabel: formKindLabel("appointmentSet"),
-    formState: formState as unknown as Record<string, unknown>,
-    personId: formState.personId,
-    dealId: formState.dealId || null,
-    sisuTransactionId: formState.sisuTransactionId || null,
-    agentId: formState.agentId || null,
-    leadType: formState.leadType || null,
+    formState: formState as Record<string, unknown>,
+    personId: String(formState.personId),
+    dealId: String(formState.dealId || "") || null,
+    sisuTransactionId: String(formState.sisuTransactionId || "") || null,
+    agentId: String(formState.agentId || "") || null,
+    leadType: String(formState.leadType || "") || null,
     hooks: {
       extraSideEffects: runAppointmentSetFubAppointmentSideEffect,
     },

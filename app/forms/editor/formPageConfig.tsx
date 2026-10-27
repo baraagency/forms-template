@@ -72,10 +72,12 @@ export const formPageConfig: Config<PageComponents> = {
             { label: "Email", value: "email" },
             { label: "Number", value: "number" },
             { label: "Currency ($)", value: "currency" },
+            { label: "Percentage (%)", value: "percentage" },
             { label: "True/False", value: "boolean" },
             { label: "Choice", value: "choice" },
             { label: "Checkboxes", value: "multiChoice" },
             { label: "Date", value: "date" },
+            { label: "Time", value: "time" },
           ],
         },
         display: {
@@ -103,9 +105,22 @@ export const formPageConfig: Config<PageComponents> = {
           label: "Options source",
           options: [
             { label: "Manual", value: "manual" },
-            { label: "SISU field", value: "sisu" },
+            { label: "SISU team field", value: "sisu" },
+            { label: "SISU team agents", value: "sisuAgents" },
+            { label: "SISU vendors", value: "sisuVendors" },
+            { label: "FUB users", value: "fubUsers" },
+            { label: "FUB appointment types", value: "fubAppointmentTypes" },
             { label: "US states", value: "usStates" },
           ],
+        },
+        optionFilter: {
+          type: "text",
+          label: "Option filter (role or vendor group)",
+        },
+        disableWhenEmpty: {
+          type: "radio",
+          label: "Disable when options are unavailable",
+          options: yesNoOptions,
         },
         options: {
           type: "array",

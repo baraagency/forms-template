@@ -158,4 +158,92 @@ describe("parseFormPageData", () => {
 
     expect(result.ok).toBe(false);
   });
+
+  it("accepts the dynamic option sources and requires a filter for agents and vendors", () => {
+    const dynamic = parseFormPageData(
+      pageWith([
+        {
+          type: "FieldBlock",
+          props: {
+            ...validField,
+            id: "assignedIsa",
+            label: "Assigned ISA",
+            optionSource: "sisuAgents",
+            optionFilter: "ISISA",
+            options: [{ label: "Taylor ISA", value: "501" }],
+          },
+        },
+        {
+          type: "FieldBlock",
+          props: {
+            ...validField,
+            id: "assignedOsa",
+            label: "Assigned OSA",
+            optionSource: "fubUsers",
+            options: [{ label: "Alex Agent", value: "1" }],
+          },
+        },
+        {
+          type: "FieldBlock",
+          props: {
+            ...validField,
+            id: "appointmentType",
+            label: "Appointment Type",
+            optionSource: "fubAppointmentTypes",
+            options: [{ label: "Buyer Consultation", value: "1" }],
+          },
+        },
+      ]),
+      { forPublish: true },
+    );
+
+    expect(dynamic.ok).toBe(true);
+
+    expect(
+      parseFormPageData(
+        pageWith([
+          {
+            type: "FieldBlock",
+            props: {
+              ...validField,
+              id: "isa",
+              label: "ISA",
+              optionSource: "sisuAgents",
+              optionFilter: "",
+              options: [{ label: "A", value: "a" }],
+            },
+          },
+        ]),
+      ).ok,
+    ).toBe(false);
+  });
+
+  it("accepts time and percentage fields", () => {
+    const result = parseFormPageData(
+      pageWith([
+        {
+          type: "FieldBlock",
+          props: {
+            ...validField,
+            id: "startTime",
+            label: "Start Time",
+            kind: "time",
+            options: undefined,
+          },
+        },
+        {
+          type: "FieldBlock",
+          props: {
+            ...validField,
+            id: "referralPercent",
+            label: "Referral Percent",
+            kind: "percentage",
+            options: undefined,
+          },
+        },
+      ]),
+    );
+
+    expect(result.ok).toBe(true);
+  });
 });

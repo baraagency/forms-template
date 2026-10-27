@@ -13,6 +13,7 @@ export type CommunicationTextInputProps = InputHTMLAttributes<HTMLInputElement> 
   hint?: string;
   wrapperClassName?: string;
   error?: string;
+  describedBy?: string;
   /** Defaults from `type`: tel → phone, email → email. */
   communicationKind?: CommunicationKind;
 };
@@ -48,6 +49,7 @@ export function CommunicationTextInput({
   communicationKind,
   placeholder,
   error,
+  describedBy,
   disabled,
   readOnly,
   ...props
@@ -56,6 +58,9 @@ export function CommunicationTextInput({
   const Icon = kind === "phone" ? PhoneIcon : EmailIcon;
   const placeholderText = placeholder ?? label;
   const a11y = fieldA11yProps(id, error);
+  const describedByIds = [a11y["aria-describedby"], describedBy]
+    .filter(Boolean)
+    .join(" ");
 
   return (
     <div className={wrapperClassName}>
@@ -80,6 +85,9 @@ export function CommunicationTextInput({
             render={(inputProps) => <input {...inputProps} id={id} />}
             {...props}
             {...a11y}
+            {...(describedByIds
+              ? { "aria-describedby": describedByIds }
+              : {})}
           />
         </div>
         <FieldError id={`${id}-error`} message={error} />

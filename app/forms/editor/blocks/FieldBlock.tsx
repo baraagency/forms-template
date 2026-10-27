@@ -1,11 +1,18 @@
 import { useMemo, type ChangeEvent } from "react";
-import { formatCurrencyInput } from "@/app/forms/_core/formatUtils";
+import {
+  formatCurrencyInput,
+  formatPercentageInput,
+  formatPhoneInput,
+  limitPercentageInputPrecision,
+} from "@/app/forms/_core/formatUtils";
+import { CommunicationTextInput } from "@/app/forms/_core/CommunicationTextInput";
 import { FieldError } from "@/app/forms/_core/FieldError";
 import {
   getMaxFormDateTodayForPicker,
 } from "@/app/forms/_core/formDateValidation";
 import { FormDatePickerField } from "@/app/forms/_core/formDatePickerField";
 import { FormSelectInput } from "@/app/forms/_core/formSelectInput";
+import { FormTimePickerField } from "@/app/forms/_core/formTimePickerField";
 import {
   TextAreaInput,
   TextInput,
@@ -78,7 +85,11 @@ export function FieldBlock({
     field.kind === "multiChoice"
   ) {
     const isMulti = field.kind === "multiChoice";
-    const useSelect = field.kind === "choice" && field.display !== "radio";
+    const useSelect =
+      (field.kind === "choice" && field.display !== "radio") ||
+      (field.kind === "boolean" && field.display === "select");
+    const optionsUnavailable =
+      Boolean(field.disableWhenEmpty) && options.length === 0;
 
     if (useSelect) {
       return (
@@ -88,13 +99,15 @@ export function FieldBlock({
             label={field.label}
             value={asSingleValue(value)}
             required={field.required}
-            disabled={isPreview}
+            disabled={isPreview || optionsUnavailable}
             error={error}
             describedBy={tooltipId}
             onChange={(event) => setValue(event.target.value)}
           >
             <option value="">
-              {field.placeholder || `Select ${field.label.toLowerCase()}`}
+              {optionsUnavailable
+                ? "Options unavailable"
+                : field.placeholder || `Select ${field.label.toLowerCase()}`}
             </option>
             {options.map((option) => (
               <option key={option.value} value={option.value}>
@@ -165,6 +178,45 @@ export function FieldBlock({
     );
   }
 
+  if (field.kind === "time") {
+    const stringValue = asSingleValue(value);
+    if (isPreview) {
+      return (
+        <div>
+          <TextInput
+            id={inputId}
+            label={field.label}
+            value={stringValue}
+            required={field.required}
+            disabled
+            readOnly
+          />
+          {hasTooltip && tooltipId ? (
+            <FieldTooltip id={tooltipId} label={field.label} text={field.tooltip!} />
+          ) : null}
+          <FieldError id={errorId} message={error} />
+        </div>
+      );
+    }
+
+    return (
+      <div>
+        <FormTimePickerField
+          id={inputId}
+          label={field.label}
+          value={stringValue}
+          required={field.required}
+          error={error}
+          describedBy={tooltipId}
+          onChange={(next) => setValue(next)}
+        />
+        {hasTooltip && tooltipId ? (
+          <FieldTooltip id={tooltipId} label={field.label} text={field.tooltip!} />
+        ) : null}
+      </div>
+    );
+  }
+
   if (field.kind === "date") {
     const stringValue = asSingleValue(value);
     if (isPreview) {
@@ -210,6 +262,34 @@ export function FieldBlock({
   }
 
   const stringValue = asSingleValue(value);
+
+  if (field.kind === "phone" || field.kind === "email") {
+    return (
+      <div>
+        <CommunicationTextInput
+          id={inputId}
+          label={field.label}
+          type={field.kind === "phone" ? "tel" : "email"}
+          value={stringValue}
+          required={field.required}
+          disabled={isPreview}
+          placeholder={field.placeholder}
+          error={error}
+          describedBy={tooltipId}
+          onBlur={
+            field.kind === "phone"
+              ? () => setValue(formatPhoneInput(stringValue))
+              : undefined
+          }
+          onChange={(event) => setValue(event.target.value)}
+        />
+        {hasTooltip && tooltipId ? (
+          <FieldTooltip id={tooltipId} label={field.label} text={field.tooltip!} />
+        ) : null}
+      </div>
+    );
+  }
+
   const commonProps = {
     id: inputId,
     label: field.label,
@@ -221,7 +301,12 @@ export function FieldBlock({
     "aria-describedby": described,
     onChange: (
       event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-    ) => setValue(event.target.value),
+    ) =>
+      setValue(
+        field.kind === "percentage"
+          ? limitPercentageInputPrecision(event.target.value)
+          : event.target.value,
+      ),
   };
 
   return (
@@ -231,24 +316,20 @@ export function FieldBlock({
       ) : (
         <TextInput
           {...commonProps}
-          type={
-            field.kind === "phone"
-              ? "tel"
-              : field.kind === "email"
-                ? "email"
-                : "text"
-          }
+          type="text"
           inputMode={
-            field.kind === "phone"
-              ? "tel"
-              : field.kind === "number" || field.kind === "currency"
-                ? "decimal"
-                : undefined
+            field.kind === "number" ||
+            field.kind === "currency" ||
+            field.kind === "percentage"
+              ? "decimal"
+              : undefined
           }
           onBlur={
             field.kind === "currency"
               ? () => setValue(formatCurrencyInput(stringValue))
-              : undefined
+              : field.kind === "percentage"
+                ? () => setValue(formatPercentageInput(stringValue))
+                : undefined
           }
         />
       )}

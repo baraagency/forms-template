@@ -14,13 +14,27 @@ export const FIELD_KINDS = [
   "email",
   "number",
   "currency",
+  "percentage",
   "boolean",
   "choice",
   "multiChoice",
   "date",
+  "time",
 ] as const;
 
 export type FieldKind = (typeof FIELD_KINDS)[number];
+
+export const FIELD_OPTION_SOURCES = [
+  "manual",
+  "sisu",
+  "sisuAgents",
+  "sisuVendors",
+  "fubUsers",
+  "fubAppointmentTypes",
+  "usStates",
+] as const;
+
+export type FieldOptionSource = (typeof FIELD_OPTION_SOURCES)[number];
 
 export const FIELD_DISPLAY_MODES = ["radio", "select"] as const;
 export type FieldDisplay = (typeof FIELD_DISPLAY_MODES)[number];
@@ -58,8 +72,12 @@ export type FieldBlockProps = {
   tooltip?: string;
   placeholder?: string;
   options?: FieldOption[];
-  optionSource?: "manual" | "sisu" | "usStates";
+  optionSource?: FieldOptionSource;
+  /** SISU field key for optionSource=sisu. */
   sisuFieldKey?: string;
+  /** Role filter (sisuAgents) or vendor group (sisuVendors). */
+  optionFilter?: string;
+  disableWhenEmpty?: boolean;
   dateConstraint?: "past" | "future" | "any";
   visibleWhen?: VisibilityRule[];
 };

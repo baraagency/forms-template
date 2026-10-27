@@ -1,6 +1,7 @@
 import {
   FIELD_DISPLAY_MODES,
   FIELD_KINDS,
+  FIELD_OPTION_SOURCES,
   MAX_PAGE_BLOCKS,
   PAGE_BLOCK_TYPES,
   VISIBILITY_OPERATORS,
@@ -113,8 +114,18 @@ function parseFieldBlock(
   }
 
   const optionSource = props.optionSource ?? "manual";
-  if (!isOneOf(optionSource, ["manual", "sisu", "usStates"] as const)) {
+  if (!isOneOf(optionSource, FIELD_OPTION_SOURCES)) {
     return { ok: false, error: `Unknown option source for "${label}".` };
+  }
+
+  if (
+    (optionSource === "sisuAgents" || optionSource === "sisuVendors") &&
+    !isNonEmptyString(props.optionFilter)
+  ) {
+    return {
+      ok: false,
+      error: `Option filter is required for "${label}".`,
+    };
   }
 
   let options: FieldOption[] | undefined;
@@ -206,6 +217,18 @@ function parseFieldBlock(
       return { ok: false, error: `Invalid SISU field key for "${label}".` };
     }
     field.sisuFieldKey = props.sisuFieldKey;
+  }
+  if (props.optionFilter !== undefined) {
+    if (!isString(props.optionFilter)) {
+      return { ok: false, error: `Invalid option filter for "${label}".` };
+    }
+    field.optionFilter = props.optionFilter;
+  }
+  if (props.disableWhenEmpty !== undefined) {
+    if (!isBoolean(props.disableWhenEmpty)) {
+      return { ok: false, error: `Invalid disableWhenEmpty flag for "${label}".` };
+    }
+    field.disableWhenEmpty = props.disableWhenEmpty;
   }
   if (props.dateConstraint !== undefined) {
     if (!isOneOf(props.dateConstraint, ["past", "future", "any"] as const)) {

@@ -33,6 +33,17 @@ function parseNumber(value: string): number | null {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+function parsePercentage(value: string): number | null {
+  const cleaned = value.replace(/[%,\s]/g, "");
+  if (!cleaned) {
+    return null;
+  }
+  const parsed = Number(cleaned);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+const TIME_PATTERN = /^([01]?\d|2[0-3]):([0-5]\d)$/;
+
 function validateChoice(
   field: FieldBlockProps,
   value: FieldValue | undefined,
@@ -106,6 +117,21 @@ export function validatePageValues(
         !isFormDateOnOrAfterToday(stringValue)
       ) {
         errors[field.id] = formDateOnOrAfterTodayError(field.label);
+      }
+      continue;
+    }
+
+    if (field.kind === "time") {
+      if (!TIME_PATTERN.test(asString(value))) {
+        errors[field.id] = "Enter a valid time.";
+      }
+      continue;
+    }
+
+    if (field.kind === "percentage") {
+      const percentage = parsePercentage(asString(value));
+      if (percentage === null || percentage < 0 || percentage > 100) {
+        errors[field.id] = "Enter a percentage from 0 to 100.";
       }
       continue;
     }

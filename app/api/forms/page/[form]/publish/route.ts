@@ -1,6 +1,10 @@
 import { enforcePageEditorAdmin } from "@/app/api/_services/settingsAdminAuth";
 import { publishFormPage } from "@/app/api/_services/formPageQueries";
 import { loadSisuTeamFieldCatalog } from "@/app/api/_services/sisuTeamFieldsService";
+import { loadSisuTeamAgentOptions } from "@/app/api/_services/sisuTeamAgentOptionsService";
+import { loadSisuVendorOptions } from "@/app/api/_services/sisuVendorOptionsService";
+import { loadFubUserOptions } from "@/app/api/_services/fubUserOptionsService";
+import { loadFubAppointmentTypeOptions } from "@/app/api/_services/fubAppointmentTypeOptionsService";
 import { isSettingsFormKind } from "@/app/forms/_core/formIdentity";
 import {
   MAX_PAGE_BYTES,
@@ -62,10 +66,13 @@ export async function action({
     return Response.json({ message: parsed.error }, { status: 400 });
   }
 
-  const resolved = await resolvePublishedPageOptions(
-    parsed.data,
-    loadSisuTeamFieldCatalog,
-  );
+  const resolved = await resolvePublishedPageOptions(parsed.data, {
+    loadSisuTeamFields: loadSisuTeamFieldCatalog,
+    loadSisuAgents: loadSisuTeamAgentOptions,
+    loadSisuVendors: loadSisuVendorOptions,
+    loadFubUsers: loadFubUserOptions,
+    loadFubAppointmentTypes: loadFubAppointmentTypeOptions,
+  });
   const publishable = parseFormPageData(resolved.data, { forPublish: true });
   if (!publishable.ok) {
     return Response.json({ message: publishable.error }, { status: 400 });

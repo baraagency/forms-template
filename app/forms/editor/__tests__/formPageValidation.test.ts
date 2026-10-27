@@ -99,4 +99,25 @@ describe("validatePageValues", () => {
     expect(validatePageValues([booleanField], {}).flag).toBeTruthy();
     expect(validatePageValues([booleanField], { flag: "true" })).toEqual({});
   });
+
+  it("validates time and percentage values", () => {
+    const time: FieldBlockProps = {
+      id: "startTime",
+      label: "Start Time",
+      kind: "time",
+      required: true,
+    };
+    const percentage: FieldBlockProps = {
+      id: "referralPercent",
+      label: "Referral Percent",
+      kind: "percentage",
+      required: false,
+    };
+
+    expect(validatePageValues([time], { startTime: "09:30" })).toEqual({});
+    expect(validatePageValues([time], { startTime: "25:00" }).startTime).toBeTruthy();
+    expect(validatePageValues([percentage], { referralPercent: "12.50%" })).toEqual({});
+    expect(validatePageValues([percentage], { referralPercent: "101" }).referralPercent).toBeTruthy();
+    expect(validatePageValues([percentage], { referralPercent: "abc" }).referralPercent).toBeTruthy();
+  });
 });

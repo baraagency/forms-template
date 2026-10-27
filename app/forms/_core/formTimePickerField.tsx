@@ -161,6 +161,7 @@ type FormTimePickerFieldProps = {
   value: string;
   required?: boolean;
   error?: string;
+  describedBy?: string;
   onChange: (value: string) => void;
   minutesStep?: number;
   minTime?: Dayjs;
@@ -205,6 +206,7 @@ function FormTimePickerFieldInner({
   value,
   required,
   error,
+  describedBy,
   onChange,
   minutesStep = 15,
   minTime,
@@ -215,6 +217,9 @@ function FormTimePickerFieldInner({
   const [pickerActivated, setPickerActivated] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
   const a11y = fieldA11yProps(id, error);
+  const describedByIds = [a11y["aria-describedby"], describedBy]
+    .filter(Boolean)
+    .join(" ");
   const pickerConfig = useMemo(
     () => buildFormTimePickerConfig(minutesStep),
     [minutesStep],
@@ -249,6 +254,9 @@ function FormTimePickerFieldInner({
             readOnly,
             "aria-readonly": readOnly || undefined,
             ...a11y,
+            ...(describedByIds
+              ? { "aria-describedby": describedByIds }
+              : {}),
           },
         },
       },

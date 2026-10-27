@@ -47,11 +47,10 @@ describe("CLOSED_PAGE_DOCUMENT", () => {
       (field) => field.id === "securityDeposit",
     );
 
-    expect(deposit?.visibleWhen?.[0]).toMatchObject({
-      fieldId: "transactionType",
-      operator: "in",
-      values: expect.arrayContaining(["Lease Listing", "Rental/Tenant"]),
-    });
+    expect(deposit?.visibleWhen?.[0]?.fieldId).toBe("transactionType");
+    expect(deposit?.visibleWhen?.[0]?.operator).toBe("in");
+    expect(deposit?.visibleWhen?.[0]?.values).toContain("Lease Listing");
+    expect(deposit?.visibleWhen?.[0]?.values).toContain("Rental/Tenant");
   });
 
   it("constrains settlementDate to past dates", () => {

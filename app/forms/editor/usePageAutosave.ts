@@ -58,10 +58,10 @@ export function usePageAutosave(input: {
       if (timerRef.current) {
         clearTimeout(timerRef.current);
       }
+      setStatus("saving");
 
       timerRef.current = setTimeout(() => {
         timerRef.current = null;
-        setStatus("saving");
         pendingRef.current = queue(data);
         void pendingRef.current.catch(() => undefined);
       }, SAVE_DELAY_MS);

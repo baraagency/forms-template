@@ -37,8 +37,12 @@ export function PuckPageEditor({
     <Puck
       config={formPageConfig}
       data={document}
-      onChange={(data) => schedule(data as unknown as FormPageData)}
+      onChange={(data) => {
+        setFlash(null);
+        schedule(data as unknown as FormPageData);
+      }}
       onPublish={(data) => {
+        setFlash(null);
         void publish(data as unknown as FormPageData)
           .then((result) => {
             setFlash(

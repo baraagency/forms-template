@@ -10,3 +10,22 @@
 8. Update submitted-page labels in `app/routes/forms.submitted.tsx` / `submissionFormLabels` if needed.
 
 Import shared code only from `app/forms/_core/`.
+
+## Page editor (Phase 1: Closed only)
+
+Closed is now document-driven. Its page is a Puck `Data` document seeded in
+`app/forms/closed/closedPageDocument.ts` and stored per form in
+`form_pages.draft/published` (JSONB). The published document is rendered by
+`app/forms/editor/PageRenderer.tsx`; the admin editor lives at
+`/forms/closed/edit` behind `ADMIN_PASSWORD` plus the settings admin cookie.
+
+- Field identity is `props.id`; for Closed those ids match the existing
+  `ClosedFormState` keys so current SISU/FUB mapping rows keep working.
+- `visibleWhen` rules are evaluated in the browser and again by
+  `buildClosedSubmission`; hidden values are dropped before the workflow.
+- Publishing snapshots SISU options into `props.options`. Public pages never
+  call SISU for options.
+- New fields added in the editor submit through the doc-aware route, but
+  cannot be mapped to SISU/FUB until Phase 3.
+- Appointment Set, Appointment Met, and Pending still use the steps above.
+  Creating brand-new forms in the editor is Phase 4.

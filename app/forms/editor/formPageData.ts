@@ -13,6 +13,8 @@ import {
   type VisibilityRule,
 } from "./formPageTypes";
 
+export { MAX_PAGE_BLOCKS, MAX_PAGE_BYTES } from "./formPageTypes";
+
 type RecordValue = Record<string, unknown>;
 
 function isRecord(value: unknown): value is RecordValue {

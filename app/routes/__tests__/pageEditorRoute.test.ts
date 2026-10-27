@@ -36,10 +36,10 @@ describe("GET /forms/:slug/edit", () => {
 
     try {
       await loader({
-        request: new Request("http://localhost/forms/pending/edit", {
+        request: new Request("http://localhost/forms/bogus/edit", {
           headers: { Cookie: cookie },
         }),
-        params: { slug: "pending" },
+        params: { slug: "bogus" },
       } as never);
       throw new Error("expected loader to throw");
     } catch (error) {

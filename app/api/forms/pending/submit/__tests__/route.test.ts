@@ -1,4 +1,4 @@
-import { describe, expect, it } from "bun:test";
+import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 import { action } from "../route";
 
 const validPendingPayload = {
@@ -14,8 +14,8 @@ const validPendingPayload = {
   city: "Charleston",
   state: "SC",
   postal: "29401",
-  jcreOffice: "Charleston",
-  jcreLeadTransaction: "yes",
+  office: "Charleston",
+  leadTransaction: "yes",
   hasSecondaryClient: "no",
   onTeam: "no",
   isaSet: "no",
@@ -35,6 +35,27 @@ const validPendingPayload = {
 };
 
 describe("pending submit route", () => {
+  const originalFubKey = process.env.FUB_API_KEY;
+  const originalSisuKey = process.env.SISU_API_KEY;
+
+  beforeEach(() => {
+    delete process.env.FUB_API_KEY;
+    delete process.env.SISU_API_KEY;
+  });
+
+  afterEach(() => {
+    if (originalFubKey === undefined) {
+      delete process.env.FUB_API_KEY;
+    } else {
+      process.env.FUB_API_KEY = originalFubKey;
+    }
+    if (originalSisuKey === undefined) {
+      delete process.env.SISU_API_KEY;
+    } else {
+      process.env.SISU_API_KEY = originalSisuKey;
+    }
+  });
+
   it("returns validation errors for an empty payload", async () => {
     const response = await action({
       request: new Request("http://localhost/api/forms/pending/submit", {

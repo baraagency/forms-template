@@ -6,6 +6,7 @@ import {
 import { CLOSED_PAGE_DOCUMENT } from "../forms/closed/closedPageDocument";
 import { APPOINTMENT_SET_PAGE_DOCUMENT } from "../forms/appointment-set/appointmentSetPageDocument";
 import { APPOINTMENT_MET_PAGE_DOCUMENT } from "../forms/appointment-met/appointmentMetPageDocument";
+import { PENDING_PAGE_DOCUMENT } from "../forms/pending/pendingPageDocument";
 import { canEditFormPages } from "@/app/api/_services/settingsAdminAuth";
 import { loadDraftFormPage } from "@/app/api/_services/formPageService";
 import { useIsMounted } from "../forms/_core/useIsMounted";
@@ -26,7 +27,8 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   if (
     form !== "closed" &&
     form !== "appointmentSet" &&
-    form !== "appointmentMet"
+    form !== "appointmentMet" &&
+    form !== "pending"
   ) {
     throw new Response("Not Found", { status: 404 });
   }
@@ -36,7 +38,9 @@ export async function loader({ request, params }: Route.LoaderArgs) {
       ? CLOSED_PAGE_DOCUMENT
       : form === "appointmentSet"
         ? APPOINTMENT_SET_PAGE_DOCUMENT
-        : APPOINTMENT_MET_PAGE_DOCUMENT;
+        : form === "appointmentMet"
+          ? APPOINTMENT_MET_PAGE_DOCUMENT
+          : PENDING_PAGE_DOCUMENT;
   const page = await loadDraftFormPage(form, fallback);
 
   return {

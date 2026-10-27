@@ -40,3 +40,21 @@ export function isFormDateOnOrBeforeToday(dateValue: string): boolean {
 export function formDateOnOrBeforeTodayError(fieldLabel: string): string {
   return `${fieldLabel} must be today or earlier.`;
 }
+
+export function isFormDateOnOrAfterToday(dateValue: string): boolean {
+  const trimmedValue = dateValue.trim();
+  if (!trimmedValue) {
+    return false;
+  }
+
+  const parsed = dayjs.tz(trimmedValue, "YYYY-MM-DD", FORM_DATE_TIMEZONE);
+  if (!parsed.isValid()) {
+    return false;
+  }
+
+  return !parsed.startOf("day").isBefore(getMaxFormDateToday());
+}
+
+export function formDateOnOrAfterTodayError(fieldLabel: string): string {
+  return `${fieldLabel} must be today or later.`;
+}

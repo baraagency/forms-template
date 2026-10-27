@@ -6,6 +6,7 @@ import {
   FORM_DATE_TIMEZONE,
   getMaxFormDateToday,
   getMaxFormDateTodayForPicker,
+  isFormDateOnOrAfterToday,
   isFormDateOnOrBeforeToday,
 } from "../_core/formDateValidation";
 
@@ -26,5 +27,6 @@ describe("getMaxFormDateTodayForPicker", () => {
   it("allows selecting the business-timezone today in validation", () => {
     const today = dayjs().tz(FORM_DATE_TIMEZONE).format("YYYY-MM-DD");
     expect(isFormDateOnOrBeforeToday(today)).toBe(true);
+    expect(isFormDateOnOrAfterToday(today)).toBe(true);
   });
 });

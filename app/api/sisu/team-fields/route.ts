@@ -1,30 +1,13 @@
-import { loadFixture } from "@/app/api/_mock/loadFixture";
-import {
-  fetchLiveSisuTeamFields,
-  normalizeSisuTeamFieldCatalog,
-} from "@/app/api/_services/sisuLiveClient";
-import { isSisuApiEnabled } from "@/app/api/_services/sisuApiMode";
-import type { SISUTeamFieldsCatalogResponse } from "@/app/types/sisu";
+import { loadSisuTeamFieldCatalog } from "@/app/api/_services/sisuTeamFieldsService";
 
 export async function loader() {
-  if (isSisuApiEnabled()) {
-    const live = await fetchLiveSisuTeamFields();
-    if (live.error || !live.data) {
-      return Response.json(
-        { message: live.error ?? "Failed to load SISU team fields." },
-        { status: live.status ?? 502 },
-      );
-    }
-
-    const fields = normalizeSisuTeamFieldCatalog(
-      live.data.fields,
-    ) satisfies SISUTeamFieldsCatalogResponse["fields"];
-
-    return Response.json({ fields });
+  const result = await loadSisuTeamFieldCatalog();
+  if (result.error || !result.data) {
+    return Response.json(
+      { message: result.error ?? "Failed to load SISU team fields." },
+      { status: 502 },
+    );
   }
 
-  const fixture = loadFixture<{ fields: Record<string, unknown> }>(
-    "sisu-team-fields.json",
-  );
-  return Response.json(fixture);
+  return Response.json({ fields: result.data });
 }

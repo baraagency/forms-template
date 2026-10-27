@@ -1,10 +1,12 @@
 import { enforcePageEditorAdmin } from "@/app/api/_services/settingsAdminAuth";
 import { publishFormPage } from "@/app/api/_services/formPageQueries";
+import { loadSisuTeamFieldCatalog } from "@/app/api/_services/sisuTeamFieldsService";
 import { isSettingsFormKind } from "@/app/forms/_core/formIdentity";
 import {
   MAX_PAGE_BYTES,
   parseFormPageData,
 } from "@/app/forms/editor/formPageData";
+import { resolvePublishedPageOptions } from "@/app/forms/editor/formPagePublish";
 import type { JsonValue } from "@/app/types/storage";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -60,9 +62,18 @@ export async function action({
     return Response.json({ message: parsed.error }, { status: 400 });
   }
 
+  const resolved = await resolvePublishedPageOptions(
+    parsed.data,
+    loadSisuTeamFieldCatalog,
+  );
+  const publishable = parseFormPageData(resolved.data, { forPublish: true });
+  if (!publishable.ok) {
+    return Response.json({ message: publishable.error }, { status: 400 });
+  }
+
   const result = await publishFormPage(
     form,
-    parsed.data as unknown as JsonValue,
+    publishable.data as unknown as JsonValue,
     version,
   );
 
@@ -76,5 +87,8 @@ export async function action({
     return Response.json({ message: result.error }, { status: 500 });
   }
 
-  return Response.json({ version: result.version, warnings: [] });
+  return Response.json({
+    version: result.version,
+    warnings: resolved.warnings,
+  });
 }

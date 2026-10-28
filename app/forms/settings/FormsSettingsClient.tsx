@@ -1,8 +1,6 @@
-import { useMemo, useState } from "react";
-import { Notice, SectionCard, secondaryButtonClassName } from "../_core/ui";
+import { useEffect, useMemo, useState } from "react";
+import { Notice, SectionCard } from "../_core/ui";
 import type { RouterForm } from "@/app/types/storage";
-import { FormBanner } from "../_core/FormBanner";
-import { FormRouterBackLink } from "../_core/formRouterBackLink";
 import {
   SETTINGS_TAB_SLUGS,
   formKindLabel,
@@ -13,9 +11,22 @@ import { GmailAccountPanel } from "./GmailAndRecipientsPanels";
 import { FormSettingsPanel } from "./FormSettingsPanel";
 import { AppearanceSettingsPanel } from "./AppearanceSettingsPanel";
 import { BrandingSettingsPanel } from "./BrandingSettingsPanel";
+import { SettingsMasthead } from "./SettingsMasthead";
+import { SettingsBackLink } from "./SettingsBackLink";
 import type { AppBranding, ThemeSelection } from "@/app/theme/appTheme";
 import { useRovingTabIndex } from "../_core/useRovingTabIndex";
+import "./settings-layout.css";
 import "./settings-tabs.css";
+
+const SETTINGS_SECTION_TABS = [
+  { id: "forms", label: "Forms" },
+  { id: "appearance", label: "Appearance" },
+  { id: "integrations", label: "Integrations" },
+] as const;
+
+const SETTINGS_SECTION_TAB_IDS = SETTINGS_SECTION_TABS.map((tab) => tab.id);
+
+type SettingsSectionTab = (typeof SETTINGS_SECTION_TABS)[number]["id"];
 
 type GmailStatus = {
   environment: string;
@@ -23,6 +34,20 @@ type GmailStatus = {
   connected: boolean;
   email: string | null;
 };
+
+function useWideSettingsLayout() {
+  const [isWide, setIsWide] = useState(false);
+
+  useEffect(() => {
+    const media = window.matchMedia("(min-width: 1000px)");
+    const update = () => setIsWide(media.matches);
+    update();
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
+
+  return isWide;
+}
 
 export function FormsSettingsClient({
   initialRouterForms,
@@ -37,14 +62,25 @@ export function FormsSettingsClient({
   initialBranding: AppBranding;
   gmailFlash: { tone: "success" | "warning"; message: string } | null;
 }) {
+  const [activeSection, setActiveSection] = useState<SettingsSectionTab>(
+    gmailFlash ? "integrations" : "forms",
+  );
   const [activeSlug, setActiveSlug] =
     useState<FormRouterSlug>("appointment-set");
   const [routerForms, setRouterForms] =
     useState<RouterForm[]>(initialRouterForms);
+  const isWideLayout = useWideSettingsLayout();
 
   const routerFormBySlug = useMemo(() => {
     return new Map(routerForms.map((form) => [form.slug, form]));
   }, [routerForms]);
+
+  const { getTabProps: getSectionTabProps } = useRovingTabIndex({
+    items: SETTINGS_SECTION_TAB_IDS,
+    selected: activeSection,
+    onSelect: setActiveSection,
+    orientation: isWideLayout ? "vertical" : "horizontal",
+  });
 
   const { getTabProps } = useRovingTabIndex({
     items: SETTINGS_TAB_SLUGS,
@@ -53,103 +89,148 @@ export function FormsSettingsClient({
   });
 
   return (
-    <main id="main-content" className="page-form">
+    <main id="main-content" className="page-form settings-page">
       <title>Form Settings</title>
-      <FormRouterBackLink
-        href="/forms"
-        className={`settings-back-link app-button-press ${secondaryButtonClassName}`}
-      />
 
-      <header className="page-header">
-        <FormBanner />
-      </header>
+      <SettingsMasthead />
 
-      <div className="settings-page-stack">
-        <div>
-          <h1 className="page-title">Form Settings</h1>
-          <p className="page-intro">
-            Configure the app's appearance and branding, Gmail delivery,
-            per-form recipients, router visibility, and SISU / FUB mappings.
-            Mapping changes are stored for future workflows; submit routes
-            remain mocked in this template.
-          </p>
-        </div>
-
-        {gmailFlash ? (
+      {gmailFlash ? (
+        <div className="settings-flash">
           <Notice tone={gmailFlash.tone}>{gmailFlash.message}</Notice>
-        ) : null}
+        </div>
+      ) : null}
 
-        <SectionCard title="Appearance">
-          <AppearanceSettingsPanel initialSelection={initialAppearance} />
-        </SectionCard>
-
-        <SectionCard title="Branding">
-          <BrandingSettingsPanel initialBranding={initialBranding} />
-        </SectionCard>
-
-        <SectionCard title="Email">
-          <GmailAccountPanel initialStatus={initialGmailStatus} />
-        </SectionCard>
-
-        <SectionCard title="Forms">
+      <div className="settings-workspace">
+        <nav className="settings-rail" aria-label="Settings navigation">
+          <SettingsBackLink />
           <div
-            className="settings-tabs"
+            className="settings-rail__tabs"
             role="tablist"
-            aria-label="Form settings"
+            aria-label="Settings sections"
+            aria-orientation={isWideLayout ? "vertical" : "horizontal"}
           >
-            {SETTINGS_TAB_SLUGS.map((slug) => {
-              const kind = slugToFormKind(slug)!;
-              const selected = slug === activeSlug;
+            {SETTINGS_SECTION_TABS.map((tab) => {
+              const selected = tab.id === activeSection;
               return (
                 <button
-                  key={slug}
+                  key={tab.id}
                   type="button"
                   role="tab"
-                  id={`settings-tab-${slug}`}
+                  id={`settings-section-tab-${tab.id}`}
                   aria-selected={selected}
-                  aria-controls={`settings-panel-${slug}`}
-                  className={`settings-tabs__tab app-button-press${
-                    selected ? " settings-tabs__tab--active" : ""
+                  aria-controls={`settings-section-panel-${tab.id}`}
+                  className={`settings-rail__tab app-button-press${
+                    selected ? " settings-rail__tab--active" : ""
                   }`}
-                  {...getTabProps(slug)}
+                  {...getSectionTabProps(tab.id)}
                 >
-                  {formKindLabel(kind)}
+                  {tab.label}
                 </button>
               );
             })}
-            <span
-              className="settings-tabs__indicator"
-              style={{
-                transform: `translateX(${SETTINGS_TAB_SLUGS.indexOf(activeSlug) * 100}%)`,
-                width: `${100 / SETTINGS_TAB_SLUGS.length}%`,
-              }}
-              aria-hidden="true"
-            />
           </div>
+        </nav>
 
-          {SETTINGS_TAB_SLUGS.map((slug) => {
-            const kind = slugToFormKind(slug)!;
-            const selected = slug === activeSlug;
-            return (
-              <div key={slug} hidden={!selected}>
-                <FormSettingsPanel
-                  slug={slug}
-                  formKind={kind}
-                  title={formKindLabel(kind)}
-                  routerForm={routerFormBySlug.get(slug) ?? null}
-                  gmailConnected={Boolean(initialGmailStatus?.connected)}
-                  onRouterFormChange={(form) => {
-                    setRouterForms((current) => {
-                      const next = current.filter((row) => row.slug !== form.slug);
-                      next.push(form);
-                      return next;
-                    });
+        <div className="settings-panels">
+          <div
+            className="settings-tab-panel"
+            role="tabpanel"
+            id="settings-section-panel-forms"
+            aria-labelledby="settings-section-tab-forms"
+            hidden={activeSection !== "forms"}
+          >
+            <SectionCard title="Forms">
+              <div
+                className="settings-tabs"
+                role="tablist"
+                aria-label="Form settings"
+              >
+                {SETTINGS_TAB_SLUGS.map((slug) => {
+                  const kind = slugToFormKind(slug)!;
+                  const selected = slug === activeSlug;
+                  return (
+                    <button
+                      key={slug}
+                      type="button"
+                      role="tab"
+                      id={`settings-tab-${slug}`}
+                      aria-selected={selected}
+                      aria-controls={`settings-panel-${slug}`}
+                      className={`settings-tabs__tab app-button-press${
+                        selected ? " settings-tabs__tab--active" : ""
+                      }`}
+                      {...getTabProps(slug)}
+                    >
+                      {formKindLabel(kind)}
+                    </button>
+                  );
+                })}
+                <span
+                  className="settings-tabs__indicator"
+                  style={{
+                    transform: `translateX(${SETTINGS_TAB_SLUGS.indexOf(activeSlug) * 100}%)`,
+                    width: `${100 / SETTINGS_TAB_SLUGS.length}%`,
                   }}
+                  aria-hidden="true"
                 />
               </div>
-            );
-          })}
-        </SectionCard>
+
+              {SETTINGS_TAB_SLUGS.map((slug) => {
+                const kind = slugToFormKind(slug)!;
+                const selected = slug === activeSlug;
+                return (
+                  <div key={slug} hidden={!selected}>
+                    <FormSettingsPanel
+                      slug={slug}
+                      formKind={kind}
+                      title={formKindLabel(kind)}
+                      routerForm={routerFormBySlug.get(slug) ?? null}
+                      gmailConnected={Boolean(initialGmailStatus?.connected)}
+                      onRouterFormChange={(form) => {
+                        setRouterForms((current) => {
+                          const next = current.filter(
+                            (row) => row.slug !== form.slug,
+                          );
+                          next.push(form);
+                          return next;
+                        });
+                      }}
+                    />
+                  </div>
+                );
+              })}
+            </SectionCard>
+          </div>
+
+          <div
+            className="settings-tab-panel"
+            role="tabpanel"
+            id="settings-section-panel-appearance"
+            aria-labelledby="settings-section-tab-appearance"
+            hidden={activeSection !== "appearance"}
+          >
+            <div className="settings-appearance-grid">
+              <SectionCard title="Colors">
+                <AppearanceSettingsPanel initialSelection={initialAppearance} />
+              </SectionCard>
+              <SectionCard title="Branding">
+                <BrandingSettingsPanel initialBranding={initialBranding} />
+              </SectionCard>
+            </div>
+          </div>
+
+          <div
+            className="settings-tab-panel"
+            role="tabpanel"
+            id="settings-section-panel-integrations"
+            aria-labelledby="settings-section-tab-integrations"
+            hidden={activeSection !== "integrations"}
+          >
+            <SectionCard title="Gmail">
+              <GmailAccountPanel initialStatus={initialGmailStatus} />
+            </SectionCard>
+          </div>
+        </div>
       </div>
     </main>
   );

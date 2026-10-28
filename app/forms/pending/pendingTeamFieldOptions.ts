@@ -50,13 +50,12 @@ const candidateFields = {
     "lead_type_id",
     "type_id",
   ],
-  jcreOffice: ["jcreOffice", "jcre_office", "JCRE Office"],
-  jcreLeadTransaction: [
-    "jcreLeadTransaction",
-    "jcre_lead_transaction",
-    "jcre_leads_63",
-    "JCRE Lead Transaction",
-    "JCRE Lead?",
+  office: ["office", "office_name", "Office"],
+  leadTransaction: [
+    "leadTransaction",
+    "lead_transaction",
+    "Lead Transaction",
+    "Lead Transaction?",
   ],
   plrAcknowledgement: [
     "plrAcknowledgement",
@@ -83,13 +82,12 @@ const candidateFields = {
     "on_team",
     "are_you_on_a_teams_63",
     "Are you on a team?",
-    "Are you on a Team within JCRE?",
   ],
   isaSet: ["isaSet", "isa_set", "isa_sets_63", "ISA Set", "ISA Set?"],
   pastClient: [
     "pastClient",
     "past_client",
-    "Was this a JCRE past client?",
+    "Was this a past client?",
   ],
   outsideReferral: [
     "outsideReferral",
@@ -132,8 +130,8 @@ const candidateFields = {
 
 export type PendingSelectOptions = {
   clientTypeOptions: SelectOption[];
-  jcreOfficeOptions: SelectOption[];
-  jcreLeadTransactionOptions: SelectOption[];
+  officeOptions: SelectOption[];
+  leadTransactionOptions: SelectOption[];
   plrAcknowledgementOptions: SelectOption[];
   closingDepartmentOptions: SelectOption[];
   hasSecondaryClientOptions: SelectOption[];
@@ -279,8 +277,8 @@ export function getPendingSelectOptions(
     clientTypeOptions: normalizeClientTypeOptions(
       getOptions(fields, "clientType", clientTypeFallbackOptions),
     ),
-    jcreOfficeOptions: getOptions(fields, "jcreOffice", officeFallbackOptions),
-    jcreLeadTransactionOptions: getYesNoOptions(fields, "jcreLeadTransaction"),
+    officeOptions: getOptions(fields, "office", officeFallbackOptions),
+    leadTransactionOptions: getYesNoOptions(fields, "leadTransaction"),
     plrAcknowledgementOptions: getYesNoOptions(fields, "plrAcknowledgement"),
     closingDepartmentOptions: getYesNoOptions(fields, "closingDepartment"),
     hasSecondaryClientOptions: getYesNoOptions(fields, "hasSecondaryClient"),

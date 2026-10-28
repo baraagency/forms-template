@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import type { TeamFieldCatalog } from "../_core/teamFieldOptions";
+import type { TeamFieldCatalog } from "../../_core/teamFieldOptions";
 import {
   getPendingSelectOptions,
   isNoSelection,
@@ -10,9 +10,9 @@ import {
 } from "../pendingTeamFieldOptions";
 
 const fields: TeamFieldCatalog = {
-  jcre_leads_63: {
-    name: "jcre_leads_63",
-    label: "JCRE Lead?",
+  lead_transaction: {
+    name: "lead_transaction",
+    label: "Lead Transaction?",
     type: "yes_no",
     custom: true,
     options: [
@@ -70,7 +70,7 @@ describe("getPendingSelectOptions", () => {
       { value: "Buyer", label: "Buyer" },
       { value: "Seller", label: "Seller" },
     ]);
-    expect(options.jcreLeadTransactionOptions).toEqual([
+    expect(options.leadTransactionOptions).toEqual([
       { value: "yes", label: "Yes" },
       { value: "no", label: "No" },
     ]);

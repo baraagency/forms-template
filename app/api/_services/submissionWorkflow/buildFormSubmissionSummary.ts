@@ -101,6 +101,7 @@ export async function buildFormSubmissionSummary(input: {
   form: SettingsFormKind;
   formLabel: string;
   formState: Record<string, unknown>;
+  fieldOptions?: readonly FormFieldOption[];
   theme?: ResolvedAppTheme;
   branding?: AppBranding;
 }): Promise<{
@@ -111,7 +112,18 @@ export async function buildFormSubmissionSummary(input: {
 }> {
   const theme = input.theme ?? DEFAULT_RESOLVED_THEME;
   const branding = input.branding ?? DEFAULT_APP_BRANDING;
-  const options = getFormFieldOptions(input.form);
+  const catalogOptions = getFormFieldOptions(input.form);
+  const options: readonly FormFieldOption[] = input.fieldOptions
+    ? [
+        ...input.fieldOptions,
+        ...catalogOptions.filter(
+          (option) =>
+            !input.fieldOptions!.some(
+              (candidate) => candidate.value === option.value,
+            ),
+        ),
+      ]
+    : catalogOptions;
   const displayContext = await loadFormSubmissionDisplayContext(input.form);
   const rows: Array<{ label: string; value: string }> = [];
 

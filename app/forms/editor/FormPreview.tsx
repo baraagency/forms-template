@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type RefObject } from "react";
 import { createPortal } from "react-dom";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
@@ -17,6 +17,9 @@ export function buildPreviewValues(
   return values;
 }
 
+const FOCUSABLE_SELECTOR =
+  'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
 /**
  * Read-only-ish preview of the draft using the published renderer. Controls are
  * interactive so conditional fields can be exercised before publishing.
@@ -24,17 +27,23 @@ export function buildPreviewValues(
 export function FormPreview({
   pageDocument,
   onClose,
+  returnFocusTo,
 }: {
   pageDocument: FormPageData;
   onClose: () => void;
+  returnFocusTo?: RefObject<HTMLElement | null>;
 }) {
   const [values, setValues] = useState<Record<string, FieldValue>>(() =>
     buildPreviewValues(pageDocument),
   );
-  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const [announcement, setAnnouncement] = useState("");
+  const dialogRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const root = document.getElementById("root");
+    const shell =
+      document.querySelector<HTMLElement>(".app-shell") ??
+      document.getElementById("root");
+    const skipLink = document.querySelector<HTMLElement>(".skip-to-main");
     const previousOverflow = document.body.style.overflow;
     const previousFocus =
       document.activeElement instanceof HTMLElement
@@ -42,20 +51,55 @@ export function FormPreview({
         : null;
 
     document.body.style.overflow = "hidden";
-    root?.setAttribute("inert", "");
-    closeButtonRef.current?.focus();
+    shell?.setAttribute("inert", "");
+    skipLink?.setAttribute("inert", "");
+    dialogRef.current?.focus();
 
     return () => {
-      root?.removeAttribute("inert");
+      shell?.removeAttribute("inert");
+      skipLink?.removeAttribute("inert");
       document.body.style.overflow = previousOverflow;
-      previousFocus?.focus();
+      const fallbackFocus = returnFocusTo?.current ?? previousFocus;
+      // Puck re-renders its header on close; focus after that commit instead of
+      // landing on <body>.
+      window.requestAnimationFrame(() => {
+        const trigger = document.querySelector<HTMLElement>(
+          "[data-page-editor-preview-trigger]",
+        );
+        (trigger ?? fallbackFocus)?.focus();
+      });
     };
-  }, []);
+  }, [returnFocusTo]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         onClose();
+        return;
+      }
+
+      if (event.key !== "Tab" || !dialogRef.current) {
+        return;
+      }
+
+      const focusable = Array.from(
+        dialogRef.current.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR),
+      );
+      if (focusable.length === 0) {
+        return;
+      }
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (document.activeElement === dialogRef.current) {
+        event.preventDefault();
+        (event.shiftKey ? last : first).focus();
+      } else if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
       }
     };
     window.addEventListener("keydown", handleKeyDown);
@@ -68,30 +112,40 @@ export function FormPreview({
 
   return createPortal(
     <div
+      ref={dialogRef}
       role="dialog"
       aria-modal="true"
-      aria-label="Form preview"
-      className="fixed inset-0 z-[100] overflow-auto bg-slate-50"
+      aria-labelledby="form-preview-title"
+      aria-describedby="form-preview-hint"
+      tabIndex={-1}
+      className="page-editor-preview"
     >
-      <div className="sticky top-0 z-10 flex items-center justify-between border-b border-[var(--divider-color)] bg-[var(--card-bg)] px-4 py-3">
+      <div className="page-editor-preview__bar">
         <div>
-          <p className="text-sm font-semibold">Preview</p>
-          <p className="text-xs text-[var(--muted-foreground)]">
+          <h2 id="form-preview-title" className="page-editor-preview__title">
+            Preview
+          </h2>
+          <p id="form-preview-hint" className="page-editor-preview__hint">
             Interactive draft preview. Nothing is submitted.
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="page-editor-preview__actions">
+          <span className="sr-only" role="status">
+            {announcement}
+          </span>
           <button
             type="button"
-            className="rounded border border-[var(--divider-color)] px-3 py-1.5 text-sm"
-            onClick={() => setValues(buildPreviewValues(pageDocument))}
+            className="page-editor__button"
+            onClick={() => {
+              setValues(buildPreviewValues(pageDocument));
+              setAnnouncement("Preview fields reset.");
+            }}
           >
             Reset
           </button>
           <button
-            ref={closeButtonRef}
             type="button"
-            className="rounded border border-[var(--divider-color)] px-3 py-1.5 text-sm font-medium"
+            className="page-editor__button"
             onClick={onClose}
           >
             Back to editor
@@ -99,8 +153,8 @@ export function FormPreview({
         </div>
       </div>
 
-      <div className="mx-auto max-w-3xl p-4 sm:p-8">
-        <div className="page-form">
+      <div className="page-editor-preview__body">
+        <div className="page-editor-preview__form page-form">
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <FormRuntimeProvider
               value={{

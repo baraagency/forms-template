@@ -1,5 +1,10 @@
 import { describe, expect, it } from "bun:test";
-import { collectPageFields, parseFormPageData } from "../formPageData";
+import {
+  collectPageFields,
+  formPageBlockLabel,
+  parseFormPageData,
+} from "../formPageData";
+import type { FormPageBlock } from "../formPageTypes";
 
 const validField = {
   id: "clientType",
@@ -245,5 +250,40 @@ describe("parseFormPageData", () => {
     );
 
     expect(result.ok).toBe(true);
+  });
+});
+
+describe("formPageBlockLabel", () => {
+  it("uses the field label, then falls back to the block type", () => {
+    expect(
+      formPageBlockLabel({
+        type: "FieldBlock",
+        props: { id: "clientName", label: "Client Name" },
+      } as FormPageBlock),
+    ).toBe("Client Name");
+    expect(
+      formPageBlockLabel({
+        type: "FieldBlock",
+        props: { id: "empty", label: "  " },
+      } as FormPageBlock),
+    ).toBe("Untitled field");
+  });
+
+  it("uses page titles and section headers as labels", () => {
+    expect(
+      formPageBlockLabel({
+        type: "PageTitle",
+        props: { id: "title", text: "Pending" },
+      } as FormPageBlock),
+    ).toBe("Pending");
+    expect(
+      formPageBlockLabel({
+        type: "SectionHeader",
+        props: { id: "section", title: "" },
+      } as FormPageBlock),
+    ).toBe("Section header");
+    expect(
+      formPageBlockLabel({ type: "Divider", props: { id: "divider" } }),
+    ).toBe("Divider");
   });
 });

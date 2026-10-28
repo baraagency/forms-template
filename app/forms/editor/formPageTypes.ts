@@ -80,6 +80,8 @@ export type FieldBlockProps = {
   disableWhenEmpty?: boolean;
   dateConstraint?: "past" | "future" | "any";
   visibleWhen?: VisibilityRule[];
+  /** Inspector-only custom field; not rendered as a form value. */
+  mappings?: unknown;
 };
 
 export type FormPageBlock = {

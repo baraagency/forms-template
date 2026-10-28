@@ -1,21 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
-import {
-  Notice,
-  Spinner,
-} from "../_core/ui";
+import { Notice, Spinner } from "../_core/ui";
 import type {
-  FormFubDealMapping,
-  FormFubPersonMapping,
   FormFubTag,
-  FormSisuMapping,
   RouterForm,
 } from "@/app/types/storage";
 import type { FormRouterSlug, SettingsFormKind } from "../_core/formIdentity";
-import {
-  FubMappingsTable,
-  useFubDealFieldKeys,
-  useFubPersonFieldKeys,
-} from "./FubMappingsTable";
 import {
   DesiredStagePicker,
   useDealStageOptions,
@@ -27,7 +16,6 @@ import {
   normalizeFubClientType,
   type FubClientType,
 } from "../_core/fubClientTypeSettings";
-import { SisuMappingsTable } from "./SisuMappingsTable";
 import { FormRecipientsPanel } from "./GmailAndRecipientsPanels";
 import { PillToggle } from "./PillToggle";
 import { useRovingTabIndex } from "../_core/useRovingTabIndex";
@@ -147,21 +135,16 @@ export function TagsEditor({
 
 function FubPersonSection({
   formKind,
-  personMaps,
-  onReloadMappings,
   panelId,
   labelledBy,
   hidden,
 }: {
   formKind: SettingsFormKind;
-  personMaps: FormFubPersonMapping[];
-  onReloadMappings: () => Promise<void>;
   panelId: string;
   labelledBy: string;
   hidden: boolean;
 }) {
   const personStages = usePersonStageOptions();
-  const personFields = useFubPersonFieldKeys();
   const fubTagCatalog = useFubTagOptions();
   const clientTypes: readonly (FubClientType | null)[] = formSupportsFubClientType(
     formKind,
@@ -179,66 +162,33 @@ function FubPersonSection({
     >
       <p className="settings-section-description text-pretty">
         {clientTypes.length > 1
-          ? "Desired person stages and tags by client type, plus field mappings into a Follow Up Boss person record."
-          : "Desired person stage and tags, plus field mappings into a Follow Up Boss person record."}
+          ? "Desired person stages and tags by client type. Field mappings live in the page editor."
+          : "Desired person stage and tags. Field mappings live in the page editor."}
       </p>
 
-      <div className="settings-fub-subsections">
-        <div className="settings-fub-client-type-grid">
-          {clientTypes.map((clientType) => (
-            <div key={clientType ?? "general"} className="settings-fub-subsection">
-              <h4 className="settings-subsection-title">{clientType ?? "General"}</h4>
-              <h5 className="settings-subsection-eyebrow">Stage</h5>
-              <DesiredStagePicker
-                formKind={formKind}
-                target="person"
-                clientType={clientType}
-                options={personStages.options}
-                optionsLoading={personStages.loading}
-                optionsError={personStages.error}
-              />
-              <h5 className="settings-subsection-eyebrow">Tags</h5>
-              <TagsEditor
-                formKind={formKind}
-                clientType={clientType}
-                fubTagOptions={fubTagCatalog.tags}
-                fubTagsLoading={fubTagCatalog.loading}
-                fubTagsError={fubTagCatalog.error}
-              />
-            </div>
-          ))}
-        </div>
-
-        <div className="settings-fub-subsection">
-          <h4 className="settings-subsection-title">Mappings</h4>
-          <FubMappingsTable
-            formKind={formKind}
-            rows={personMaps}
-            emptyHint="No person mapping templates for this form."
-            targetLabel="FUB person field"
-            fieldOptions={personFields.keys}
-            fieldOptionsLoading={personFields.loading}
-            fieldOptionsError={personFields.error}
-            searchId={`${formKind}-person-mappings-search`}
-            tableAriaLabel="FUB person field mappings"
-            onSaveRow={async (row, draft) => {
-              await readJson(
-                await fetch(
-                  `/api/forms/settings/fub/person-mappings/${row.id}`,
-                  {
-                    method: "PATCH",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                      fub_field_name: draft.fub_field_name,
-                      enabled: draft.enabled,
-                    }),
-                  },
-                ),
-              );
-            }}
-            onAfterSave={onReloadMappings}
-          />
-        </div>
+      <div className="settings-fub-client-type-grid">
+        {clientTypes.map((clientType) => (
+          <div key={clientType ?? "general"} className="settings-fub-subsection">
+            <h4 className="settings-subsection-title">{clientType ?? "General"}</h4>
+            <h5 className="settings-subsection-eyebrow">Stage</h5>
+            <DesiredStagePicker
+              formKind={formKind}
+              target="person"
+              clientType={clientType}
+              options={personStages.options}
+              optionsLoading={personStages.loading}
+              optionsError={personStages.error}
+            />
+            <h5 className="settings-subsection-eyebrow">Tags</h5>
+            <TagsEditor
+              formKind={formKind}
+              clientType={clientType}
+              fubTagOptions={fubTagCatalog.tags}
+              fubTagsLoading={fubTagCatalog.loading}
+              fubTagsError={fubTagCatalog.error}
+            />
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -246,21 +196,16 @@ function FubPersonSection({
 
 function FubDealSection({
   formKind,
-  dealMaps,
-  onReloadMappings,
   panelId,
   labelledBy,
   hidden,
 }: {
   formKind: SettingsFormKind;
-  dealMaps: FormFubDealMapping[];
-  onReloadMappings: () => Promise<void>;
   panelId: string;
   labelledBy: string;
   hidden: boolean;
 }) {
   const dealStages = useDealStageOptions();
-  const dealFields = useFubDealFieldKeys();
   const clientTypes: readonly (FubClientType | null)[] = formSupportsFubClientType(
     formKind,
   )
@@ -277,71 +222,34 @@ function FubDealSection({
     >
       <p className="settings-section-description text-pretty">
         {clientTypes.length > 1
-          ? "Desired deal stages by client type from your pipelines, and field mappings into a Follow Up Boss deal."
-          : "Desired deal stage from your pipelines, and field mappings into a Follow Up Boss deal."}
+          ? "Desired deal stages by client type from your pipelines. Field mappings live in the page editor."
+          : "Desired deal stage from your pipelines. Field mappings live in the page editor."}
       </p>
 
-      <div className="settings-fub-subsections">
-        <div className="settings-fub-client-type-grid">
-          {clientTypes.map((clientType) => (
-            <div key={clientType ?? "general"} className="settings-fub-subsection">
-              <h4 className="settings-subsection-title">{clientType ?? "General"}</h4>
-              <h5 className="settings-subsection-eyebrow">Stage</h5>
-              <DesiredStagePicker
-                formKind={formKind}
-                target="deal"
-                clientType={clientType}
-                options={dealStages.options}
-                optionsLoading={dealStages.loading}
-                optionsError={dealStages.error}
-                nested
-              />
-            </div>
-          ))}
-        </div>
-
-        <div className="settings-fub-subsection">
-          <h4 className="settings-subsection-title">Mappings</h4>
-          <FubMappingsTable
-            formKind={formKind}
-            rows={dealMaps}
-            emptyHint="No deal mapping templates for this form."
-            targetLabel="FUB deal field"
-            fieldOptions={dealFields.keys}
-            fieldOptionsLoading={dealFields.loading}
-            fieldOptionsError={dealFields.error}
-            searchId={`${formKind}-deal-mappings-search`}
-            tableAriaLabel="FUB deal field mappings"
-            onSaveRow={async (row, draft) => {
-              await readJson(
-                await fetch(
-                  `/api/forms/settings/fub/deal-mappings/${row.id}`,
-                  {
-                    method: "PATCH",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                      fub_field_name: draft.fub_field_name,
-                      enabled: draft.enabled,
-                    }),
-                  },
-                ),
-              );
-            }}
-            onAfterSave={onReloadMappings}
-          />
-        </div>
+      <div className="settings-fub-client-type-grid">
+        {clientTypes.map((clientType) => (
+          <div key={clientType ?? "general"} className="settings-fub-subsection">
+            <h4 className="settings-subsection-title">{clientType ?? "General"}</h4>
+            <h5 className="settings-subsection-eyebrow">Stage</h5>
+            <DesiredStagePicker
+              formKind={formKind}
+              target="deal"
+              clientType={clientType}
+              options={dealStages.options}
+              optionsLoading={dealStages.loading}
+              optionsError={dealStages.error}
+              nested
+            />
+          </div>
+        ))}
       </div>
     </div>
   );
 }
 
-type MappingDestinationTab = "sisu" | "fub-person" | "fub-deal";
+type FubSettingsTab = "fub-person" | "fub-deal";
 
-const MAPPING_DESTINATION_TABS: {
-  id: MappingDestinationTab;
-  label: string;
-}[] = [
-  { id: "sisu", label: "SISU" },
+const FUB_SETTINGS_TABS: { id: FubSettingsTab; label: string }[] = [
   { id: "fub-person", label: "FUB Person" },
   { id: "fub-deal", label: "FUB Deal" },
 ];
@@ -361,59 +269,15 @@ export function FormSettingsPanel({
   onRouterFormChange: (form: RouterForm) => void;
   gmailConnected: boolean;
 }) {
-  const [sisu, setSisu] = useState<FormSisuMapping[]>([]);
-  const [personMaps, setPersonMaps] = useState<FormFubPersonMapping[]>([]);
-  const [dealMaps, setDealMaps] = useState<FormFubDealMapping[]>([]);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [toggleBusy, setToggleBusy] = useState(false);
-  const [mappingTab, setMappingTab] =
-    useState<MappingDestinationTab>("sisu");
-  const mappingTabIds = MAPPING_DESTINATION_TABS.map((tab) => tab.id);
-  const { getTabProps: getMappingTabProps } = useRovingTabIndex({
-    items: mappingTabIds,
-    selected: mappingTab,
-    onSelect: setMappingTab,
+  const [fubTab, setFubTab] = useState<FubSettingsTab>("fub-person");
+  const fubTabIds = FUB_SETTINGS_TABS.map((tab) => tab.id);
+  const { getTabProps } = useRovingTabIndex({
+    items: fubTabIds,
+    selected: fubTab,
+    onSelect: setFubTab,
   });
-
-  const reloadMappings = useCallback(async () => {
-    setLoading(true);
-    try {
-      const [sisuPayload, personPayload, dealPayload] = await Promise.all([
-        readJson<{ mappings: FormSisuMapping[] }>(
-          await fetch(
-            `/api/forms/settings/sisu-mappings?form=${encodeURIComponent(formKind)}`,
-          ),
-        ),
-        readJson<{ mappings: FormFubPersonMapping[] }>(
-          await fetch(
-            `/api/forms/settings/fub/person-mappings?form=${encodeURIComponent(formKind)}`,
-          ),
-        ),
-        readJson<{ mappings: FormFubDealMapping[] }>(
-          await fetch(
-            `/api/forms/settings/fub/deal-mappings?form=${encodeURIComponent(formKind)}`,
-          ),
-        ),
-      ]);
-      setSisu(sisuPayload.mappings);
-      setPersonMaps(personPayload.mappings);
-      setDealMaps(dealPayload.mappings);
-      setError(null);
-    } catch (loadError) {
-      setError(
-        loadError instanceof Error
-          ? loadError.message
-          : "Failed to load form mappings.",
-      );
-    } finally {
-      setLoading(false);
-    }
-  }, [formKind]);
-
-  useEffect(() => {
-    void reloadMappings();
-  }, [reloadMappings]);
 
   const visible = routerForm?.visible ?? true;
 
@@ -427,10 +291,10 @@ export function FormSettingsPanel({
       <section className="settings-section">
         <div className="settings-section-header">
           <div>
-            <h2 className="settings-section-title text-balance">{title}</h2>
+            <h3 className="settings-section-title text-balance">{title}</h3>
             <p className="settings-section-description text-pretty">
               Show this form on the form router and configure email recipients,
-              SISU, and FUB mappings.
+              FUB stages, and tags.
             </p>
           </div>
           <PillToggle
@@ -467,110 +331,71 @@ export function FormSettingsPanel({
       </section>
 
       {error ? <Notice tone="warning">{error}</Notice> : null}
-      {loading ? <Spinner /> : null}
 
-      {!loading ? (
-        <>
-          <FormRecipientsPanel
-            formKind={formKind}
-            gmailConnected={gmailConnected}
+      <FormRecipientsPanel
+        formKind={formKind}
+        gmailConnected={gmailConnected}
+      />
+
+      <section className="settings-section">
+        <h3 className="settings-section-title text-balance">
+          Follow Up Boss
+        </h3>
+        <p className="settings-section-description text-pretty">
+          Stage and tag rules by client type. Field mappings are configured in
+          the page editor.
+        </p>
+
+        <div
+          className="settings-tabs settings-tabs--2"
+          role="tablist"
+          aria-label={`${title} Follow Up Boss settings`}
+        >
+          {FUB_SETTINGS_TABS.map((tab) => {
+            const selected = tab.id === fubTab;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                role="tab"
+                id={`${slug}-fub-tab-${tab.id}`}
+                aria-selected={selected}
+                aria-controls={`${slug}-fub-panel-${tab.id}`}
+                className={`settings-tabs__tab app-button-press${
+                  selected ? " settings-tabs__tab--active" : ""
+                }`}
+                {...getTabProps(tab.id)}
+              >
+                {tab.label}
+              </button>
+            );
+          })}
+          <span
+            className="settings-tabs__indicator"
+            style={{
+              transform: `translateX(${
+                FUB_SETTINGS_TABS.findIndex((tab) => tab.id === fubTab) * 100
+              }%)`,
+              width: `${100 / FUB_SETTINGS_TABS.length}%`,
+            }}
+            aria-hidden="true"
           />
+        </div>
 
-          <section className="settings-section">
-            <h3 className="settings-section-title text-balance">
-              Field mappings
-            </h3>
-            <p className="settings-section-description text-pretty">
-              Map form fields to SISU or Follow Up Boss. Choose a destination,
-              edit freely, then save.
-            </p>
+        <FubPersonSection
+          formKind={formKind}
+          panelId={`${slug}-fub-panel-fub-person`}
+          labelledBy={`${slug}-fub-tab-fub-person`}
+          hidden={fubTab !== "fub-person"}
+        />
 
-            <div
-              className="settings-tabs settings-tabs--3"
-              role="tablist"
-              aria-label={`${title} mapping destinations`}
-            >
-              {MAPPING_DESTINATION_TABS.map((tab) => {
-                const selected = tab.id === mappingTab;
-                return (
-                  <button
-                    key={tab.id}
-                    type="button"
-                    role="tab"
-                    id={`${slug}-mapping-tab-${tab.id}`}
-                    aria-selected={selected}
-                    aria-controls={`${slug}-mapping-panel-${tab.id}`}
-                    className={`settings-tabs__tab app-button-press${
-                      selected ? " settings-tabs__tab--active" : ""
-                    }`}
-                    {...getMappingTabProps(tab.id)}
-                  >
-                    {tab.label}
-                  </button>
-                );
-              })}
-              <span
-                className="settings-tabs__indicator"
-                style={{
-                  transform: `translateX(${
-                    MAPPING_DESTINATION_TABS.findIndex(
-                      (tab) => tab.id === mappingTab,
-                    ) * 100
-                  }%)`,
-                  width: `${100 / MAPPING_DESTINATION_TABS.length}%`,
-                }}
-                aria-hidden="true"
-              />
-            </div>
-
-            <div
-              className="settings-mapping-tabs-panel"
-              role="tabpanel"
-              id={`${slug}-mapping-panel-sisu`}
-              aria-labelledby={`${slug}-mapping-tab-sisu`}
-              hidden={mappingTab !== "sisu"}
-            >
-              <p className="settings-section-description text-pretty">
-                Map form fields to SISU field names. Stored for future submit
-                workflows.
-              </p>
-              <SisuMappingsTable
-                formKind={formKind}
-                rows={sisu}
-                emptyHint="No SISU mapping templates for this form."
-                onSaveRow={async (row, draft) => {
-                  await readJson(
-                    await fetch(`/api/forms/settings/sisu-mappings/${row.id}`, {
-                      method: "PATCH",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify(draft),
-                    }),
-                  );
-                }}
-                onAfterSave={reloadMappings}
-              />
-            </div>
-
-            <FubPersonSection
-              formKind={formKind}
-              personMaps={personMaps}
-              onReloadMappings={reloadMappings}
-              panelId={`${slug}-mapping-panel-fub-person`}
-              labelledBy={`${slug}-mapping-tab-fub-person`}
-              hidden={mappingTab !== "fub-person"}
-            />
-
-            <FubDealSection
-              formKind={formKind}
-              dealMaps={dealMaps}
-              onReloadMappings={reloadMappings}
-              panelId={`${slug}-mapping-panel-fub-deal`}
-              labelledBy={`${slug}-mapping-tab-fub-deal`}
-              hidden={mappingTab !== "fub-deal"}
-            />
-          </section>
-        </>
-      ) : null}
+        <FubDealSection
+          formKind={formKind}
+          panelId={`${slug}-fub-panel-fub-deal`}
+          labelledBy={`${slug}-fub-tab-fub-deal`}
+          hidden={fubTab !== "fub-deal"}
+        />
+      </section>
     </div>
   );
 }

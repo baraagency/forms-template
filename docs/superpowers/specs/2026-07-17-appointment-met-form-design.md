@@ -2,11 +2,11 @@
 
 **Date:** 2026-07-17  
 **Status:** Approved / implemented  
-**Approach:** Clone `appointment-set` scaffold; reshape fields/sections to match jeff-cook Appointment Met (minus JCRE fields); mock submit like other template forms.
+**Approach:** Clone `appointment-set` scaffold; reshape fields/sections to match the reference client app Appointment Met (minus client-specific fields); mock submit like other template forms.
 
 ## Goal
 
-Add an **Appointment Met** form template at `/forms/appointment-met` that replicates the layout and fields of jeff-cook’s Appointment Met form, while keeping this project’s visual design and mock-API patterns.
+Add an **Appointment Met** form template at `/forms/appointment-met` that replicates the layout and fields of the reference client app’s Appointment Met form, while keeping this project’s visual design and mock-API patterns.
 
 ## Non-goals
 
@@ -15,12 +15,12 @@ Add an **Appointment Met** form template at `/forms/appointment-met` that replic
 - Follow-up task creation / background jobs
 - DB persistence of submissions
 - Changing branding or introducing a new visual system
-- Touching the pending form’s existing `jcreOffice` field
+- Touching the pending form’s existing office field
 
 ## Constraints (from product decisions)
 
 - **Submit:** template-style mock (`POST` returns fixture JSON)
-- **JCRE:** omit `jcreOffice` / any field whose label contains “JCRE”
+- **Client-specific fields:** omit the client-specific office field and any other client-branded field.
 - **Visual:** reuse `page-form`, `SectionCard`, `Row`, `@baraagency/components`, existing CSS tokens
 - **Resubmission:** `previousSubmissionFormData={null}` (same as other template forms)
 - **Success:** `router.push` to `/forms/submitted` via `buildPostSubmissionHref` — never set local complete state after navigate
@@ -48,7 +48,7 @@ Wire into:
 
 ### Sections & layout
 
-Visual order matches jeff-cook; styling matches appointment-set.
+Visual order matches the reference client app; styling matches appointment-set.
 
 **Section 1 — Client Info** (two-column `Row`s)
 
@@ -60,7 +60,7 @@ Visual order matches jeff-cook; styling matches appointment-set.
 
 Always:
 
-1. Did the Appointment Happen? — single full-width select (no partner field; JCRE Office removed)
+1. Did the Appointment Happen? — single full-width select (no partner field; client-specific office field removed)
 
 **Branch — Met with Customer**
 
@@ -127,7 +127,7 @@ Submit: full-width primary button in `.form-actions`.
 
 #### Explicitly omitted
 
-- `jcreOffice` / **JCRE Office** (and any other JCRE-labeled field)
+- Client-specific office field (and any other client-branded field)
 - `whyApptDidntHappen` / **Why Didn't Appointment Happen?**
 
 ### Enums
@@ -252,4 +252,4 @@ Client stores debug record when present, then navigates with `buildPostSubmissio
 
 ## Open questions
 
-None — decisions locked: mock submit, omit JCRE fields, template visual system.
+None — decisions locked: mock submit, omit client-specific fields, template visual system.

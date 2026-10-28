@@ -7,6 +7,7 @@ import {
   TextBlock,
 } from "./blocks/StaticBlocks";
 import { VisibilityRulesField } from "./blocks/VisibilityRulesField";
+import { FieldMappingsPanel } from "./FieldMappingsPanel";
 import type { FieldBlockProps } from "./formPageTypes";
 
 type PageComponents = {
@@ -23,6 +24,11 @@ const yesNoOptions = [
 ];
 
 export const formPageConfig: Config<PageComponents> = {
+  // The page document has no editable root props; keep the panel focused on
+  // the selected block instead of showing Puck's default "title" field.
+  root: {
+    fields: {},
+  },
   components: {
     PageTitle: {
       label: "Page title",
@@ -153,9 +159,19 @@ export const formPageConfig: Config<PageComponents> = {
             />
           ),
         },
+        mappings: {
+          type: "custom",
+          label: "Mappings",
+          render: () => <FieldMappingsPanel />,
+        },
       },
       render: ({ id, puck, editMode: _editMode, ...props }) => (
-        <FieldBlock id={id} {...props} puck={puck} />
+        // The canvas field is a visual preview only. Inert keeps its disabled
+        // controls out of the tab order and the accessibility tree, where Puck
+        // already wraps the block in a selectable button.
+        <div inert={puck?.isEditing ? true : undefined}>
+          <FieldBlock id={id} {...props} puck={puck} />
+        </div>
       ),
     },
   },

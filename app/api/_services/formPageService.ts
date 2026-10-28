@@ -1,6 +1,8 @@
 import type { SettingsFormKind } from "@/app/forms/_core/formIdentity";
-import { parseFormPageData } from "@/app/forms/editor/formPageData";
+import { collectPageFields, parseFormPageData } from "@/app/forms/editor/formPageData";
 import type { FormPageData } from "@/app/forms/editor/formPageTypes";
+import type { FormFieldOption } from "@/app/forms/settings/formFieldCatalog";
+import { getFormPageFallback } from "@/app/forms/pageDocumentRegistry";
 import { getFormPage } from "./formPageQueries";
 
 export async function loadDraftFormPage(
@@ -31,4 +33,15 @@ export async function loadPublishedFormPage(
     forPublish: true,
   });
   return parsed.ok ? parsed.data : fallback;
+}
+
+/** Published field labels/order, then legacy catalog fields for hidden keys. */
+export async function loadPublishedFormFieldOptions(
+  form: SettingsFormKind,
+): Promise<FormFieldOption[]> {
+  const page = await loadPublishedFormPage(form, getFormPageFallback(form));
+  return collectPageFields(page).map((field) => ({
+    value: field.id,
+    label: field.label,
+  }));
 }

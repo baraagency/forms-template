@@ -6,7 +6,7 @@
 
 **Architecture:** Add live FUB user + SISU find-agent helpers, a shared `resolveSisuAgentIdForFubAgentId` bridge, and inject `sisuPayload.agent_id` inside `runSubmissionWorkflow` only when the SISU write path runs. Appointment Met passes `agentSubmitting || agentId` as workflow `agentId`.
 
-**Tech Stack:** React Router v8, Bun (`bun test`), existing `fubLiveClient` / `sisuLiveClient` patterns, jeff-cook reference at `/Users/nikomart/Documents/jeff-cook-app`.
+**Tech Stack:** React Router v8, Bun (`bun test`), existing `fubLiveClient` / `sisuLiveClient` patterns, the reference client app.
 
 **Spec:** `docs/superpowers/specs/2026-07-21-sisu-agent-id-resolution-design.md`
 

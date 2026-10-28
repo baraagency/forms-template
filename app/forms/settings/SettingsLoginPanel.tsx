@@ -2,11 +2,11 @@ import { useState } from "react";
 import {
   Notice,
   primaryButtonClassName,
-  secondaryButtonClassName,
+  SectionCard,
   TextInput,
 } from "../_core/ui";
-import { FormBanner } from "../_core/FormBanner";
-import { FormRouterBackLink } from "../_core/formRouterBackLink";
+import { SettingsMasthead } from "./SettingsMasthead";
+import "./settings-layout.css";
 
 export function SettingsLoginPanel() {
   const [password, setPassword] = useState("");
@@ -42,48 +42,39 @@ export function SettingsLoginPanel() {
   }
 
   return (
-    <main id="main-content" className="page-form">
+    <main
+      id="main-content"
+      className="page-form settings-page settings-page--gate"
+    >
       <title>Form Settings</title>
-      <FormRouterBackLink
-        href="/forms"
-        className={`settings-back-link app-button-press ${secondaryButtonClassName}`}
-      />
 
-      <header className="page-header">
-        <FormBanner />
-      </header>
+      <SettingsMasthead backLink />
 
-      <div className="settings-page-stack settings-login-stack">
-        <div>
-          <h1 className="page-title">Form Settings</h1>
-          <p className="page-intro">
-            Enter the admin password to configure Gmail delivery, recipients,
-            router visibility, and SISU / FUB mappings.
-          </p>
-        </div>
+      <div className="settings-login-shell">
+        <SectionCard title="Admin access">
+          <form className="settings-login-form" onSubmit={handleSubmit}>
+            {error ? <Notice tone="warning">{error}</Notice> : null}
 
-        <form className="settings-login-form" onSubmit={handleSubmit}>
-          {error ? <Notice tone="warning">{error}</Notice> : null}
+            <TextInput
+              id="settings-admin-password"
+              label="Admin password"
+              type="password"
+              name="password"
+              autoComplete="current-password"
+              required
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+            />
 
-          <TextInput
-            id="settings-admin-password"
-            label="Admin password"
-            type="password"
-            name="password"
-            autoComplete="current-password"
-            required
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-          />
-
-          <button
-            type="submit"
-            className={`app-button-press ${primaryButtonClassName}`}
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? "Signing in…" : "Sign in"}
-          </button>
-        </form>
+            <button
+              type="submit"
+              className={`app-button-press ${primaryButtonClassName}`}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Signing in…" : "Sign in"}
+            </button>
+          </form>
+        </SectionCard>
       </div>
     </main>
   );

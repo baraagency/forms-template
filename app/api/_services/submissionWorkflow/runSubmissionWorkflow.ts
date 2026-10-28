@@ -10,7 +10,11 @@ import {
   POST_SUBMISSION_SIDE_EFFECT_TIMEOUT_MS,
   isSubmissionDebugEnvironment,
 } from "@/app/forms/_core/submissionUtils";
-import { normalizeSettingsEnvironment } from "@/app/forms/_core/formIdentity";
+import {
+  isSettingsFormKind,
+  normalizeSettingsEnvironment,
+} from "@/app/forms/_core/formIdentity";
+import { loadPublishedFormFieldOptions } from "@/app/api/_services/formPageService";
 import {
   pickFubStageForClientType,
   pickFubTagsForClientType,
@@ -225,10 +229,14 @@ export async function runSubmissionWorkflow(
 
   const formState = { ...input.formState };
   const appTheme = await getAppTheme();
+  const summaryFieldOptions = isSettingsFormKind(input.form)
+    ? await loadPublishedFormFieldOptions(input.form)
+    : undefined;
   const summary = await buildFormSubmissionSummary({
     form: input.form,
     formLabel: input.formLabel,
     formState,
+    fieldOptions: summaryFieldOptions,
     theme: appTheme.resolved,
     branding: appTheme.branding,
   });

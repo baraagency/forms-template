@@ -3,6 +3,7 @@ import {
   formKindLabel,
   parseFormKindParam,
 } from "../forms/_core/formIdentity";
+import { Spinner } from "../forms/_core/ui";
 import { CLOSED_PAGE_DOCUMENT } from "../forms/closed/closedPageDocument";
 import { APPOINTMENT_SET_PAGE_DOCUMENT } from "../forms/appointment-set/appointmentSetPageDocument";
 import { APPOINTMENT_MET_PAGE_DOCUMENT } from "../forms/appointment-met/appointmentMetPageDocument";
@@ -51,25 +52,34 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   };
 }
 
+function LoadingEditor() {
+  return (
+    <>
+      <title>Page Editor</title>
+      <main
+        id="main-content"
+        tabIndex={-1}
+        role="status"
+        aria-live="polite"
+        aria-busy="true"
+        className="flex min-h-dvh flex-col items-center justify-center gap-3 text-sm text-[var(--body-color)]"
+      >
+        <Spinner />
+        Loading editor…
+      </main>
+    </>
+  );
+}
+
 export default function PageEditorRoute({ loaderData }: Route.ComponentProps) {
   const isMounted = useIsMounted();
 
   if (!isMounted) {
-    return (
-      <main className="flex min-h-dvh items-center justify-center text-sm text-[var(--muted-foreground)]">
-        Loading editor…
-      </main>
-    );
+    return <LoadingEditor />;
   }
 
   return (
-    <Suspense
-      fallback={
-        <main className="flex min-h-dvh items-center justify-center text-sm text-[var(--muted-foreground)]">
-          Loading editor…
-        </main>
-      }
-    >
+    <Suspense fallback={<LoadingEditor />}>
       <PuckPageEditor
         form={loaderData.form}
         formLabel={loaderData.formLabel}

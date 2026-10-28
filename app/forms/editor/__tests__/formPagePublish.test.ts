@@ -1,6 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import type { TeamFieldCatalog } from "@/app/forms/_core/teamFieldOptions";
 import {
+  findRemovedPublishedFields,
   resolvePublishedPageOptions,
   type PublishOptionLoaders,
 } from "../formPagePublish";
@@ -199,5 +200,19 @@ describe("resolvePublishedPageOptions", () => {
     );
 
     expect(result.warnings).toHaveLength(5);
+  });
+
+  it("finds fields removed since the previous publish", () => {
+    const previous = documentWith([
+      { ...manualField, id: "oldField", label: "Old Field" },
+      { ...manualField, id: "keptField", label: "Kept Field" },
+    ]);
+    const next = documentWith([
+      { ...manualField, id: "keptField", label: "Kept Field" },
+    ]);
+
+    expect(
+      findRemovedPublishedFields(previous, next).map((field) => field.id),
+    ).toEqual(["oldField"]);
   });
 });

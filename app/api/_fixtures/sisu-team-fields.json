@@ -10,9 +10,9 @@
         { "key": "seller", "value": "seller", "label": "Seller" }
       ]
     },
-    "jcre_office": {
-      "name": "jcre_office",
-      "label": "JCRE Office",
+    "office": {
+      "name": "office",
+      "label": "Office",
       "type": "select",
       "custom": true,
       "options": [
@@ -20,9 +20,9 @@
         { "key": "columbia", "value": "Columbia", "label": "Columbia" }
       ]
     },
-    "jcre_leads_63": {
-      "name": "jcre_leads_63",
-      "label": "JCRE Lead?",
+    "lead_transaction": {
+      "name": "lead_transaction",
+      "label": "Lead Transaction?",
       "type": "select",
       "custom": true,
       "options": [

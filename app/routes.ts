@@ -60,6 +60,10 @@ export default [
     "api/forms/page/:form/publish",
     "api/forms/page/[form]/publish/route.ts",
   ),
+  route(
+    "api/forms/page/:form/mappings",
+    "api/forms/page/[form]/mappings/route.ts",
+  ),
 
   // Settings
   route("api/forms/settings/auth", "api/forms/settings/auth/route.ts"),

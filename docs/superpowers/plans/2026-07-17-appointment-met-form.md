@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Add a template-style Appointment Met form that mirrors jeff-cook’s fields/layout (minus JCRE Office) with mock submit.
+**Goal:** Add a template-style Appointment Met form that mirrors the reference client app’s fields/layout (minus client-specific office field) with mock submit.
 
-**Architecture:** Clone the `appointment-set` scaffold (page → client → utils → mock submit route → router registration). Port field enums, disposition branching, and validation from jeff-cook’s `appointment-met`, omitting `jcreOffice`. Prefill from URL, FUB person, and SISU lookup only. Hardcode appointment outcome options.
+**Architecture:** Clone the `appointment-set` scaffold (page → client → utils → mock submit route → router registration). Port field enums, disposition branching, and validation from the reference client app’s `appointment-met`, omitting the client-specific office field. Prefill from URL, FUB person, and SISU lookup only. Hardcode appointment outcome options.
 
 **Tech Stack:** Next.js App Router, Bun, `@baraagency/components`, MUI date/time pickers, existing `_core` form utilities.
 
@@ -18,7 +18,7 @@
 - Create: `app/forms/appointment-met/appointmentMetFormUtils.ts`
 - Create: `app/forms/appointment-met/__tests__/appointmentMetFormUtils.test.ts`
 
-- [x] Implement state, enums, validation, normalize, prefill helpers (no `jcreOffice`)
+- [x] Implement state, enums, validation, normalize, prefill helpers (no client-specific office field)
 - [x] Add unit tests for validation branches and disposition clearing
 - [x] Run: `bun test app/forms/appointment-met/__tests__/appointmentMetFormUtils.test.ts`
 

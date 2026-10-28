@@ -119,6 +119,9 @@ For saved custom appearance pairs, `app/theme/__tests__/appTheme.test.ts` checks
 ### Settings form tabs
 
 - File: `app/forms/settings/settings-tabs.css`
+- Page-level: wide settings workspace (up to 1360px) with a 232px vertical tab rail at ≥1000px and a horizontal scroll strip below that; all panels stay mounted (`hidden`) so drafts survive switches
+- Rail header: `Back to Form Router` link with a left arrow sits above the tabs, separated by a hairline; the login gate keeps the button variant in the masthead
+- Task rhythm: 24px between SectionCards, 20px between subsections, 12–16px inside groups (Bara layout guidance); Appearance uses two task cards (Colors | Branding) in an auto-fit grid
 - Form-level: 4-column grid of tabs; sliding indicator under active tab
 - Nested mapping destinations: `.settings-tabs--3` (SISU | FUB Person | FUB Deal) inside one **Field mappings** section
 - Active: foreground color; press: `scale(0.96)`
@@ -163,6 +166,7 @@ For saved custom appearance pairs, `app/theme/__tests__/appTheme.test.ts` checks
 
 ### Settings section rhythm
 
+- Page masthead: compact brand banner beside a left-aligned page title; back link inline above; login gate capped at 820px
 - `.settings-section` gap 14px; adjacent sections get top border + 24px padding-top
 - No decorative “FUB note” / env explainer cards — credentials stay in env docs, not the UI
 - Back to Form Router: fixed top-left (`settings-back-link`, 16px inset, z-index 40)

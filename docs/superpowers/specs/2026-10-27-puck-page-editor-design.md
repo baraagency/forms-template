@@ -1,7 +1,7 @@
 # Puck page editor
 
 **Date:** 2026-10-27  
-**Status:** Implemented (Phase 2)  
+**Status:** Implemented (Phase 3)
 **Decision:** Use Puck (`@puckeditor/core`) as the editing UI. Keep the persisted page document and the public renderer independent of Puck so the editor can be replaced without rewriting stored pages.
 
 ## Problem
@@ -142,7 +142,7 @@ The server never trusts client-side visibility or required state. A hidden requi
 - Header: form name, "Back to form", autosave status (`Saving…`, `Saved`, `Unsaved changes`, `Conflict`).
 - Autosave is debounced (~1 s) and serialized so writes never race. Publish sends the current data and version in one request.
 - A 409 shows "This page changed elsewhere" with a reload action; it does not overwrite.
-- The editor header includes a "Manage mappings" link to `/forms/settings` in Phase 1; the per-field mapping panel arrives in Phase 3.
+- The field inspector includes per-field SISU / FUB Person / FUB Deal mapping controls. The old Settings mapping tables are removed.
 
 ## Security
 
@@ -167,7 +167,7 @@ The server never trusts client-side visibility or required state. A hidden requi
 | --- | --- |
 | 1 | Foundation + Closed: document model, DB, APIs, blocks, renderer, validation, editor route/button, Closed migration, doc-aware Closed submit |
 | 2 | Migrate Appointment Set, Appointment Met, Pending; per-form prefill/submit hooks; generic submit route |
-| 3 | Move SISU/FUB mapping UI into the field inspector; remove mapping tabs from Settings |
+| 3 | Move SISU/FUB mapping UI into the field inspector; remove mapping tabs from Settings — **Done** |
 | 4 | Create-form flow: dynamic `/forms/:slug`, `router_forms` row, wider `FormKind`/`SubmissionFormType`, generic submit |
 | 5 | Optional layout blocks (columns/rows) if stacked fields are not acceptable |
 
@@ -177,5 +177,5 @@ The server never trusts client-side visibility or required state. A hidden requi
 - Migrating Closed is a rewrite of a working page; keep the old client in git until parity is verified (prefill, draft cache, past date, lease conditionals, submit).
 - New fields added in the editor only submit correctly once the Closed submit route is document-aware (Phase 1 includes this).
 - SISU option snapshots can go stale between publishes; the editor should show the last publish time and a "refresh options on publish" note.
-- Removing a field orphans its mapping rows. Phase 1 does not delete them; Phase 3 must prune or warn.
-- New fields added in Phase 1 can be submitted but not mapped to SISU/FUB until Phase 3. Document this in the editor so admins do not expect a mapping for a newly added field.
+- Removing a field from the published document prunes its mapping rows using the previous published document as the diff baseline. Pending hidden legacy keys are unaffected.
+- Newly added fields can be mapped immediately in the inspector.

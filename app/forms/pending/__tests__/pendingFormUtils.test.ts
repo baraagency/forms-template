@@ -26,8 +26,8 @@ const baseState: PendingFormState = {
   city: "Charleston",
   state: "SC",
   postal: "29401",
-  jcreOffice: "Charleston",
-  jcreLeadTransaction: "yes",
+  office: "Charleston",
+  leadTransaction: "yes",
   hasSecondaryClient: "no",
   onTeam: "no",
   isaSet: "no",
@@ -161,8 +161,8 @@ describe("applyPendingSisuTransactionPrefill", () => {
         postal_code: "29401",
         agent_2: "Sam Agent",
         agent_2_s_37: 25,
-        jcre_office: "Charleston",
-        jcre_leads_63: "no",
+        office: "Charleston",
+        lead_transaction: "no",
         do_you_understand_that_plrs_92s_need_to_be_fully_executed_within_48_hours_of_ratification_and_prior_:
           "yes",
         cap_agentss_58_if_personals_44_closing_servicess_63: "yes",
@@ -183,9 +183,9 @@ describe("applyPendingSisuTransactionPrefill", () => {
         other_agent_email: "other@example.com",
         other_agent_company: "Other Realty",
         attorney_vid: 184883,
-        jcre_closing_attorney: "Other Attorney",
-        jcre_closing_attorney_phone: "8435550103",
-        jcre_closing_attorney_email: "attorney@example.com",
+        closing_attorney: "Other Attorney",
+        closing_attorney_phone: "8435550103",
+        closing_attorney_email: "attorney@example.com",
         mortgage_company_vid: 184058,
         mortgage_other: "Other Mortgage",
         loan_officer_name: "Loan Officer",
@@ -201,7 +201,7 @@ describe("applyPendingSisuTransactionPrefill", () => {
         "1s_37_for_good_contribution": "yes",
         commission_delivery_to_lpt: "Wire",
         "120_compensations_63": "2.50%",
-        jcre_gross_comission_total_in_s_36: 13500,
+        gross_commission_total: 13500,
         fub_id: "123",
         fub_deal_id: "789",
       }),
@@ -226,8 +226,8 @@ describe("applyPendingSisuTransactionPrefill", () => {
       postal: "29401",
       agent2: "Sam Agent",
       agent2Percent: "25.00%",
-      jcreOffice: "Charleston",
-      jcreLeadTransaction: "no",
+      office: "Charleston",
+      leadTransaction: "no",
       plrAcknowledgement: "yes",
       closingDepartment: "yes",
       onTeam: "yes",
@@ -295,23 +295,23 @@ describe("applyPendingSisuTransactionPrefill", () => {
     });
   });
 
-  it("normalizes SISU yes/no option ids for JCRE Lead Transaction", () => {
+  it("normalizes SISU yes/no option ids for Lead Transaction", () => {
     expect(
       applyPendingSisuTransactionPrefill(getInitialPendingFormState({}), {
         transaction_id: "6495594",
-        jcre_leads_63: "0",
+        lead_transaction: "0",
       }),
     ).toMatchObject({
-      jcreLeadTransaction: "yes",
+      leadTransaction: "yes",
     });
 
     expect(
       applyPendingSisuTransactionPrefill(getInitialPendingFormState({}), {
         transaction_id: "6495594",
-        jcre_leads_63: "1",
+        lead_transaction: "1",
       }),
     ).toMatchObject({
-      jcreLeadTransaction: "no",
+      leadTransaction: "no",
     });
   });
 

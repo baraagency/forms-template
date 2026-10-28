@@ -31,9 +31,18 @@
   transform: scale(var(--scale-large));
 }
 
+.settings-tabs__tab:hover {
+  color: var(--foreground);
+}
+
 .settings-tabs__tab--active,
 .settings-tabs__tab[aria-selected="true"] {
   color: var(--foreground);
+}
+
+.settings-tabs__tab:focus-visible {
+  outline: 2px solid var(--brand-sky);
+  outline-offset: -2px;
 }
 
 .settings-tabs__indicator {
@@ -465,4 +474,9 @@
   .settings-pill-toggle:active .settings-pill-toggle__track {
     transform: none;
   }
+}
+
+.settings-tabs--2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-bottom: 16px;
 }

@@ -2,7 +2,7 @@
 
 **Date:** 2026-07-21  
 **Status:** Approved design (pending implementation plan)  
-**Reference:** `/Users/nikomart/Documents/jeff-cook-app` (`agentResolution.ts`, `sisuService.findAgentByEmail` / `resolveAgentIdByEmail`)
+**Reference:** the reference client app (`agentResolution.ts`, `sisuService.findAgentByEmail` / `resolveAgentIdByEmail`)
 
 ## Problem
 
@@ -15,7 +15,7 @@ SISU expects its own numeric `agent_id`, resolved by looking up the submitting F
 - On every form submit that reaches the SISU write step, resolve SISU `agent_id` from the submitting FUB user’s email.
 - If resolution fails, still write the SISU transaction **without** `agent_id` (best-effort).
 - Keep resolution shared in the submission workflow (template architecture), not duplicated across form routes.
-- Match jeff-cook lookup semantics (exact email / archived email, else first agent).
+- Match the reference client app lookup semantics (exact email / archived email, else first agent).
 
 ## Non-goals
 
@@ -60,7 +60,7 @@ Skip gates for the SISU step (API key / enabled mappings) are unchanged. Agent r
 
 ### Types (`app/types/sisu.ts`)
 
-Add (from jeff-cook):
+Add (from the reference client app):
 
 - `SISUFindAgentRequest` — `{ email: string }`
 - Ensure `SISUAgent` / response shape supports `agents[]` with `agent_id`, `email`, `archived_email` as needed for find-agent (reuse or extend existing types)
@@ -81,7 +81,7 @@ Add (from jeff-cook):
   - `resolveSisuAgentIdForFubAgentId(fubAgentId, deps?)`
   - FUB get user → email → SISU resolve by email
   - Returns `number | undefined`
-  - Injectable deps for unit tests (jeff-cook pattern)
+  - Injectable deps for unit tests (reference client app pattern)
 
 ### Workflow (`runSubmissionWorkflow.ts`)
 

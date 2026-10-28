@@ -387,3 +387,34 @@ export function collectPageFields(data: FormPageData): FieldBlockProps[] {
     .filter((block) => block.type === "FieldBlock")
     .map((block) => block.props as unknown as FieldBlockProps);
 }
+
+const BLOCK_LABELS: Record<string, string> = {
+  PageTitle: "Page title",
+  SectionHeader: "Section header",
+  Divider: "Divider",
+  TextBlock: "Plain text",
+};
+
+/** Short label used by the outline and the canvas block's accessible name. */
+export function formPageBlockLabel(block: FormPageBlock): string {
+  if (block.type === "FieldBlock") {
+    const label = block.props.label;
+    return typeof label === "string" && label.trim() ? label : "Untitled field";
+  }
+
+  if (block.type === "PageTitle") {
+    const text = block.props.text;
+    return typeof text === "string" && text.trim()
+      ? text
+      : (BLOCK_LABELS[block.type] ?? block.type);
+  }
+
+  if (block.type === "SectionHeader") {
+    const title = block.props.title;
+    return typeof title === "string" && title.trim()
+      ? title
+      : (BLOCK_LABELS[block.type] ?? block.type);
+  }
+
+  return BLOCK_LABELS[block.type] ?? block.type;
+}

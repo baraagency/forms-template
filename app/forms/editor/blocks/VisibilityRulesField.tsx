@@ -1,4 +1,5 @@
 import { createUsePuck } from "@puckeditor/core";
+import { Plus } from "lucide-react";
 import { collectPageFields } from "../formPageData";
 import type {
   FormPageData,
@@ -46,35 +47,60 @@ export function VisibilityRulesField({
 
   if (fields.length === 0) {
     return (
-      <p className="text-xs text-[var(--muted-foreground)]">
+      <p className="page-editor__helper">
         Add another field before creating a visibility rule.
       </p>
     );
   }
 
   return (
-    <div className="space-y-2">
-      <p className="text-xs font-medium">Visible when all of these match</p>
+    <fieldset className="page-editor-rules">
+      <legend className="page-editor-rules__legend">
+        Visible when all of these match
+      </legend>
+
+      {rules.length === 0 ? (
+        <p className="page-editor__helper">
+          No rules yet, so this field is always visible.
+        </p>
+      ) : null}
+
       {rules.map((rule, index) => {
         const needsValue =
           rule.operator !== "isFilled" && rule.operator !== "isEmpty";
+        const fieldMissing = !fields.some(
+          (field) => field.id === rule.fieldId,
+        );
+        const ruleLabel = `Rule ${index + 1}`;
 
         return (
-          <div
-            key={`${rule.fieldId}-${index}`}
-            className="space-y-2 rounded border border-[var(--divider-color)] p-2"
-          >
+          <div key={`${rule.fieldId}-${index}`} className="page-editor-rule">
+            <div className="page-editor-rule__head">
+              <span className="page-editor-rule__index">{ruleLabel}</span>
+              <button
+                type="button"
+                disabled={readOnly}
+                className="page-editor__text-button page-editor__text-button--danger"
+                onClick={() => update(rules.filter((_, i) => i !== index))}
+              >
+                Remove
+              </button>
+            </div>
+
             <select
               value={rule.fieldId}
               disabled={readOnly}
-              aria-label="Controlling field"
-              className="w-full rounded border border-[var(--divider-color)] bg-[var(--card-bg)] p-2 text-sm"
+              aria-label={`${ruleLabel} controlling field`}
+              className="page-editor__control"
               onChange={(event) => {
                 const next = [...rules];
                 next[index] = { ...rule, fieldId: event.target.value };
                 update(next);
               }}
             >
+              {fieldMissing ? (
+                <option value={rule.fieldId}>Missing field</option>
+              ) : null}
               {fields.map((field) => (
                 <option key={field.id} value={field.id}>
                   {field.label}
@@ -85,8 +111,8 @@ export function VisibilityRulesField({
             <select
               value={rule.operator}
               disabled={readOnly}
-              aria-label="Visibility operator"
-              className="w-full rounded border border-[var(--divider-color)] bg-[var(--card-bg)] p-2 text-sm"
+              aria-label={`${ruleLabel} condition`}
+              className="page-editor__control"
               onChange={(event) => {
                 const next = [...rules];
                 next[index] = {
@@ -112,9 +138,9 @@ export function VisibilityRulesField({
               <input
                 value={(rule.values ?? []).join(", ")}
                 disabled={readOnly}
-                aria-label="Visibility values, comma separated"
-                placeholder="Value or option label"
-                className="w-full rounded border border-[var(--divider-color)] bg-[var(--card-bg)] p-2 text-sm"
+                aria-label={`${ruleLabel} values, comma separated`}
+                placeholder="e.g. Buyer, Seller"
+                className="page-editor__control"
                 onChange={(event) => {
                   const values = event.target.value
                     .split(",")
@@ -126,15 +152,6 @@ export function VisibilityRulesField({
                 }}
               />
             ) : null}
-
-            <button
-              type="button"
-              disabled={readOnly}
-              className="text-xs font-medium text-[var(--error-color)]"
-              onClick={() => update(rules.filter((_, i) => i !== index))}
-            >
-              Remove rule
-            </button>
           </div>
         );
       })}
@@ -142,7 +159,7 @@ export function VisibilityRulesField({
       <button
         type="button"
         disabled={readOnly}
-        className="text-xs font-medium text-[var(--brand-sky)]"
+        className="page-editor__text-button"
         onClick={() =>
           update([
             ...rules,
@@ -154,8 +171,9 @@ export function VisibilityRulesField({
           ])
         }
       >
+        <Plus size={13} aria-hidden="true" />
         Add rule
       </button>
-    </div>
+    </fieldset>
   );
 }

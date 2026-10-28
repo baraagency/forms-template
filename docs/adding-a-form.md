@@ -11,7 +11,7 @@
 
 Import shared code only from `app/forms/_core/`.
 
-## Page editor (Phase 2: all example forms)
+## Page editor (Phase 3: all example forms)
 
 All four example forms are document-driven. Each page is a Puck `Data`
 document seeded in `app/forms/<form>/<form>PageDocument.ts` and stored per
@@ -26,7 +26,7 @@ rendered by `app/forms/editor/PageRenderer.tsx`; the admin editor lives at
 - Publishing snapshots SISU team fields, SISU agents, SISU vendors, FUB users,
   and FUB appointment types into `props.options`. Public pages never fetch
   options at render time.
-- New fields added in the editor submit through the doc-aware routes, but
-  cannot be mapped to SISU/FUB until Phase 3.
+- New fields added in the editor submit through the doc-aware routes and can
+  be mapped immediately in the field inspector.
 - Creating brand-new forms in the editor is Phase 4; the steps above still
   apply to a form that is not page-driven yet.

@@ -87,7 +87,7 @@ const PERCENTAGE_FIELDS = new Set([
 
 const YES_NO_FIELDS = new Set([
   "hasSecondaryClient",
-  "jcreLeadTransaction",
+  "leadTransaction",
   "plrAcknowledgement",
   "closingDepartment",
   "onTeam",
@@ -103,8 +103,8 @@ const PENDING_SELECT_FIELDS: Partial<
   Record<string, keyof PendingSelectOptions>
 > = {
   clientType: "clientTypeOptions",
-  jcreOffice: "jcreOfficeOptions",
-  jcreLeadTransaction: "jcreLeadTransactionOptions",
+  office: "officeOptions",
+  leadTransaction: "leadTransactionOptions",
   plrAcknowledgement: "plrAcknowledgementOptions",
   closingDepartment: "closingDepartmentOptions",
   hasSecondaryClient: "hasSecondaryClientOptions",

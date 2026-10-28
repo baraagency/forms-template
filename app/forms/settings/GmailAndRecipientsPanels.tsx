@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState } from "react";
 import {
   Notice,
   Spinner,
-  TextInput,
   secondaryButtonClassName,
 } from "../_core/ui";
 import type { FormEmailRecipient } from "@/app/types/storage";
@@ -52,18 +51,11 @@ export function GmailAccountPanel({
 
   return (
     <section className="settings-section">
-      <div className="settings-section-header">
-        <div>
-          <h2 className="settings-section-title text-balance">
-            Submission email — Gmail
-          </h2>
-          <p className="settings-section-description text-pretty">
-            Connect the Gmail inbox used for this deploy environment (
-            {status?.environment ?? "…"}). Staging and production use separate
-            credentials.
-          </p>
-        </div>
-      </div>
+      <p className="settings-section-description text-pretty">
+        Connect the Gmail inbox used for this deploy environment (
+        {status?.environment ?? "…"}). Staging and production use separate
+        credentials.
+      </p>
       {error ? <Notice tone="warning">{error}</Notice> : null}
       <div className="settings-gmail-panel">
         <div>

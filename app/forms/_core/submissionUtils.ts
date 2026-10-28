@@ -111,7 +111,7 @@ type SubmittedDebugPayload = {
   transaction?: unknown;
 };
 
-const submissionDebugStoragePrefix = "jcre:forms:submission-debug:";
+const submissionDebugStoragePrefix = "forms-template:submission-debug:";
 const submissionDebugEnvironments = new Set(["LOCAL", "STAGING"]);
 
 export const submissionFormLabels: Record<SubmissionFormType, string> = {

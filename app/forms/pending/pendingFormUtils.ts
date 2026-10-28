@@ -47,8 +47,8 @@ export type PendingFormState = {
   postal: string;
   agent2: string;
   agent2Percent: string;
-  jcreOffice: string;
-  jcreLeadTransaction: string;
+  office: string;
+  leadTransaction: string;
   plrAcknowledgement: string;
   closingDepartment: string;
   hasSecondaryClient: string;
@@ -183,8 +183,8 @@ export function getInitialPendingFormState(values: {
     postal: "",
     agent2: "",
     agent2Percent: "",
-    jcreOffice: "",
-    jcreLeadTransaction: "",
+    office: "",
+    leadTransaction: "",
     plrAcknowledgement: "",
     closingDepartment: "",
     hasSecondaryClient: "",
@@ -316,10 +316,10 @@ export function applyPendingSisuTransactionPrefill(
     agent2Percent:
       current.agent2Percent ||
       formatPercentageInput(readSisuValue(transaction, ["agent_2_s_37"])),
-    jcreOffice: current.jcreOffice || readSisuValue(transaction, ["jcre_office"]),
-    jcreLeadTransaction:
-      current.jcreLeadTransaction ||
-      normalizeSisuYesNoToLower(readSisuValue(transaction, ["jcre_leads_63"])),
+    office: current.office || readSisuValue(transaction, ["office"]),
+    leadTransaction:
+      current.leadTransaction ||
+      normalizeSisuYesNoToLower(readSisuValue(transaction, ["lead_transaction"])),
     plrAcknowledgement:
       current.plrAcknowledgement ||
       normalizeSisuYesNoToLower(
@@ -372,13 +372,13 @@ export function applyPendingSisuTransactionPrefill(
       current.otherAgentCompany || readSisuValue(transaction, ["other_agent_company"]),
     closingAttorney: current.closingAttorney || readSisuValue(transaction, ["attorney_vid"]),
     closingAttorneyOther:
-      current.closingAttorneyOther || readSisuValue(transaction, ["jcre_closing_attorney"]),
+      current.closingAttorneyOther || readSisuValue(transaction, ["closing_attorney"]),
     closingAttorneyPhone:
       current.closingAttorneyPhone ||
-      formatPhoneInput(readSisuValue(transaction, ["jcre_closing_attorney_phone"])),
+      formatPhoneInput(readSisuValue(transaction, ["closing_attorney_phone"])),
     closingAttorneyEmail:
       current.closingAttorneyEmail ||
-      readSisuValue(transaction, ["jcre_closing_attorney_email"]),
+      readSisuValue(transaction, ["closing_attorney_email"]),
     mortgageCompany: current.mortgageCompany || readSisuValue(transaction, ["mortgage_company_vid"]),
     mortgageCompanyName: current.mortgageCompanyName || readSisuValue(transaction, ["mortgage_other"]),
     loanOfficerName: current.loanOfficerName || readSisuValue(transaction, ["loan_officer_name"]),
@@ -418,7 +418,7 @@ export function applyPendingSisuTransactionPrefill(
       readSisuValue(transaction, ["120_compensations_63"]),
     grossCommissionTotal:
       current.grossCommissionTotal ||
-      formatCurrencyInput(readSisuValue(transaction, ["jcre_gross_comission_total_in_s_36"])),
+      formatCurrencyInput(readSisuValue(transaction, ["gross_commission_total"])),
   });
 }
 

@@ -1,5 +1,9 @@
 import { enforcePageEditorAdmin } from "@/app/api/_services/settingsAdminAuth";
-import { publishFormPage } from "@/app/api/_services/formPageQueries";
+import {
+  getFormPage,
+  publishFormPage,
+} from "@/app/api/_services/formPageQueries";
+import { pruneFormFieldMappings, pruneOrphanEditorMappings } from "@/app/api/_services/formMappingQueries";
 import { loadSisuTeamFieldCatalog } from "@/app/api/_services/sisuTeamFieldsService";
 import { loadSisuTeamAgentOptions } from "@/app/api/_services/sisuTeamAgentOptionsService";
 import { loadSisuVendorOptions } from "@/app/api/_services/sisuVendorOptionsService";
@@ -8,9 +12,13 @@ import { loadFubAppointmentTypeOptions } from "@/app/api/_services/fubAppointmen
 import { isSettingsFormKind } from "@/app/forms/_core/formIdentity";
 import {
   MAX_PAGE_BYTES,
+  collectPageFields,
   parseFormPageData,
 } from "@/app/forms/editor/formPageData";
-import { resolvePublishedPageOptions } from "@/app/forms/editor/formPagePublish";
+import {
+  findRemovedPublishedFields,
+  resolvePublishedPageOptions,
+} from "@/app/forms/editor/formPagePublish";
 import type { JsonValue } from "@/app/types/storage";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -78,6 +86,12 @@ export async function action({
     return Response.json({ message: publishable.error }, { status: 400 });
   }
 
+  const previousPage = await getFormPage(form);
+  const previousParsed =
+    previousPage.data?.published
+      ? parseFormPageData(previousPage.data.published, { forPublish: true })
+      : null;
+
   const result = await publishFormPage(
     form,
     publishable.data as unknown as JsonValue,
@@ -94,8 +108,40 @@ export async function action({
     return Response.json({ message: result.error }, { status: 500 });
   }
 
+  const warnings = [...resolved.warnings];
+  const removed = findRemovedPublishedFields(
+    previousParsed?.ok ? previousParsed.data : null,
+    publishable.data,
+  );
+
+  if (removed.length > 0) {
+    const pruned = await pruneFormFieldMappings(
+      form,
+      removed.map((field) => field.id),
+    );
+    if (pruned.error) {
+      warnings.push(
+        `Page published, but mappings for removed fields could not be pruned: ${pruned.error}`,
+      );
+    } else if ((pruned.data ?? 0) > 0) {
+      warnings.push(
+        `Removed mappings for: ${removed.map((field) => field.label).join(", ")}.`,
+      );
+    }
+  }
+
+  const validIds = collectPageFields(publishable.data).map((field) => field.id);
+  const orphans = await pruneOrphanEditorMappings(form, validIds);
+  if (orphans.error) {
+    warnings.push(
+      `Page published, but mappings for deleted editor fields could not be pruned: ${orphans.error}`,
+    );
+  } else if ((orphans.data ?? 0) > 0) {
+    warnings.push("Removed mappings for deleted editor fields.");
+  }
+
   return Response.json({
     version: result.version,
-    warnings: resolved.warnings,
+    warnings,
   });
 }

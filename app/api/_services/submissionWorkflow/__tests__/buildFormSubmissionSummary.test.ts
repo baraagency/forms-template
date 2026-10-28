@@ -63,6 +63,26 @@ describe("buildFormSubmissionSummary", () => {
     expect(summary.body).toMatch(/Assigned OSA: .+/);
   });
 
+  it("uses published document labels for summary rows", async () => {
+    const summary = await buildFormSubmissionSummary({
+      form: "appointmentSet",
+      formLabel: "Appointment Set",
+      formState: {
+        personId: "143",
+        clientFirstName: "Tom",
+        customNote: "Gate code 42",
+      },
+      fieldOptions: [
+        { value: "clientFirstName", label: "Preferred First Name" },
+        { value: "customNote", label: "Access Note" },
+      ],
+    });
+
+    expect(summary.body).toContain("Preferred First Name: Tom");
+    expect(summary.body).toContain("Access Note: Gate code 42");
+    expect(summary.body).not.toContain("Client First Name: Tom");
+  });
+
   it("escapes HTML in field labels and values", async () => {
     const summary = await buildFormSubmissionSummary({
       form: "closed",

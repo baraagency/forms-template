@@ -4,7 +4,7 @@ import {
   type TeamFieldCatalog,
 } from "@/app/forms/_core/teamFieldOptions";
 import { collectPageFields } from "./formPageData";
-import type { FieldOption, FormPageData } from "./formPageTypes";
+import type { FieldBlockProps, FieldOption, FormPageData } from "./formPageTypes";
 
 export type PublishOptionLoaders = {
   loadSisuTeamFields: () => Promise<StorageResult<TeamFieldCatalog>>;
@@ -28,6 +28,17 @@ function replaceOptions(
       return { ...block, props: { ...block.props, options } };
     }),
   };
+}
+
+export function findRemovedPublishedFields(
+  previous: FormPageData | null,
+  next: FormPageData,
+): FieldBlockProps[] {
+  if (!previous) {
+    return [];
+  }
+  const nextIds = new Set(collectPageFields(next).map((field) => field.id));
+  return collectPageFields(previous).filter((field) => !nextIds.has(field.id));
 }
 
 /**

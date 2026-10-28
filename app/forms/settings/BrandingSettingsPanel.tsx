@@ -136,10 +136,10 @@ export function BrandingSettingsPanel({
   return (
     <section className="settings-section branding-settings">
       <p className="settings-section-description text-pretty">
-        Point to an image hosted on your CDN or website. When set, it appears
-        in the app header, the HTML summary email, and FUB notes. Use an https
-        URL so email clients can load it. Leave it blank to use the built-in
-        banner in the app; emails and notes then omit the logo.
+        Point to an image hosted on your CDN or website. When set, it appears in
+        the app header, the HTML summary email, and FUB notes. Use an https URL
+        so email clients can load it. Leave it blank to use the built-in banner
+        in the app; emails and notes then omit the logo.
       </p>
 
       {error ? (

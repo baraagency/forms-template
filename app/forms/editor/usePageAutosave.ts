@@ -3,7 +3,14 @@ import type { SettingsFormKind } from "@/app/forms/_core/formIdentity";
 import { createSaveQueue } from "./createSaveQueue";
 import type { FormPageData } from "./formPageTypes";
 
-type SaveStatus = "idle" | "saving" | "saved" | "conflict" | "error";
+export type SaveStatus =
+  | "idle"
+  | "dirty"
+  | "saving"
+  | "publishing"
+  | "saved"
+  | "conflict"
+  | "error";
 
 const SAVE_DELAY_MS = 1_000;
 
@@ -18,6 +25,8 @@ export function usePageAutosave(input: {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingRef = useRef<Promise<number>>(Promise.resolve(input.initialVersion));
   const lastSavedJsonRef = useRef(JSON.stringify(input.initialData));
+  const latestDataRef = useRef(input.initialData);
+  const dirtyRef = useRef(false);
 
   const saveDraft = useCallback(
     async (data: FormPageData): Promise<number> => {
@@ -42,35 +51,82 @@ export function usePageAutosave(input: {
       }
 
       versionRef.current = payload.version;
-      lastSavedJsonRef.current = JSON.stringify(data);
+      const savedJson = JSON.stringify(data);
+      lastSavedJsonRef.current = savedJson;
       setErrorMessage(null);
-      setStatus("saved");
+      if (JSON.stringify(latestDataRef.current) === savedJson) {
+        dirtyRef.current = false;
+        setStatus("saved");
+      } else {
+        setStatus("saving");
+      }
       return payload.version;
     },
     [input.form],
   );
 
   const queue = useMemo(() => createSaveQueue(saveDraft), [saveDraft]);
+  const queueRef = useRef(queue);
+  queueRef.current = queue;
 
-  const schedule = useCallback(
-    (data: FormPageData) => {
-      if (JSON.stringify(data) === lastSavedJsonRef.current) {
-        return;
-      }
-
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
-      }
+  const saveNow = useCallback(
+    (data: FormPageData): Promise<number> => {
+      latestDataRef.current = data;
+      dirtyRef.current = true;
       setStatus("saving");
-
-      timerRef.current = setTimeout(() => {
-        timerRef.current = null;
-        pendingRef.current = queue(data);
-        void pendingRef.current.catch(() => undefined);
-      }, SAVE_DELAY_MS);
+      const next = queue(data);
+      pendingRef.current = next;
+      void next.catch(() => undefined);
+      return next;
     },
     [queue],
   );
+
+  const schedule = useCallback(
+    (data: FormPageData) => {
+      latestDataRef.current = data;
+
+      if (JSON.stringify(data) === lastSavedJsonRef.current) {
+        if (timerRef.current) {
+          clearTimeout(timerRef.current);
+          timerRef.current = null;
+        }
+        dirtyRef.current = false;
+        setStatus("saved");
+        return;
+      }
+
+      dirtyRef.current = true;
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
+      setStatus("dirty");
+
+      timerRef.current = setTimeout(() => {
+        timerRef.current = null;
+        void saveNow(data).catch(() => undefined);
+      }, SAVE_DELAY_MS);
+    },
+    [saveNow],
+  );
+
+  const flush = useCallback((): Promise<number> => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+
+    const data = latestDataRef.current;
+    if (JSON.stringify(data) === lastSavedJsonRef.current) {
+      dirtyRef.current = false;
+      setStatus("saved");
+      return pendingRef.current;
+    }
+
+    return saveNow(data);
+  }, [saveNow]);
+
+  const retry = useCallback(() => flush(), [flush]);
 
   const publish = useCallback(
     async (data: FormPageData) => {
@@ -80,7 +136,7 @@ export function usePageAutosave(input: {
       }
 
       await pendingRef.current.catch(() => undefined);
-      setStatus("saving");
+      setStatus("publishing");
 
       const response = await fetch(`/api/forms/page/${input.form}/publish`, {
         method: "POST",
@@ -105,6 +161,8 @@ export function usePageAutosave(input: {
 
       versionRef.current = payload.version;
       lastSavedJsonRef.current = JSON.stringify(data);
+      latestDataRef.current = data;
+      dirtyRef.current = false;
       setErrorMessage(null);
       setStatus("saved");
       return {
@@ -116,12 +174,36 @@ export function usePageAutosave(input: {
   );
 
   useEffect(() => {
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (!dirtyRef.current) {
+        return;
+      }
+      event.preventDefault();
+      event.returnValue = "";
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
     return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
       if (timerRef.current) {
         clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
+      if (JSON.stringify(latestDataRef.current) !== lastSavedJsonRef.current) {
+        // Client-side navigation unmounts after the route changes; the request
+        // still completes. A full page unload is covered by the guard above.
+        void queueRef.current(latestDataRef.current).catch(() => undefined);
       }
     };
   }, []);
 
-  return { schedule, publish, status, errorMessage, version: versionRef.current };
+  return {
+    schedule,
+    publish,
+    retry,
+    status,
+    errorMessage,
+    version: versionRef.current,
+  };
 }

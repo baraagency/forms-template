@@ -173,11 +173,11 @@ test.describe("accessibility", () => {
     const appointmentMetTab = page.getByRole("tab", { name: /appointment met/i });
     await appointmentMetTab.focus();
     await expect(appointmentMetTab).toBeFocused();
-    // Give the browser a tick to fully settle focus before dispatching the
-    // key event — pressing immediately after .focus() resolves can race
-    // ahead of it in some browsers, delivering the keydown before the
-    // newly-focused element is actually listening.
-    await page.waitForTimeout(100);
+    // Give the browser a tick to fully settle hydration/focus before
+    // dispatching the key event — pressing immediately after .focus()
+    // resolves can race ahead of it in some browsers, delivering the keydown
+    // before the newly-focused element is actually listening.
+    await page.waitForTimeout(500);
     await page.keyboard.press("ArrowRight");
     await expect(page.getByRole("tab", { name: /pending/i })).toBeFocused();
   });
